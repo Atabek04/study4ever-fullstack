@@ -6,7 +6,6 @@ import com.study4ever.authservice.dto.UserCredentials;
 import com.study4ever.authservice.dto.UserResponse;
 import com.study4ever.authservice.dto.Role;
 import com.study4ever.authservice.exception.EmailAlreadyExistsException;
-import com.study4ever.authservice.exception.InvalidTokenException;
 import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
 import com.study4ever.authservice.jwt.JwtProperties;
 import com.study4ever.authservice.jwt.JwtTokenProvider;
@@ -77,9 +76,7 @@ public class AuthenticationService {
     }
 
     public TokenResponse refreshToken(String refreshToken) {
-        if (!tokenProvider.validateToken(refreshToken)) {
-            throw new InvalidTokenException("Invalid refresh token");
-        }
+        tokenProvider.validateToken(refreshToken);
 
         String username = tokenProvider.getUsernameFromToken(refreshToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);

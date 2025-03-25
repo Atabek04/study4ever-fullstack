@@ -1,7 +1,8 @@
 package com.study4ever.authservice.exception;
 
 import com.study4ever.authservice.dto.ErrorResponse;
-import jakarta.ws.rs.BadRequestException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -38,6 +39,16 @@ public class GlobalExceptionHandler {
         log.error("Authentication error: {}", ex.getMessage());
         String message = ex instanceof BadCredentialsException ? "Invalid username or password" : ex.getMessage();
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, message, null);
+    }
+
+    @ExceptionHandler({
+            JwtException.class,
+            SignatureException.class
+    })
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleJwtExceptions(Exception ex) {
+        log.error("JWT error: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Invalid token", null);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

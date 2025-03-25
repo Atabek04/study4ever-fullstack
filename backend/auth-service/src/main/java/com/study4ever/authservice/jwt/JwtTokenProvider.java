@@ -1,5 +1,6 @@
 package com.study4ever.authservice.jwt;
 
+import com.study4ever.authservice.exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -66,14 +67,20 @@ public class JwtTokenProvider {
             return true;
         } catch (SecurityException | MalformedJwtException e) {
             log.error("Invalid JWT signature: {}", e.getMessage());
+            throw new InvalidTokenException("Invalid token signature");
         } catch (ExpiredJwtException e) {
             log.error("JWT token is expired: {}", e.getMessage());
+            throw new InvalidTokenException("Token has expired");
         } catch (UnsupportedJwtException e) {
             log.error("JWT token is unsupported: {}", e.getMessage());
+            throw new InvalidTokenException("Unsupported token format");
         } catch (IllegalArgumentException e) {
             log.error("JWT claims string is empty: {}", e.getMessage());
+            throw new InvalidTokenException("Token claims are invalid");
+        } catch (Exception e) {
+            log.error("JWT validation error: {}", e.getMessage());
+            throw new InvalidTokenException("Token validation failed");
         }
-        return false;
     }
 
     private Claims getClaimsFromToken(String token) {
