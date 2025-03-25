@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:14:///testdb
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: test
+    password: test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  jwt:
+    secret: testsecrettestsecrettestsecrettestsecrettestsecrettestsecret
+    access-token-expiration-ms: 300000  # 5 minutes
+    refresh-token-expiration-ms: 600000  # 10 minutes
+    issuer: test-auth-service
+
+eureka:
+  client:
+    enabled: false
