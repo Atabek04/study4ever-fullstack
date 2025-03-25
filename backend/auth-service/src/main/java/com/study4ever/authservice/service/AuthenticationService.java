@@ -1,0 +1,112 @@
+package com.study4ever.authservice.service;
+
+import com.study4ever.authservice.dto.LoginRequest;
+import com.study4ever.authservice.dto.RegisterRequest;
+import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.dto.UserResponse;
+import com.study4ever.authservice.dto.Role;
+import com.study4ever.authservice.exception.EmailAlreadyExistsException;
+import com.study4ever.authservice.exception.InvalidTokenException;
+import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
+import com.study4ever.authservice.jwt.JwtProperties;
+import com.study4ever.authservice.jwt.JwtTokenProvider;
+import com.study4ever.authservice.jwt.TokenResponse;
+import com.study4ever.authservice.repo.RoleRepository;
+import com.study4ever.authservice.repo.UserCredentialsRepository;
+import com.study4ever.authservice.util.Mapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AuthenticationService {
+
+    private final AuthenticationManager authenticationManager;
+    private final UserCredentialsRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider tokenProvider;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final JwtProperties jwtProperties;
+
+    public TokenResponse authenticate(LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return createTokenResponse(authentication);
+    }
+
+    public UserResponse register(RegisterRequest registerRequest) {
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+            throw new UsernameAlreadyExistsException("Username is already taken");
+        }
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new EmailAlreadyExistsException("Email is already in use");
+        }
+
+        Set<Role> roles = new HashSet<>();
+        Role role = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
+                .orElseThrow(() -> new RuntimeException("Default role not found"));
+        roles.add(role);
+
+        UserCredentials user = UserCredentials.builder()
+                .username(registerRequest.getUsername())
+                .email(registerRequest.getEmail())
+                .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .roles(roles)
+                .build();
+        UserCredentials savedUser = userRepository.save(user);
+        return Mapper.mapToUserResponse(savedUser);
+    }
+
+    public TokenResponse refreshToken(String refreshToken) {
+        if (!tokenProvider.validateToken(refreshToken)) {
+            throw new InvalidTokenException("Invalid refresh token");
+        }
+
+        String username = tokenProvider.getUsernameFromToken(refreshToken);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+        return createTokenResponse(authentication);
+    }
+
+    public boolean validateToken(String token) {
+        return tokenProvider.validateToken(token);
+    }
+
+    private TokenResponse createTokenResponse(Authentication authentication) {
+        String accessToken = tokenProvider.generateAccessToken(authentication);
+        String refreshToken = tokenProvider.generateRefreshToken(authentication);
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiresAt = now.plusSeconds(jwtProperties.getAccessTokenExpirationMs() / 1000);
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtProperties.getAccessTokenExpirationMs())
+                .issuedAt(now)
+                .expiresAt(expiresAt)
+                .build();
+    }
+}
