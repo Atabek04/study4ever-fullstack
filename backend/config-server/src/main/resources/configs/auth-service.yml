@@ -1,10 +1,10 @@
 server:
-  port: 8123
+  port: 8081
 
 spring:
   datasource:
     username: ${AUTH_DB_USERNAME}
-    password: ${AUTH_DB_PASSWORD}
+    password: ${POSTGRES_PASSWORD}
     url: ${AUTH_DB_URL}
     driver-class-name: org.postgresql.Driver
 

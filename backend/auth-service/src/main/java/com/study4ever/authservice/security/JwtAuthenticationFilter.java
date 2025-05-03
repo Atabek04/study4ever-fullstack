@@ -1,7 +1,6 @@
 package com.study4ever.authservice.security;
 
-import com.study4ever.authservice.jwt.JwtTokenProvider;
-import com.study4ever.authservice.service.UserDetailsServiceImpl;
+import com.study4ever.authservice.service.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

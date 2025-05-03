@@ -1,6 +1,6 @@
 package com.study4ever.authservice.service;
 
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.UserCredentialsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

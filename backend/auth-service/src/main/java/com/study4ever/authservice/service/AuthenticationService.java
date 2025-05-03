@@ -2,14 +2,13 @@ package com.study4ever.authservice.service;
 
 import com.study4ever.authservice.dto.LoginRequest;
 import com.study4ever.authservice.dto.RegisterRequest;
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.dto.UserResponse;
 import com.study4ever.authservice.dto.Role;
 import com.study4ever.authservice.exception.EmailAlreadyExistsException;
 import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
-import com.study4ever.authservice.jwt.JwtProperties;
-import com.study4ever.authservice.jwt.JwtTokenProvider;
-import com.study4ever.authservice.jwt.TokenResponse;
+import com.study4ever.authservice.config.JwtProperties;
+import com.study4ever.authservice.dto.TokenResponse;
 import com.study4ever.authservice.repo.RoleRepository;
 import com.study4ever.authservice.repo.UserCredentialsRepository;
 import com.study4ever.authservice.util.Mapper;

@@ -1,6 +1,6 @@
 package com.study4ever.authservice.util;
 
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.dto.UserResponse;
 import lombok.experimental.UtilityClass;
 

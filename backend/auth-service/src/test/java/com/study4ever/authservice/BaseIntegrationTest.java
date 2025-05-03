@@ -2,7 +2,7 @@ package com.study4ever.authservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study4ever.authservice.dto.Role;
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.RoleRepository;
 import com.study4ever.authservice.repo.UserCredentialsRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.Arrays;
 import java.util.Set;

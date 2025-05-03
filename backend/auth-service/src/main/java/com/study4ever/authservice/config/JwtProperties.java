@@ -1,4 +1,4 @@
-package com.study4ever.authservice.jwt;
+package com.study4ever.authservice.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

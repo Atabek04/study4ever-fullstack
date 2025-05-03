@@ -1,5 +1,6 @@
-package com.study4ever.authservice.dto;
+package com.study4ever.authservice.model;
 
+import com.study4ever.authservice.dto.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,10 +30,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "user_credentials")
-@Getter
-@Setter
-@ToString(exclude = {"password", "roles"})
-@Builder
+@Getter @Setter @ToString(exclude = {"password", "roles"}) @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserCredentials {

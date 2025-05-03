@@ -1,4 +1,6 @@
 package com.study4ever.courseservice.repository;
 
-public class UserReference {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserReference extends JpaRepository<UserReference, Long> {
 }

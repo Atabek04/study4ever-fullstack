@@ -1,4 +1,4 @@
-package com.study4ever.authservice.jwt;
+package com.study4ever.authservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
