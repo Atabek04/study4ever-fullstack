@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:15
-    container_name: postgres-db
+    image: postgres:17
+    container_name: course-service-postgres
     environment:
+      POSTGRES_DB: course_service_s4e
       POSTGRES_USER: course_user
       POSTGRES_PASSWORD: course_password
-      POSTGRES_DB: course_db
     ports:
       - "5432:5432"
     volumes:

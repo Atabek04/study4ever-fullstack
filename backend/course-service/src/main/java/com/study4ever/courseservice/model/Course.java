@@ -51,6 +51,7 @@ public class Course {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
+    @Builder.Default
     private Set<Module> modules = new HashSet<>();
 
     @ManyToMany
@@ -59,10 +60,12 @@ public class Course {
             joinColumns = @JoinColumn(name = "course_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @ToString.Exclude
+    @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
+    @Builder.Default
     private Set<CourseFeedback> feedbacks = new HashSet<>();
 
     @CreatedDate

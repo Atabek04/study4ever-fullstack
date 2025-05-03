@@ -13,7 +13,7 @@ spring:
       fail-fast: true
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/course_db
+    url: jdbc:postgresql://postgres:5432/course_service_s4e
     username: course_user
     password: course_password
     driver-class-name: org.postgresql.Driver
@@ -23,6 +23,12 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 server:
   port: 9988
