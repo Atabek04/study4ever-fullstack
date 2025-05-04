@@ -1,4 +1,4 @@
-package com.study4ever.authservice.dto;
+package com.study4ever.courseservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserUpdatedEvent {
+public class UserCreatedEvent {
     private UUID id;
     private String username;
     private String email;

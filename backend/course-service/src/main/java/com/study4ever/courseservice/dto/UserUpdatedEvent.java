@@ -1,4 +1,4 @@
-package com.study4ever.authservice.dto;
+package com.study4ever.courseservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
