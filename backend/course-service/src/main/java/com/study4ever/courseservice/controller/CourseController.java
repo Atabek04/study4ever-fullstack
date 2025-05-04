@@ -2,7 +2,7 @@ package com.study4ever.courseservice.controller;
 
 import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
-import com.study4ever.courseservice.model.Course;
+import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,19 +20,29 @@ public class CourseController {
     public List<CourseResponseDto> getAllCourses() {
         return courseService.getAllCourses();
     }
+    
+    @GetMapping("/details")
+    public List<CourseDetailResponseDto> getAllCoursesWithDetails() {
+        return courseService.getAllCoursesWithDetails();
+    }
 
     @GetMapping("/{id}")
     public CourseResponseDto getCourseById(@PathVariable Long id) {
         return courseService.getCourseById(id);
     }
+    
+    @GetMapping("/{id}/details")
+    public CourseDetailResponseDto getCourseDetailsById(@PathVariable Long id) {
+        return courseService.getCourseDetailsById(id);
+    }
 
     @PostMapping
-    public Course createCourse(@Valid @RequestBody CourseRequestDto courseRequestDto) {
-        return courseService.createCourse(courseRequestDto);
+    public CourseResponseDto createCourse(@Valid @RequestBody CourseRequestDto courseRequestDto) {
+        return courseService.saveCourse(courseRequestDto);
     }
 
     @PutMapping("/{id}")
-    public Course updateCourse(@PathVariable Long id, @Valid @RequestBody CourseRequestDto courseRequestDto) {
+    public CourseResponseDto updateCourse(@PathVariable Long id, @Valid @RequestBody CourseRequestDto courseRequestDto) {
         return courseService.updateCourse(id, courseRequestDto);
     }
 

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 public class CourseRequestDto {
@@ -15,7 +16,7 @@ public class CourseRequestDto {
     private String description;
 
     @NotNull
-    private Long instructorId;
+    private UUID instructorId;
 
     private Set<Long> tagIds;
 }

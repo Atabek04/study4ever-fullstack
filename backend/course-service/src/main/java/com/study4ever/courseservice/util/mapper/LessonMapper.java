@@ -1,6 +1,7 @@
 package com.study4ever.courseservice.util.mapper;
 
 import com.study4ever.courseservice.dto.LessonRequestDto;
+import com.study4ever.courseservice.dto.LessonResponseDto;
 import com.study4ever.courseservice.model.Lesson;
 
 import com.study4ever.courseservice.service.ModuleService;
@@ -22,5 +23,16 @@ public class LessonMapper {
         existingLesson.setSortOrder(lessonRequestDto.getSortOrder());
         existingLesson.setModule(moduleService.getModuleById(lessonRequestDto.getModuleId()));
         return existingLesson;
+    }
+
+    public LessonResponseDto toResponseDto(Lesson lesson) {
+        return LessonResponseDto.builder()
+                .id(lesson.getId())
+                .title(lesson.getTitle())
+                .content(lesson.getContent())
+                .videoUrl(lesson.getVideoUrl())
+                .durationMinutes(lesson.getDurationMinutes())
+                .sortOrder(lesson.getSortOrder())
+                .build();
     }
 }
