@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  rabbitmq:
+    host: ${embedded.rabbitmq.host}
+    port: ${embedded.rabbitmq.port}
+    username: guest
+    password: guest
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 100
+          max-attempts: 3
+          max-interval: 1000
+          multiplier: 1.5
+
+retry:
+  maxAttempts: 3
+  initialDelay: 100
+  multiplier: 1.5
+  maxDelay: 1000
+
+eureka:
+  client:
+    enabled: false

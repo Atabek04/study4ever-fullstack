@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:tc:postgresql:14:///auth_service_test
+    url: jdbc:tc:postgresql:14:///course_service_test
     username: test
     password: test
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
@@ -19,13 +19,20 @@ spring:
     port: ${embedded.rabbitmq.port}
     username: guest
     password: guest
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 100
+          max-attempts: 3
+          max-interval: 1000
+          multiplier: 1.5
 
-app:
-  jwt:
-    secret: testsecretkeythatisatleast32characterslong
-    access-token-expiration-ms: 900000
-    refresh-token-expiration-ms: 604800000
-    issuer: study4ever-auth-service-test
+retry:
+  maxAttempts: 3
+  initialDelay: 100
+  multiplier: 1.5
+  maxDelay: 1000
 
 eureka:
   client:
