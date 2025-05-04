@@ -11,39 +11,3 @@ spring:
   cloud:
     config:
       fail-fast: true
-
-  datasource:
-    url: jdbc:postgresql://postgres:5432/course_service_s4e
-    username: course_user
-    password: course_password
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    listener:
-      simple:
-        retry:
-          enabled: true
-          initial-interval: 1000
-          max-attempts: 3
-          max-interval: 10000
-          multiplier: 2
-
-server:
-  port: 9988
-
-# Retry configuration for @Retryable annotation
-retry:
-  maxAttempts: 3
-  initialDelay: 1000
-  multiplier: 2
-  maxDelay: 10000

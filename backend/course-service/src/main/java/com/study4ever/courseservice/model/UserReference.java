@@ -29,6 +29,7 @@ public class UserReference {
     private String email;
 
     @Column(columnDefinition = "boolean default true")
+    @Builder.Default
     private Boolean active = true;
 }
 

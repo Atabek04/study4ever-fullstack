@@ -3,6 +3,7 @@ package com.study4ever.courseservice.util.mapper;
 import com.study4ever.courseservice.dto.LessonRequestDto;
 import com.study4ever.courseservice.model.Lesson;
 
+import com.study4ever.courseservice.service.ModuleService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Component;

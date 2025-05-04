@@ -1,6 +1,5 @@
 package com.study4ever.authservice.model;
 
-import com.study4ever.authservice.dto.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

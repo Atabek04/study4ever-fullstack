@@ -1,7 +1,7 @@
 package com.study4ever.authservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.study4ever.authservice.dto.Role;
+import com.study4ever.authservice.model.Role;
 import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.RoleRepository;
 import com.study4ever.authservice.repo.UserCredentialsRepository;

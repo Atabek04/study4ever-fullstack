@@ -2,7 +2,7 @@ package com.study4ever.authservice;
 
 import com.study4ever.authservice.dto.LoginRequest;
 import com.study4ever.authservice.dto.RegisterRequest;
-import com.study4ever.authservice.dto.Role;
+import com.study4ever.authservice.model.Role;
 import com.study4ever.authservice.dto.UserResponse;
 import com.study4ever.authservice.dto.TokenResponse;
 import org.junit.jupiter.api.Test;

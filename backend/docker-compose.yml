@@ -1,15 +1,61 @@
 services:
   postgres:
     image: postgres:17
-    container_name: course-service-postgres
+    container_name: s4e-postgres
     environment:
-      POSTGRES_DB: course_service_s4e
-      POSTGRES_USER: course_user
-      POSTGRES_PASSWORD: course_password
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-db-init:
+    image: postgres:17
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        psql -h postgres -U postgres -c \"CREATE USER ${AUTH_DB_USERNAME} WITH PASSWORD '${POSTGRES_PASSWORD}';\" &&
+        psql -h postgres -U postgres -c \"CREATE DATABASE auth_service_s4e;\" &&
+        psql -h postgres -U postgres -c \"GRANT ALL PRIVILEGES ON DATABASE auth_service_s4e TO ${AUTH_DB_USERNAME};\" &&
+        psql -h postgres -U postgres -d auth_service_s4e -c \"GRANT ALL ON SCHEMA public TO ${AUTH_DB_USERNAME};\"
+      "
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+
+  course-db-init:
+    image: postgres:17
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        psql -h postgres -U postgres -c \"CREATE USER ${COURSE_DB_USERNAME} WITH PASSWORD '${POSTGRES_PASSWORD}';\" &&
+        psql -h postgres -U postgres -c \"CREATE DATABASE course_service_s4e;\" &&
+        psql -h postgres -U postgres -c \"GRANT ALL PRIVILEGES ON DATABASE course_service_s4e TO ${COURSE_DB_USERNAME};\"
+      "
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: s4e-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
 volumes:
   postgres_data:
+  rabbitmq_data:

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CourseMapper {
 
-    private final UserReferenceService userService;
+    private final UserRefereceService userService;
     private final TagService tagService;
 
     public Course mapToCourse(Course existingCourse, CourseRequestDto courseRequestDto) {

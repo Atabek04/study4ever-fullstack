@@ -1,4 +1,4 @@
-package com.study4ever.authservice.dto;
+package com.study4ever.authservice.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
