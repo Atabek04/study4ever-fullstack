@@ -16,7 +16,7 @@ public class UserEventProducer {
     private final RabbitTemplate rabbitTemplate;
 
     public void sendUserCreatedEvent(UserCreatedEvent event) {
-        log.info("Sending user created event: {}", event);
+        log.info("Sending UserCreated event: {}", event);
         rabbitTemplate.convertAndSend("user.queue", event);
     }
 

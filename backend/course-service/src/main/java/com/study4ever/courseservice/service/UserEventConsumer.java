@@ -3,6 +3,7 @@ package com.study4ever.courseservice.service;
 import com.study4ever.courseservice.dto.UserCreatedEvent;
 import com.study4ever.courseservice.dto.UserDeletedEvent;
 import com.study4ever.courseservice.dto.UserUpdatedEvent;
+import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.model.UserReference;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,9 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,7 +28,7 @@ public class UserEventConsumer {
 
     @RabbitListener(queues = "user.queue")
     @Retryable(
-        value = Exception.class,
+        retryFor = Exception.class,
         maxAttemptsExpression = "${retry.maxAttempts:3}",
         backoff = @Backoff(
             delayExpression = "${retry.initialDelay:1000}",
@@ -37,7 +41,6 @@ public class UserEventConsumer {
         try {
             log.info("Received UserCreatedEvent for user with ID: {}", event.getId());
             
-            // Check if the user reference already exists
             if (userReferenceRepository.existsById(event.getId())) {
                 log.warn("UserReference with ID: {} already exists. Skipping creation.", event.getId());
                 return;
@@ -47,6 +50,9 @@ public class UserEventConsumer {
             userReference.setId(event.getId());
             userReference.setUsername(event.getUsername());
             userReference.setEmail(event.getEmail());
+            userReference.setFirstName(event.getFirstName());
+            userReference.setLastName(event.getLastName());
+            userReference.setRoles(convertStringRolesToEnums(event.getRoles()));
             userReference.setActive(event.isActive());
             
             userReferenceRepository.save(userReference);
@@ -59,7 +65,7 @@ public class UserEventConsumer {
 
     @RabbitListener(queues = "user.queue")
     @Retryable(
-        value = Exception.class,
+        retryFor = Exception.class,
         maxAttemptsExpression = "${retry.maxAttempts:3}",
         backoff = @Backoff(
             delayExpression = "${retry.initialDelay:1000}",
@@ -77,6 +83,9 @@ public class UserEventConsumer {
             
             userReference.setUsername(event.getUsername());
             userReference.setEmail(event.getEmail());
+            userReference.setFirstName(event.getFirstName());
+            userReference.setLastName(event.getLastName());
+            userReference.setRoles(convertStringRolesToEnums(event.getRoles()));
             userReference.setActive(event.isActive());
             
             userReferenceRepository.save(userReference);
@@ -89,7 +98,7 @@ public class UserEventConsumer {
 
     @RabbitListener(queues = "user.queue")
     @Retryable(
-        value = Exception.class,
+        retryFor = Exception.class,
         maxAttemptsExpression = "${retry.maxAttempts:3}",
         backoff = @Backoff(
             delayExpression = "${retry.initialDelay:1000}",
@@ -123,5 +132,12 @@ public class UserEventConsumer {
         // - Send a notification
         // - Log to a monitoring system
         // - Trigger manual intervention workflow
+    }
+    
+    private Set<Role> convertStringRolesToEnums(Set<String> stringRoles) {
+        return stringRoles.stream()
+            .map(Role::fromString)
+            .filter(role -> role != null)
+            .collect(Collectors.toSet());
     }
 }

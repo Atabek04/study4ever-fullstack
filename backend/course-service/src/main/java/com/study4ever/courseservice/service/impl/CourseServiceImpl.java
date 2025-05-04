@@ -3,8 +3,12 @@ package com.study4ever.courseservice.service.impl;
 import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
 import com.study4ever.courseservice.dto.CourseDetailResponseDto;
+import com.study4ever.courseservice.exception.UserReferenceNotFoundException;
+import com.study4ever.courseservice.exception.InvalidInstructorRoleException;
 import com.study4ever.courseservice.model.Course;
+import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.repository.CourseRepository;
+import com.study4ever.courseservice.repository.UserReferenceRepository;
 import com.study4ever.courseservice.service.CourseService;
 import com.study4ever.courseservice.util.mapper.CourseMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import java.util.stream.Collectors;
 public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
+    private final UserReferenceRepository userRepository;
     private final CourseMapper courseMapper;
 
     @Override
@@ -50,15 +55,20 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Course createCourse(CourseRequestDto courseRequestDto) {
-        Course course = new Course();
-        courseMapper.mapToCourse(course, courseRequestDto);
+        var course = courseMapper.mapToCourse(new Course(), courseRequestDto);
         return courseRepository.save(course);
     }
     
     @Override
     public CourseResponseDto saveCourse(CourseRequestDto courseRequestDto) {
-        Course course = new Course();
-        courseMapper.mapToCourse(course, courseRequestDto);
+        var instructor = userRepository.findById(courseRequestDto.getInstructorId())
+                .orElseThrow(() -> new UserReferenceNotFoundException("Instructor with this ID not found"));
+
+        if (!instructor.getRoles().contains(Role.ROLE_INSTRUCTOR)) {
+            throw new InvalidInstructorRoleException("User is not an instructor");
+        }
+        
+        var course = courseMapper.mapToCourse(new Course(), courseRequestDto);
         Course savedCourse = courseRepository.save(course);
         return courseMapper.mapToResponseDto(savedCourse);
     }

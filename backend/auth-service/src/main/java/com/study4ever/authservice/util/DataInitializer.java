@@ -46,9 +46,10 @@ public class DataInitializer implements CommandLineRunner {
         String adminUsername = "ibnmalik";
         String adminEmail = "ibn_malik@gmail.com";
         String adminPassword = "Admin@123";
+        String adminFirstName = "Ibn";
+        String adminLastName = "Malik";
         
         if (!userRepository.existsByUsername(adminUsername)) {
-            // Create an admin user with a prominent Islamic scholar name: Ibn Sina (Avicenna)
             Role adminRole = roleRepository.findByName(Role.RoleName.ROLE_ADMIN)
                     .orElseThrow(() -> new RuntimeException("Admin role not found"));
             
@@ -57,6 +58,8 @@ public class DataInitializer implements CommandLineRunner {
             
             UserCredentials adminUser = UserCredentials.builder()
                     .username(adminUsername)
+                    .firstName(adminFirstName)
+                    .lastName(adminLastName)
                     .email(adminEmail)
                     .password(passwordEncoder.encode(adminPassword))
                     .roles(roles)

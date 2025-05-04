@@ -3,6 +3,7 @@ package com.study4ever.courseservice.integration;
 import com.study4ever.courseservice.dto.UserCreatedEvent;
 import com.study4ever.courseservice.dto.UserUpdatedEvent;
 import com.study4ever.courseservice.dto.UserDeletedEvent;
+import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.model.UserReference;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.lifecycle.Startables;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -98,7 +101,6 @@ public class RabbitMQCommunicationIT {
         registry.add("spring.rabbitmq.password", rabbitMQContainer::getAdminPassword);
     }
 
-    // Tests remain the same
     @Test
     void simulateAuthServiceCreatingUserAndCourseServiceConsumingEvent() {
         // Given - Create event like auth-service would do
@@ -107,6 +109,11 @@ public class RabbitMQCommunicationIT {
         userCreatedEvent.setUsername("communication-test-user");
         userCreatedEvent.setEmail("communication@test.com");
         userCreatedEvent.setActive(true);
+        
+        // Add roles to the event
+        Set<String> roles = new HashSet<>();
+        roles.add("ROLE_STUDENT");
+        userCreatedEvent.setRoles(roles);
 
         // When - Simulate auth-service sending message to queue
         rabbitTemplate.convertAndSend(QUEUE_NAME, userCreatedEvent);
@@ -120,6 +127,7 @@ public class RabbitMQCommunicationIT {
             assertEquals(userCreatedEvent.getUsername(), user.getUsername());
             assertEquals(userCreatedEvent.getEmail(), user.getEmail());
             assertEquals(userCreatedEvent.isActive(), user.getActive());
+            assertTrue(user.getRoles().contains(Role.ROLE_STUDENT), "User should have ROLE_STUDENT role");
         });
     }
 
@@ -131,6 +139,7 @@ public class RabbitMQCommunicationIT {
         initialUser.setUsername("initial-user");
         initialUser.setEmail("initial@test.com");
         initialUser.setActive(true);
+        initialUser.setRoles(Set.of(Role.ROLE_STUDENT));
         userReferenceRepository.save(initialUser);
 
         // Create update event like auth-service would do
@@ -139,6 +148,12 @@ public class RabbitMQCommunicationIT {
         userUpdatedEvent.setUsername("communication-updated-user");
         userUpdatedEvent.setEmail("updated-communication@test.com");
         userUpdatedEvent.setActive(true);
+        
+        // Update roles to include both STUDENT and INSTRUCTOR roles
+        Set<String> updatedRoles = new HashSet<>();
+        updatedRoles.add("ROLE_STUDENT");
+        updatedRoles.add("ROLE_INSTRUCTOR");
+        userUpdatedEvent.setRoles(updatedRoles);
 
         // When - Simulate auth-service sending message to queue
         rabbitTemplate.convertAndSend(QUEUE_NAME, userUpdatedEvent);
@@ -152,6 +167,9 @@ public class RabbitMQCommunicationIT {
             assertEquals(userUpdatedEvent.getUsername(), user.getUsername());
             assertEquals(userUpdatedEvent.getEmail(), user.getEmail());
             assertEquals(userUpdatedEvent.isActive(), user.getActive());
+            assertEquals(2, user.getRoles().size(), "User should have 2 roles");
+            assertTrue(user.getRoles().contains(Role.ROLE_STUDENT), "User should have ROLE_STUDENT role");
+            assertTrue(user.getRoles().contains(Role.ROLE_INSTRUCTOR), "User should have ROLE_INSTRUCTOR role");
         });
     }
 
@@ -163,6 +181,7 @@ public class RabbitMQCommunicationIT {
         userToDelete.setUsername("user-to-delete");
         userToDelete.setEmail("delete@test.com");
         userToDelete.setActive(true);
+        userToDelete.setRoles(Set.of(Role.ROLE_STUDENT));
         userReferenceRepository.save(userToDelete);
         
         // Verify user exists initially

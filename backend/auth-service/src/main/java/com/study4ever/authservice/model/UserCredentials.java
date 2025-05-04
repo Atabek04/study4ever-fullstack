@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "user_credentials")
-@Getter @Setter @ToString(exclude = {"password", "roles"}) @Builder
+@Getter @Setter @ToString @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserCredentials {
@@ -45,8 +45,15 @@ public class UserCredentials {
     @Email
     private String email;
 
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
     @Column(nullable = false)
     @Size(min = 8, max = 100)
+    @ToString.Exclude
     private String password;
 
     @Column(name = "is_account_non_expired")
@@ -67,6 +74,8 @@ public class UserCredentials {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+    @ToString.Exclude
+    @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
     @CreationTimestamp

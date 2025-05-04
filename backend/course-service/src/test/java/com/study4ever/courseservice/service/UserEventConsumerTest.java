@@ -116,7 +116,7 @@ class UserEventConsumerTest {
         verify(userReferenceRepository).save(argThat(userReference -> 
             userReference.getUsername().equals(userUpdatedEvent.getUsername()) &&
             userReference.getEmail().equals(userUpdatedEvent.getEmail()) &&
-            userReference.isActive() == userUpdatedEvent.isActive()
+            userReference.getActive() == userUpdatedEvent.isActive()
         ));
     }
 

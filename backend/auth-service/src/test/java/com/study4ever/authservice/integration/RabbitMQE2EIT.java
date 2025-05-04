@@ -22,7 +22,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
-import java.util.Properties;
 import java.util.UUID;
 
 import static org.awaitility.Awaitility.await;

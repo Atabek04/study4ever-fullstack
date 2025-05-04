@@ -3,6 +3,7 @@ package com.study4ever.courseservice.integration;
 import com.study4ever.courseservice.dto.UserCreatedEvent;
 import com.study4ever.courseservice.dto.UserDeletedEvent;
 import com.study4ever.courseservice.dto.UserUpdatedEvent;
+import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.model.UserReference;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.lifecycle.Startables;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -85,6 +88,7 @@ public class RabbitMQE2EIT {
             assertEquals(userCreatedEvent.getUsername(), user.getUsername());
             assertEquals(userCreatedEvent.getEmail(), user.getEmail());
             assertEquals(userCreatedEvent.isActive(), user.getActive());
+            assertTrue(user.getRoles().contains(Role.ROLE_STUDENT), "User should have ROLE_STUDENT role");
         });
     }
 
@@ -99,6 +103,15 @@ public class RabbitMQE2EIT {
         userUpdatedEvent.setId(TEST_USER_ID);
         userUpdatedEvent.setUsername("updated-e2e-user");
         userUpdatedEvent.setEmail("updated-e2e@test.com");
+        userUpdatedEvent.setFirstName("Updated");
+        userUpdatedEvent.setLastName("User");
+        
+        // Add roles
+        Set<String> updatedRoles = new HashSet<>();
+        updatedRoles.add("ROLE_STUDENT");
+        updatedRoles.add("ROLE_INSTRUCTOR");
+        userUpdatedEvent.setRoles(updatedRoles);
+        
         userUpdatedEvent.setActive(true);
 
         // When
@@ -111,7 +124,12 @@ public class RabbitMQE2EIT {
             UserReference user = userOpt.get();
             assertEquals(userUpdatedEvent.getUsername(), user.getUsername());
             assertEquals(userUpdatedEvent.getEmail(), user.getEmail());
+            assertEquals(userUpdatedEvent.getFirstName(), user.getFirstName());
+            assertEquals(userUpdatedEvent.getLastName(), user.getLastName());
             assertEquals(userUpdatedEvent.isActive(), user.getActive());
+            assertEquals(2, user.getRoles().size(), "User should have 2 roles");
+            assertTrue(user.getRoles().contains(Role.ROLE_STUDENT), "User should have ROLE_STUDENT role");
+            assertTrue(user.getRoles().contains(Role.ROLE_INSTRUCTOR), "User should have ROLE_INSTRUCTOR role");
         });
     }
 
@@ -140,6 +158,14 @@ public class RabbitMQE2EIT {
         userCreatedEvent.setId(TEST_USER_ID);
         userCreatedEvent.setUsername("e2e-test-user");
         userCreatedEvent.setEmail("e2e@test.com");
+        userCreatedEvent.setFirstName("Test");
+        userCreatedEvent.setLastName("User");
+        
+        // Add role
+        Set<String> roles = new HashSet<>();
+        roles.add("ROLE_STUDENT");
+        userCreatedEvent.setRoles(roles);
+        
         userCreatedEvent.setActive(true);
         return userCreatedEvent;
     }
@@ -149,6 +175,9 @@ public class RabbitMQE2EIT {
         userReference.setId(TEST_USER_ID);
         userReference.setUsername("original-e2e-user");
         userReference.setEmail("original-e2e@test.com");
+        userReference.setFirstName("Original");
+        userReference.setLastName("User");
+        userReference.setRoles(Set.of(Role.ROLE_STUDENT));
         userReference.setActive(true);
         return userReferenceRepository.save(userReference);
     }

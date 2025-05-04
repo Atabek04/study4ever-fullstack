@@ -19,13 +19,12 @@ public class ModuleMapper {
     private final CourseRepository courseRepository;
     private final LessonMapper lessonMapper;
 
-    public Module mapToModule(Module existingModule, ModuleRequestDto moduleRequestDto) {
+    public void mapToModule(Module existingModule, ModuleRequestDto moduleRequestDto) {
         existingModule.setTitle(moduleRequestDto.getTitle());
         existingModule.setSortOrder(moduleRequestDto.getSortOrder());
         existingModule.setCourse(courseRepository.findById(moduleRequestDto.getCourseId())
                 .orElseThrow(() -> new RuntimeException("Course not found")));
 
-        return existingModule;
     }
     
     public ModuleResponseDto toResponseDto(Module module) {
