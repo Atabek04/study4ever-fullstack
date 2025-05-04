@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${COURSE_SERVICE_PORT:0}
 
 spring:
   datasource:
@@ -15,8 +15,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
     listener:
       simple:
         retry:

@@ -1,5 +1,6 @@
 package com.study4ever.courseservice.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
@@ -12,6 +13,7 @@ import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
 import org.springframework.amqp.rabbit.retry.MessageRecoverer;
 import org.springframework.amqp.rabbit.retry.RepublishMessageRecoverer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
@@ -19,6 +21,7 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 @Configuration
+@Slf4j
 public class RabbitMQConfig implements RabbitListenerConfigurer {
 
     public static final String USER_QUEUE = "user.queue";
@@ -35,7 +38,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(messageConverter());
         
-        // Add retry template
         RetryTemplate retryTemplate = new RetryTemplate();
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(500);
@@ -43,40 +45,37 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
         backOffPolicy.setMaxInterval(10000);
         retryTemplate.setBackOffPolicy(backOffPolicy);
         rabbitTemplate.setRetryTemplate(retryTemplate);
-        
+
+        log.info("RabbitMQ template successfully configured");
         return rabbitTemplate;
     }
 
-    // Main queue for user events
     @Bean
     public Queue userQueue() {
+        log.info("Creating user queue: {}", USER_QUEUE);
         return QueueBuilder.durable(USER_QUEUE)
                 .withArgument("x-dead-letter-exchange", USER_DLX)
                 .withArgument("x-dead-letter-routing-key", USER_DLQ)
                 .build();
     }
     
-    // Dead letter exchange
     @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange(USER_DLX);
     }
     
-    // Dead letter queue
     @Bean
     public Queue deadLetterQueue() {
         return QueueBuilder.durable(USER_DLQ).build();
     }
     
-    // Bind dead letter queue to dead letter exchange
     @Bean
-    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
+    public Binding deadLetterBinding(@Qualifier("deadLetterQueue") Queue deadLetterQueue, DirectExchange deadLetterExchange) {
         return BindingBuilder.bind(deadLetterQueue)
                 .to(deadLetterExchange)
                 .with(USER_DLQ);
     }
     
-    // Message recoverer for failed message processing
     @Bean
     public MessageRecoverer messageRecoverer(RabbitTemplate rabbitTemplate) {
         return new RepublishMessageRecoverer(rabbitTemplate, USER_DLX, USER_DLQ);

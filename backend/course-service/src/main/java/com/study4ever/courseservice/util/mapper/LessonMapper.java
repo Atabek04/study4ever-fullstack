@@ -3,26 +3,24 @@ package com.study4ever.courseservice.util.mapper;
 import com.study4ever.courseservice.dto.LessonRequestDto;
 import com.study4ever.courseservice.dto.LessonResponseDto;
 import com.study4ever.courseservice.model.Lesson;
-
-import com.study4ever.courseservice.service.ModuleService;
+import com.study4ever.courseservice.repository.ModuleRepository;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class LessonMapper {
 
-    private final ModuleService moduleService;
+    private final ModuleRepository moduleRepository;
 
-    public Lesson mapToLesson(Lesson existingLesson, LessonRequestDto lessonRequestDto) {
+    public void mapToLesson(Lesson existingLesson, LessonRequestDto lessonRequestDto) {
         existingLesson.setTitle(lessonRequestDto.getTitle());
         existingLesson.setContent(lessonRequestDto.getContent());
         existingLesson.setVideoUrl(lessonRequestDto.getVideoUrl());
         existingLesson.setDurationMinutes(lessonRequestDto.getDurationMinutes());
         existingLesson.setSortOrder(lessonRequestDto.getSortOrder());
-        existingLesson.setModule(moduleService.getModuleById(lessonRequestDto.getModuleId()));
-        return existingLesson;
+        existingLesson.setModule(moduleRepository.findById(lessonRequestDto.getModuleId())
+                .orElseThrow(() -> new IllegalArgumentException("Module not found")));
     }
 
     public LessonResponseDto toResponseDto(Lesson lesson) {

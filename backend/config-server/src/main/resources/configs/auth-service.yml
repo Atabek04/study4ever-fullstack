@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${AUTH_SERVICE_PORT:0}
 
 spring:
   datasource:
@@ -11,6 +11,20 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          max-interval: 10000
+          multiplier: 2
 
 eureka:
   client:
