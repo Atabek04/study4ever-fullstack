@@ -6,6 +6,7 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -24,9 +25,24 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 @Slf4j
 public class RabbitMQConfig implements RabbitListenerConfigurer {
 
-    public static final String USER_QUEUE = "user.queue";
+    // Topic exchange name
+    public static final String USER_EXCHANGE = "user.exchange";
+    
+    // Queue names
+    public static final String USER_CREATED_QUEUE = "user.created.queue";
+    public static final String USER_UPDATED_QUEUE = "user.updated.queue";
+    public static final String USER_DELETED_QUEUE = "user.deleted.queue";
+    
+    // Routing keys
+    public static final String USER_CREATED_ROUTING_KEY = "user.created";
+    public static final String USER_UPDATED_ROUTING_KEY = "user.updated";
+    public static final String USER_DELETED_ROUTING_KEY = "user.deleted";
+    
+    // Dead letter configuration
     public static final String USER_DLX = "user.dlx";
-    public static final String USER_DLQ = "user.dlq";
+    public static final String USER_CREATED_DLQ = "user.created.dlq";
+    public static final String USER_UPDATED_DLQ = "user.updated.dlq";
+    public static final String USER_DELETED_DLQ = "user.deleted.dlq";
     
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
@@ -50,35 +66,100 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
         return rabbitTemplate;
     }
 
+    // Topic Exchange
     @Bean
-    public Queue userQueue() {
-        log.info("Creating user queue: {}", USER_QUEUE);
-        return QueueBuilder.durable(USER_QUEUE)
+    public TopicExchange userExchange() {
+        log.info("Creating user exchange: {}", USER_EXCHANGE);
+        return new TopicExchange(USER_EXCHANGE);
+    }
+    
+    // User Created Queue
+    @Bean
+    public Queue userCreatedQueue() {
+        log.info("Creating user created queue: {}", USER_CREATED_QUEUE);
+        return QueueBuilder.durable(USER_CREATED_QUEUE)
                 .withArgument("x-dead-letter-exchange", USER_DLX)
-                .withArgument("x-dead-letter-routing-key", USER_DLQ)
+                .withArgument("x-dead-letter-routing-key", USER_CREATED_DLQ)
                 .build();
     }
     
+    // User Updated Queue
+    @Bean
+    public Queue userUpdatedQueue() {
+        log.info("Creating user updated queue: {}", USER_UPDATED_QUEUE);
+        return QueueBuilder.durable(USER_UPDATED_QUEUE)
+                .withArgument("x-dead-letter-exchange", USER_DLX)
+                .withArgument("x-dead-letter-routing-key", USER_UPDATED_DLQ)
+                .build();
+    }
+    
+    // User Deleted Queue
+    @Bean
+    public Queue userDeletedQueue() {
+        log.info("Creating user deleted queue: {}", USER_DELETED_QUEUE);
+        return QueueBuilder.durable(USER_DELETED_QUEUE)
+                .withArgument("x-dead-letter-exchange", USER_DLX)
+                .withArgument("x-dead-letter-routing-key", USER_DELETED_DLQ)
+                .build();
+    }
+    
+    // Bindings for topic exchange
+    @Bean
+    public Binding userCreatedBinding(@Qualifier("userCreatedQueue") Queue queue, TopicExchange userExchange) {
+        return BindingBuilder.bind(queue).to(userExchange).with(USER_CREATED_ROUTING_KEY);
+    }
+    
+    @Bean
+    public Binding userUpdatedBinding(@Qualifier("userUpdatedQueue") Queue queue, TopicExchange userExchange) {
+        return BindingBuilder.bind(queue).to(userExchange).with(USER_UPDATED_ROUTING_KEY);
+    }
+    
+    @Bean
+    public Binding userDeletedBinding(@Qualifier("userDeletedQueue") Queue queue, TopicExchange userExchange) {
+        return BindingBuilder.bind(queue).to(userExchange).with(USER_DELETED_ROUTING_KEY);
+    }
+
+    // Dead Letter Exchange
     @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange(USER_DLX);
     }
     
+    // Dead Letter Queues
     @Bean
-    public Queue deadLetterQueue() {
-        return QueueBuilder.durable(USER_DLQ).build();
+    public Queue userCreatedDLQ() {
+        return QueueBuilder.durable(USER_CREATED_DLQ).build();
     }
     
     @Bean
-    public Binding deadLetterBinding(@Qualifier("deadLetterQueue") Queue deadLetterQueue, DirectExchange deadLetterExchange) {
-        return BindingBuilder.bind(deadLetterQueue)
-                .to(deadLetterExchange)
-                .with(USER_DLQ);
+    public Queue userUpdatedDLQ() {
+        return QueueBuilder.durable(USER_UPDATED_DLQ).build();
+    }
+    
+    @Bean
+    public Queue userDeletedDLQ() {
+        return QueueBuilder.durable(USER_DELETED_DLQ).build();
+    }
+    
+    // Dead Letter Bindings
+    @Bean
+    public Binding userCreatedDLBinding(@Qualifier("userCreatedDLQ") Queue queue, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(queue).to(deadLetterExchange).with(USER_CREATED_DLQ);
+    }
+    
+    @Bean
+    public Binding userUpdatedDLBinding(@Qualifier("userUpdatedDLQ") Queue queue, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(queue).to(deadLetterExchange).with(USER_UPDATED_DLQ);
+    }
+    
+    @Bean
+    public Binding userDeletedDLBinding(@Qualifier("userDeletedDLQ") Queue queue, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(queue).to(deadLetterExchange).with(USER_DELETED_DLQ);
     }
     
     @Bean
     public MessageRecoverer messageRecoverer(RabbitTemplate rabbitTemplate) {
-        return new RepublishMessageRecoverer(rabbitTemplate, USER_DLX, USER_DLQ);
+        return new RepublishMessageRecoverer(rabbitTemplate, USER_DLX, USER_DELETED_DLQ);
     }
 
     @Override

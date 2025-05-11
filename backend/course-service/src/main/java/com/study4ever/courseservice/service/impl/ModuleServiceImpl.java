@@ -3,6 +3,8 @@ package com.study4ever.courseservice.service.impl;
 import com.study4ever.courseservice.dto.ModuleRequestDto;
 import com.study4ever.courseservice.dto.ModuleResponseDto;
 import com.study4ever.courseservice.dto.ModuleDetailResponseDto;
+import com.study4ever.courseservice.exception.NotFoundException;
+import com.study4ever.courseservice.exception.SortOrderConflictException;
 import com.study4ever.courseservice.model.Module;
 import com.study4ever.courseservice.repository.ModuleRepository;
 import com.study4ever.courseservice.service.ModuleService;
@@ -47,12 +49,19 @@ public class ModuleServiceImpl implements ModuleService {
     @Override
     public Module getModuleEntityById(Long id) {
         return moduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Module not found"));
+                .orElseThrow(() -> new NotFoundException("Module not found"));
     }
 
     @Override
     public ModuleResponseDto createModule(ModuleRequestDto moduleRequestDto) {
         Module module = new Module();
+        
+        if (moduleRequestDto.getSortOrder() == null) {
+            moduleRequestDto.setSortOrder(getNextSortOrderForCourse(moduleRequestDto.getCourseId()));
+        } else if (moduleRepository.existsByCourseIdAndSortOrder(moduleRequestDto.getCourseId(), moduleRequestDto.getSortOrder())) {
+            throw new SortOrderConflictException("Module with sort order " + moduleRequestDto.getSortOrder() + " already exists in this course");
+        }
+        
         moduleMapper.mapToModule(module, moduleRequestDto);
         Module savedModule = moduleRepository.save(module);
         return moduleMapper.toResponseDto(savedModule);
@@ -61,6 +70,18 @@ public class ModuleServiceImpl implements ModuleService {
     @Override
     public ModuleResponseDto updateModule(Long id, ModuleRequestDto moduleRequestDto) {
         Module existingModule = getModuleEntityById(id);
+        
+        if (moduleRequestDto.getSortOrder() == null) {
+            moduleRequestDto.setSortOrder(existingModule.getSortOrder() != null ? 
+                existingModule.getSortOrder() : getNextSortOrderForCourse(moduleRequestDto.getCourseId()));
+        } else if (!moduleRequestDto.getSortOrder().equals(existingModule.getSortOrder()) && 
+                  moduleRepository.existsByCourseIdAndSortOrderAndIdNot(
+                      moduleRequestDto.getCourseId(), 
+                      moduleRequestDto.getSortOrder(), 
+                      id)) {
+            throw new SortOrderConflictException("Module with sort order " + moduleRequestDto.getSortOrder() + " already exists in this course");
+        }
+        
         moduleMapper.mapToModule(existingModule, moduleRequestDto);
         Module updatedModule = moduleRepository.save(existingModule);
         return moduleMapper.toResponseDto(updatedModule);
@@ -69,5 +90,11 @@ public class ModuleServiceImpl implements ModuleService {
     @Override
     public void deleteModule(Long id) {
         moduleRepository.deleteById(id);
+    }
+
+    private Integer getNextSortOrderForCourse(Long courseId) {
+        return moduleRepository.findMaxSortOrderByCourseId(courseId)
+                .map(maxSortOrder -> maxSortOrder + 1)
+                .orElse(1);
     }
 }

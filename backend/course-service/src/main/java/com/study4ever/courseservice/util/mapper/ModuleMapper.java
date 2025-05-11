@@ -3,6 +3,7 @@ package com.study4ever.courseservice.util.mapper;
 import com.study4ever.courseservice.dto.ModuleRequestDto;
 import com.study4ever.courseservice.dto.ModuleResponseDto;
 import com.study4ever.courseservice.dto.ModuleDetailResponseDto;
+import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Module;
 import com.study4ever.courseservice.repository.CourseRepository;
 
@@ -23,7 +24,7 @@ public class ModuleMapper {
         existingModule.setTitle(moduleRequestDto.getTitle());
         existingModule.setSortOrder(moduleRequestDto.getSortOrder());
         existingModule.setCourse(courseRepository.findById(moduleRequestDto.getCourseId())
-                .orElseThrow(() -> new RuntimeException("Course not found")));
+                .orElseThrow(() -> new NotFoundException("Course not found")));
 
     }
     

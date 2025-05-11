@@ -13,8 +13,6 @@ public interface TagService {
 
     Tag createTag(TagRequestDto tagRequestDto);
 
-    Tag updateTag(Long id, TagRequestDto tagRequestDto);
-
     void deleteTag(Long id);
 
     Set<Tag> getTagsByIds(Set<Long> ids);

@@ -1,6 +1,7 @@
 package com.study4ever.authservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.study4ever.authservice.exception.NotFoundException;
 import com.study4ever.authservice.model.Role;
 import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.RoleRepository;
@@ -57,7 +58,7 @@ public abstract class BaseIntegrationTest {
     protected void createTestUser(String username, String password, Role.RoleName... roles) {
         Set<Role> userRoles = Arrays.stream(roles)
                 .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Role not found")))
+                        .orElseThrow(() -> new NotFoundException("Role not found")))
                 .collect(Collectors.toSet());
 
         UserCredentials user = new UserCredentials();

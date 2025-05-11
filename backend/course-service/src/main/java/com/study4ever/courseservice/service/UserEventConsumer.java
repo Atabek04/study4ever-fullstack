@@ -1,8 +1,10 @@
 package com.study4ever.courseservice.service;
 
+import com.study4ever.courseservice.config.RabbitMQConfig;
 import com.study4ever.courseservice.dto.UserCreatedEvent;
 import com.study4ever.courseservice.dto.UserDeletedEvent;
 import com.study4ever.courseservice.dto.UserUpdatedEvent;
+import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.model.UserReference;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
@@ -26,7 +28,7 @@ public class UserEventConsumer {
 
     private final UserReferenceRepository userReferenceRepository;
 
-    @RabbitListener(queues = "user.queue")
+    @RabbitListener(queues = RabbitMQConfig.USER_CREATED_QUEUE)
     @Retryable(
         retryFor = Exception.class,
         maxAttemptsExpression = "${retry.maxAttempts:3}",
@@ -63,7 +65,7 @@ public class UserEventConsumer {
         }
     }
 
-    @RabbitListener(queues = "user.queue")
+    @RabbitListener(queues = RabbitMQConfig.USER_UPDATED_QUEUE)
     @Retryable(
         retryFor = Exception.class,
         maxAttemptsExpression = "${retry.maxAttempts:3}",
@@ -79,7 +81,7 @@ public class UserEventConsumer {
             log.info("Received UserUpdatedEvent for user with ID: {}", event.getId());
             
             UserReference userReference = userReferenceRepository.findById(event.getId())
-                    .orElseThrow(() -> new RuntimeException("UserReference not found with ID: " + event.getId()));
+                    .orElseThrow(() -> new NotFoundException("UserReference not found with ID: " + event.getId()));
             
             userReference.setUsername(event.getUsername());
             userReference.setEmail(event.getEmail());
@@ -96,7 +98,7 @@ public class UserEventConsumer {
         }
     }
 
-    @RabbitListener(queues = "user.queue")
+    @RabbitListener(queues = RabbitMQConfig.USER_DELETED_QUEUE)
     @Retryable(
         retryFor = Exception.class,
         maxAttemptsExpression = "${retry.maxAttempts:3}",
@@ -125,16 +127,30 @@ public class UserEventConsumer {
     }
 
     @Recover
-    public void recover(Exception e, Object event) {
-        log.error("All retry attempts failed for event: {}", event, e);
-        // At this point, the message will be sent to the dead letter queue
-        // You could implement additional error handling here, such as:
-        // - Send a notification
-        // - Log to a monitoring system
-        // - Trigger manual intervention workflow
+    public void recover(Exception e, UserCreatedEvent event) {
+        log.error("All retry attempts failed for UserCreatedEvent: {}", event, e);
+        // Message will be sent to the dead letter queue
+        // Additional error handling can be implemented here
+    }
+    
+    @Recover
+    public void recover(Exception e, UserUpdatedEvent event) {
+        log.error("All retry attempts failed for UserUpdatedEvent: {}", event, e);
+        // Message will be sent to the dead letter queue
+        // Additional error handling can be implemented here
+    }
+    
+    @Recover
+    public void recover(Exception e, UserDeletedEvent event) {
+        log.error("All retry attempts failed for UserDeletedEvent: {}", event, e);
+        // Message will be sent to the dead letter queue
+        // Additional error handling can be implemented here
     }
     
     private Set<Role> convertStringRolesToEnums(Set<String> stringRoles) {
+        if (stringRoles == null) {
+            return Set.of();
+        }
         return stringRoles.stream()
             .map(Role::fromString)
             .filter(role -> role != null)

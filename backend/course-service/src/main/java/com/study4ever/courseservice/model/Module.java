@@ -2,6 +2,7 @@ package com.study4ever.courseservice.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -31,6 +32,7 @@ public class Module {
 
     private String title;
 
+    @Column(unique = true, nullable = false)
     private Integer sortOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)

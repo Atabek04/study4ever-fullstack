@@ -1,5 +1,6 @@
 package com.study4ever.authservice.util;
 
+import com.study4ever.authservice.exception.NotFoundException;
 import com.study4ever.authservice.model.Role;
 import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.RoleRepository;
@@ -51,7 +52,7 @@ public class DataInitializer implements CommandLineRunner {
         
         if (!userRepository.existsByUsername(adminUsername)) {
             Role adminRole = roleRepository.findByName(Role.RoleName.ROLE_ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
+                    .orElseThrow(() -> new NotFoundException("Admin role not found"));
             
             Set<Role> roles = new HashSet<>();
             roles.add(adminRole);

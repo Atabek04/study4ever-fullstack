@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
   rabbitmq:
     host: localhost
@@ -34,6 +34,6 @@ eureka:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION:900000}  # 15 minutes
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION:3600000}  # 1 hour
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days
     issuer: study4ever-auth-service

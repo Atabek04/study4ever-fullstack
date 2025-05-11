@@ -2,6 +2,7 @@ package com.study4ever.courseservice.util.mapper;
 
 import com.study4ever.courseservice.dto.LessonRequestDto;
 import com.study4ever.courseservice.dto.LessonResponseDto;
+import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Lesson;
 import com.study4ever.courseservice.repository.ModuleRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class LessonMapper {
         existingLesson.setDurationMinutes(lessonRequestDto.getDurationMinutes());
         existingLesson.setSortOrder(lessonRequestDto.getSortOrder());
         existingLesson.setModule(moduleRepository.findById(lessonRequestDto.getModuleId())
-                .orElseThrow(() -> new IllegalArgumentException("Module not found")));
+                .orElseThrow(() -> new NotFoundException("Module not found")));
     }
 
     public LessonResponseDto toResponseDto(Lesson lesson) {

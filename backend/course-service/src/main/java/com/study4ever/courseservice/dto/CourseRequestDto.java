@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,5 +19,7 @@ public class CourseRequestDto {
     @NotNull
     private UUID instructorId;
 
-    private Set<Long> tagIds;
+    private Integer sortOrder;
+
+    private Set<Long> tagIds = new HashSet<>();
 }

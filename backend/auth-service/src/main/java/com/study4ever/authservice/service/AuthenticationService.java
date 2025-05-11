@@ -2,6 +2,7 @@ package com.study4ever.authservice.service;
 
 import com.study4ever.authservice.dto.LoginRequest;
 import com.study4ever.authservice.dto.RegisterRequest;
+import com.study4ever.authservice.exception.NotFoundException;
 import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.dto.UserResponse;
 import com.study4ever.authservice.model.Role;
@@ -65,7 +66,7 @@ public class AuthenticationService {
 
         Set<Role> roles = new HashSet<>();
         Role role = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+                .orElseThrow(() -> new NotFoundException("Default role not found"));
         roles.add(role);
 
         UserCredentials user = UserCredentials.builder()

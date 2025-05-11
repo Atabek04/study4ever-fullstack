@@ -4,6 +4,7 @@ import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
 import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.dto.ModuleSummaryDto;
+import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Course;
 import com.study4ever.courseservice.model.Module;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
@@ -26,7 +27,7 @@ public class CourseMapper {
         existingCourse.setTitle(courseRequestDto.getTitle());
         existingCourse.setDescription(courseRequestDto.getDescription());
         existingCourse.setInstructor(userReferenceRepository.findById(courseRequestDto.getInstructorId())
-                .orElseThrow(() -> new IllegalArgumentException("Instructor not found")));
+                .orElseThrow(() -> new NotFoundException("Instructor not found")));
         existingCourse.setTags(tagService.getTagsByIds(courseRequestDto.getTagIds()));
         return existingCourse;
     }

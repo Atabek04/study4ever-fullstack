@@ -22,7 +22,6 @@ public class LessonRequestDto {
     private Integer durationMinutes;
 
     @Positive
-    @NotNull
     private Integer sortOrder;
 
     @NotNull

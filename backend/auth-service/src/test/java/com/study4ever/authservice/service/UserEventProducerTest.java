@@ -1,5 +1,6 @@
 package com.study4ever.authservice.service;
 
+import com.study4ever.authservice.config.RabbitMQConfig;
 import com.study4ever.authservice.dto.UserCreatedEvent;
 import com.study4ever.authservice.dto.UserDeletedEvent;
 import com.study4ever.authservice.dto.UserUpdatedEvent;
@@ -27,7 +28,6 @@ class UserEventProducerTest {
     private UserCreatedEvent userCreatedEvent;
     private UserUpdatedEvent userUpdatedEvent;
     private UserDeletedEvent userDeletedEvent;
-    private static final String USER_QUEUE = "user.queue";
 
     @BeforeEach
     void setUp() {
@@ -53,7 +53,11 @@ class UserEventProducerTest {
         userEventProducer.sendUserCreatedEvent(userCreatedEvent);
 
         // Then
-        verify(rabbitTemplate).convertAndSend(USER_QUEUE, userCreatedEvent);
+        verify(rabbitTemplate).convertAndSend(
+            RabbitMQConfig.USER_EXCHANGE, 
+            RabbitMQConfig.USER_CREATED_ROUTING_KEY, 
+            userCreatedEvent
+        );
     }
 
     @Test
@@ -62,7 +66,11 @@ class UserEventProducerTest {
         userEventProducer.sendUserUpdatedEvent(userUpdatedEvent);
 
         // Then
-        verify(rabbitTemplate).convertAndSend(USER_QUEUE, userUpdatedEvent);
+        verify(rabbitTemplate).convertAndSend(
+            RabbitMQConfig.USER_EXCHANGE, 
+            RabbitMQConfig.USER_UPDATED_ROUTING_KEY, 
+            userUpdatedEvent
+        );
     }
 
     @Test
@@ -71,6 +79,10 @@ class UserEventProducerTest {
         userEventProducer.sendUserDeletedEvent(userDeletedEvent);
 
         // Then
-        verify(rabbitTemplate).convertAndSend(USER_QUEUE, userDeletedEvent);
+        verify(rabbitTemplate).convertAndSend(
+            RabbitMQConfig.USER_EXCHANGE, 
+            RabbitMQConfig.USER_DELETED_ROUTING_KEY, 
+            userDeletedEvent
+        );
     }
 }

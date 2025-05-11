@@ -12,7 +12,6 @@ public class ModuleRequestDto {
     private String title;
 
     @Positive
-    @NotNull
     private Integer sortOrder;
 
     @NotNull

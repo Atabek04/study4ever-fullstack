@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserReferenceNotFoundException.class)
+    @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(Exception ex) {
         log.error("Not found: {}", ex.getMessage());
@@ -28,6 +29,20 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleInvalidInstructorRoleException(InvalidInstructorRoleException ex) {
         log.error("Invalid instructor role: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+    }
+    
+    @ExceptionHandler(SortOrderConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleSortOrderConflictException(SortOrderConflictException ex) {
+        log.error("Sort order conflict: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(TagNameConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleTagNameConflictException(TagNameConflictException ex) {
+        log.error("Tag name conflict: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -41,6 +56,21 @@ public class GlobalExceptionHandler {
 
         log.error("Validation error: {}", errors);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNoResourceFoundException(NoResourceFoundException ex) {
+        log.debug("Resource not found: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Resource not found: " + ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ErrorResponse handleMethodNotSupportedException(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        String message = String.format("Request method '%s' is not supported.", ex.getMethod());
+        log.error("Method not allowed: {}", message);
+        return buildErrorResponse(HttpStatus.METHOD_NOT_ALLOWED, message, null);
     }
 
     @ExceptionHandler(Exception.class)

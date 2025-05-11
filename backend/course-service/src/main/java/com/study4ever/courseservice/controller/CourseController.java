@@ -6,6 +6,7 @@ import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,6 +16,12 @@ import java.util.List;
 public class CourseController {
 
     private final CourseService courseService;
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CourseResponseDto createCourse(@Valid @RequestBody CourseRequestDto courseRequestDto) {
+        return courseService.saveCourse(courseRequestDto);
+    }
 
     @GetMapping
     public List<CourseResponseDto> getAllCourses() {
@@ -27,27 +34,23 @@ public class CourseController {
     }
 
     @GetMapping("/{id}")
-    public CourseResponseDto getCourseById(@PathVariable Long id) {
+    public CourseResponseDto getCourseById(@PathVariable("id") Long id) {
         return courseService.getCourseById(id);
     }
     
     @GetMapping("/{id}/details")
-    public CourseDetailResponseDto getCourseDetailsById(@PathVariable Long id) {
+    public CourseDetailResponseDto getCourseDetailsById(@PathVariable("id") Long id) {
         return courseService.getCourseDetailsById(id);
     }
 
-    @PostMapping
-    public CourseResponseDto createCourse(@Valid @RequestBody CourseRequestDto courseRequestDto) {
-        return courseService.saveCourse(courseRequestDto);
-    }
-
     @PutMapping("/{id}")
-    public CourseResponseDto updateCourse(@PathVariable Long id, @Valid @RequestBody CourseRequestDto courseRequestDto) {
+    public CourseResponseDto updateCourse(@PathVariable("id") Long id, @Valid @RequestBody CourseRequestDto courseRequestDto) {
         return courseService.updateCourse(id, courseRequestDto);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteCourse(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCourse(@PathVariable("id") Long id) {
         courseService.deleteCourse(id);
     }
 }

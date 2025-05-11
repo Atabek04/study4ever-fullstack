@@ -3,8 +3,9 @@ package com.study4ever.courseservice.service.impl;
 import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
 import com.study4ever.courseservice.dto.CourseDetailResponseDto;
-import com.study4ever.courseservice.exception.UserReferenceNotFoundException;
 import com.study4ever.courseservice.exception.InvalidInstructorRoleException;
+import com.study4ever.courseservice.exception.NotFoundException;
+import com.study4ever.courseservice.exception.SortOrderConflictException;
 import com.study4ever.courseservice.model.Course;
 import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.repository.CourseRepository;
@@ -35,14 +36,14 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseResponseDto getCourseById(Long id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new NotFoundException("Course not found"));
         return courseMapper.mapToResponseDto(course);
     }
     
     @Override
     public CourseDetailResponseDto getCourseDetailsById(Long id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new NotFoundException("Course not found"));
         return courseMapper.mapToDetailResponseDto(course);
     }
     
@@ -62,7 +63,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseResponseDto saveCourse(CourseRequestDto courseRequestDto) {
         var instructor = userRepository.findById(courseRequestDto.getInstructorId())
-                .orElseThrow(() -> new UserReferenceNotFoundException("Instructor with this ID not found"));
+                .orElseThrow(() -> new NotFoundException("Instructor with this ID not found"));
 
         if (!instructor.getRoles().contains(Role.ROLE_INSTRUCTOR)) {
             throw new InvalidInstructorRoleException("User is not an instructor");
@@ -76,7 +77,8 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseResponseDto updateCourse(Long id, CourseRequestDto courseRequestDto) {
         Course existingCourse = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new NotFoundException("Course not found"));
+        
         courseMapper.mapToCourse(existingCourse, courseRequestDto);
         Course updatedCourse = courseRepository.save(existingCourse);
         return courseMapper.mapToResponseDto(updatedCourse);
