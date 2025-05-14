@@ -100,4 +100,3 @@ public class RabbitMQTestConfig {
         return new RabbitAdmin(connectionFactory);
     }
 }
-}

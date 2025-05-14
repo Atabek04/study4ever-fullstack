@@ -48,6 +48,13 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- ===== Netty ===== -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <classifier>osx-x86_64</classifier>
+        </dependency>
+
         <!-- ===== RabbitMQ ===== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
