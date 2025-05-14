@@ -2,14 +2,15 @@ package com.study4ever.authservice.service;
 
 import com.study4ever.authservice.dto.LoginRequest;
 import com.study4ever.authservice.dto.RegisterRequest;
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.exception.NotFoundException;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.dto.UserResponse;
-import com.study4ever.authservice.dto.Role;
+import com.study4ever.authservice.model.Role;
 import com.study4ever.authservice.exception.EmailAlreadyExistsException;
 import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
-import com.study4ever.authservice.jwt.JwtProperties;
-import com.study4ever.authservice.jwt.JwtTokenProvider;
-import com.study4ever.authservice.jwt.TokenResponse;
+import com.study4ever.authservice.config.JwtProperties;
+import com.study4ever.authservice.dto.TokenResponse;
+import com.study4ever.authservice.dto.UserCreatedEvent;
 import com.study4ever.authservice.repo.RoleRepository;
 import com.study4ever.authservice.repo.UserCredentialsRepository;
 import com.study4ever.authservice.util.Mapper;
@@ -22,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -39,6 +41,7 @@ public class AuthenticationService {
     private final JwtTokenProvider tokenProvider;
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtProperties jwtProperties;
+    private final UserEventProducer userEventProducer;
 
     public TokenResponse authenticate(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
@@ -52,6 +55,7 @@ public class AuthenticationService {
         return createTokenResponse(authentication);
     }
 
+    @Transactional
     public UserResponse register(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new UsernameAlreadyExistsException("Username is already taken");
@@ -62,16 +66,19 @@ public class AuthenticationService {
 
         Set<Role> roles = new HashSet<>();
         Role role = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+                .orElseThrow(() -> new NotFoundException("Default role not found"));
         roles.add(role);
 
         UserCredentials user = UserCredentials.builder()
                 .username(registerRequest.getUsername())
                 .email(registerRequest.getEmail())
+                .firstName(registerRequest.getFirstName())
+                .lastName(registerRequest.getLastName())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .roles(roles)
                 .build();
         UserCredentials savedUser = userRepository.save(user);
+        sendUserCreatedEvent(savedUser);
         return Mapper.mapToUserResponse(savedUser);
     }
 
@@ -105,5 +112,22 @@ public class AuthenticationService {
                 .issuedAt(now)
                 .expiresAt(expiresAt)
                 .build();
+    }
+
+    private void sendUserCreatedEvent(UserCredentials user) {
+        Set<String> roleNames = user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(java.util.stream.Collectors.toSet());
+                
+        UserCreatedEvent userCreatedEvent = new UserCreatedEvent(
+            user.getId(), 
+            user.getUsername(), 
+            user.getEmail(),
+            user.getFirstName(),
+            user.getLastName(),
+            roleNames,
+            user.isEnabled()
+        );
+        userEventProducer.sendUserCreatedEvent(userCreatedEvent);
     }
 }

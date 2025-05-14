@@ -1,8 +1,9 @@
 package com.study4ever.authservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.study4ever.authservice.dto.Role;
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.exception.NotFoundException;
+import com.study4ever.authservice.model.Role;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.RoleRepository;
 import com.study4ever.authservice.repo.UserCredentialsRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -58,7 +58,7 @@ public abstract class BaseIntegrationTest {
     protected void createTestUser(String username, String password, Role.RoleName... roles) {
         Set<Role> userRoles = Arrays.stream(roles)
                 .map(roleName -> roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Role not found")))
+                        .orElseThrow(() -> new NotFoundException("Role not found")))
                 .collect(Collectors.toSet());
 
         UserCredentials user = new UserCredentials();

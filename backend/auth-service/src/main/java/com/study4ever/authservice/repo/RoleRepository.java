@@ -1,6 +1,6 @@
 package com.study4ever.authservice.repo;
 
-import com.study4ever.authservice.dto.Role;
+import com.study4ever.authservice.model.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -11,6 +11,6 @@ spring:
     config:
       fail-fast: true
 
-  jpa:
-    hibernate:
-      ddl-auto: update
+logging:
+  level:
+    com.study4ever.authservice.filter: DEBUG

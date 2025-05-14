@@ -1,16 +1,30 @@
 server:
-  port: 8123
+  port: ${AUTH_SERVICE_PORT:0}
 
 spring:
   datasource:
     username: ${AUTH_DB_USERNAME}
-    password: ${AUTH_DB_PASSWORD}
+    password: ${POSTGRES_PASSWORD}
     url: ${AUTH_DB_URL}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          max-interval: 10000
+          multiplier: 2
 
 eureka:
   client:
@@ -20,6 +34,6 @@ eureka:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION:900000}  # 15 minutes
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION:3600000}  # 1 hour
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days
     issuer: study4ever-auth-service

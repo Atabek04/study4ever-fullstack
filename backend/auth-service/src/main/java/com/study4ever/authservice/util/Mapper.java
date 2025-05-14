@@ -1,6 +1,6 @@
 package com.study4ever.authservice.util;
 
-import com.study4ever.authservice.dto.UserCredentials;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.dto.UserResponse;
 import lombok.experimental.UtilityClass;
 
@@ -19,6 +19,8 @@ public class Mapper {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .roles(roles)
                 .enabled(user.isEnabled())
                 .build();

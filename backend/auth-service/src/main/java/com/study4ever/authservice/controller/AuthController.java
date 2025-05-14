@@ -2,9 +2,9 @@ package com.study4ever.authservice.controller;
 
 import com.study4ever.authservice.dto.LoginRequest;
 import com.study4ever.authservice.dto.RegisterRequest;
+import com.study4ever.authservice.dto.TokenResponse;
 import com.study4ever.authservice.dto.UserResponse;
 import com.study4ever.authservice.exception.BadRequestException;
-import com.study4ever.authservice.jwt.TokenResponse;
 import com.study4ever.authservice.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

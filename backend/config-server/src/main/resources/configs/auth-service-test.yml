@@ -1,9 +1,12 @@
+server:
+  port: 0
+
 spring:
   datasource:
-    url: jdbc:tc:postgresql:14:///testdb
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:tc:postgresql:14:///auth_service_test
     username: test
     password: test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -11,12 +14,18 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  rabbitmq:
+    host: ${embedded.rabbitmq.host}
+    port: ${embedded.rabbitmq.port}
+    username: guest
+    password: guest
+
 app:
   jwt:
-    secret: testsecrettestsecrettestsecrettestsecrettestsecrettestsecret
-    access-token-expiration-ms: 300000  # 5 minutes
-    refresh-token-expiration-ms: 600000  # 10 minutes
-    issuer: test-auth-service
+    secret: testsecretkeythatisatleast32characterslong
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000
+    issuer: study4ever-auth-service-test
 
 eureka:
   client:

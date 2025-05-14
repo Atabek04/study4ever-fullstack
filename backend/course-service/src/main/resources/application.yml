@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active: default
+
+  application:
+    name: course-service
+
+  config:
+    import: optional:configserver:http://localhost:8888
+
+  cloud:
+    config:
+      fail-fast: true
