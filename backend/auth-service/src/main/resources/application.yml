@@ -10,3 +10,7 @@ spring:
   cloud:
     config:
       fail-fast: true
+
+logging:
+  level:
+    com.study4ever.authservice.filter: DEBUG

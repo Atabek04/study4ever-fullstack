@@ -1,6 +1,5 @@
 package com.study4ever.apigateway.filter;
 
-import io.jsonwebtoken.Claims;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -124,9 +123,8 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
         String timestamp = LocalDateTime.now().toString();
         String jsonError = String.format(
-                "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
-                timestamp, status.value(), status.getReasonPhrase(), message, 
-                "/");  // Don't expose the actual path for security reasons
+                "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\"}",
+                timestamp, status.value(), status.getReasonPhrase(), message);
 
         DataBuffer buffer = response.bufferFactory().wrap(jsonError.getBytes(StandardCharsets.UTF_8));
         return response.writeWith(Mono.just(buffer));
