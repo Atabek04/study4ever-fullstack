@@ -25,6 +25,9 @@ public class CourseProgress extends BaseEntity {
     @Column(nullable = false)
     private String courseId;
     
+    @Column
+    private String courseTitle;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProgressStatus status;
@@ -49,4 +52,16 @@ public class CourseProgress extends BaseEntity {
     
     @Column(nullable = false)
     private Long totalStudyTimeMinutes;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer completedLessonsCount = 0;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer totalLessonsCount = 0;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean completed = false;
 }

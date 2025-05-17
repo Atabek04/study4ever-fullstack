@@ -39,6 +39,12 @@
             <version>${spring.cloud.starter.netflix.eureka.client.version}</version>
         </dependency>
 
+        <!-- ===== RabbitMQ ===== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
         <!-- ===== Postgresql ===== -->
         <dependency>
             <groupId>org.postgresql</groupId>
