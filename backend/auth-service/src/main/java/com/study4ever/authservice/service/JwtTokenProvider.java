@@ -1,7 +1,7 @@
 package com.study4ever.authservice.service;
 
-import com.study4ever.authservice.exception.InvalidTokenException;
 import com.study4ever.authservice.config.JwtProperties;
+import com.study4ever.authservice.exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

@@ -28,7 +28,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Getter @Setter @ToString @Builder
+@Getter
+@Setter
+@ToString
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)

@@ -42,21 +42,21 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Default roles initialized");
         }
     }
-    
+
     private void initAdminUser() {
         String adminUsername = "ibnmalik";
         String adminEmail = "ibn_malik@gmail.com";
         String adminPassword = "Admin@123";
         String adminFirstName = "Ibn";
         String adminLastName = "Malik";
-        
+
         if (!userRepository.existsByUsername(adminUsername)) {
             Role adminRole = roleRepository.findByName(Role.RoleName.ROLE_ADMIN)
                     .orElseThrow(() -> new NotFoundException("Admin role not found"));
-            
+
             Set<Role> roles = new HashSet<>();
             roles.add(adminRole);
-            
+
             UserCredentials adminUser = UserCredentials.builder()
                     .username(adminUsername)
                     .firstName(adminFirstName)
@@ -65,13 +65,13 @@ public class DataInitializer implements CommandLineRunner {
                     .password(passwordEncoder.encode(adminPassword))
                     .roles(roles)
                     .isAccountNonExpired(true)
-                    .isAccountNonLocked(true) 
+                    .isAccountNonLocked(true)
                     .isCredentialsNonExpired(true)
                     .isEnabled(true)
                     .build();
-            
+
             userRepository.save(adminUser);
-            
+
             log.info("Admin user '{}' initialized", adminUsername);
         }
     }

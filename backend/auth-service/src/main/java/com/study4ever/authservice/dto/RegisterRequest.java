@@ -24,11 +24,11 @@ public class RegisterRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
-    
+
     @Size(max = 50, message = "First name cannot exceed 50 characters")
     @NotBlank(message = "First name is required")
     private String firstName;
-    
+
     @Size(max = 50, message = "Last name cannot exceed 50 characters")
     @NotBlank(message = "Last name is required")
     private String lastName;

@@ -1,17 +1,15 @@
 package com.study4ever.courseservice.util.mapper;
 
+import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
-import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.dto.ModuleSummaryDto;
 import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Course;
 import com.study4ever.courseservice.model.Module;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
 import com.study4ever.courseservice.service.TagService;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -40,30 +38,30 @@ public class CourseMapper {
         responseDto.setInstructorId(course.getInstructor().getId());
         return responseDto;
     }
-    
+
     public CourseDetailResponseDto mapToDetailResponseDto(Course course) {
         CourseDetailResponseDto detailDto = CourseDetailResponseDto.builder()
-            .id(course.getId())
-            .title(course.getTitle())
-            .description(course.getDescription())
-            .instructorId(course.getInstructor().getId())
-            .build();
-            
+                .id(course.getId())
+                .title(course.getTitle())
+                .description(course.getDescription())
+                .instructorId(course.getInstructor().getId())
+                .build();
+
         if (course.getModules() != null) {
             detailDto.setModules(course.getModules().stream()
-                .map(this::mapToModuleSummaryDto)
-                .collect(Collectors.toSet()));
+                    .map(this::mapToModuleSummaryDto)
+                    .collect(Collectors.toSet()));
         }
-        
+
         return detailDto;
     }
-    
+
     private ModuleSummaryDto mapToModuleSummaryDto(Module module) {
         return ModuleSummaryDto.builder()
-            .id(module.getId())
-            .title(module.getTitle())
-            .sortOrder(module.getSortOrder())
-            .lessonCount(module.getLessons() != null ? module.getLessons().size() : 0)
-            .build();
+                .id(module.getId())
+                .title(module.getTitle())
+                .sortOrder(module.getSortOrder())
+                .lessonCount(module.getLessons() != null ? module.getLessons().size() : 0)
+                .build();
     }
 }

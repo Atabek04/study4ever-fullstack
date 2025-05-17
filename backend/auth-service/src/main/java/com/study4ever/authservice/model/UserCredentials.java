@@ -29,7 +29,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "user_credentials")
-@Getter @Setter @ToString @Builder
+@Getter
+@Setter
+@ToString
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserCredentials {

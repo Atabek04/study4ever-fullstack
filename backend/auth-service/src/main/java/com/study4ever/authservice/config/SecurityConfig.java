@@ -3,10 +3,8 @@ package com.study4ever.authservice.config;
 import com.study4ever.authservice.filter.ApiGatewayAuthenticationFilter;
 import com.study4ever.authservice.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -28,7 +26,7 @@ public class SecurityConfig {
     public ApiGatewayAuthenticationFilter apiGatewayAuthenticationFilter() {
         return new ApiGatewayAuthenticationFilter();
     }
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http

@@ -12,9 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import static org.mockito.Mockito.verify;
-
 import java.util.UUID;
+
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class UserEventProducerTest {
@@ -54,9 +54,9 @@ class UserEventProducerTest {
 
         // Then
         verify(rabbitTemplate).convertAndSend(
-            RabbitMQConfig.USER_EXCHANGE, 
-            RabbitMQConfig.USER_CREATED_ROUTING_KEY, 
-            userCreatedEvent
+                RabbitMQConfig.USER_EXCHANGE,
+                RabbitMQConfig.USER_CREATED_ROUTING_KEY,
+                userCreatedEvent
         );
     }
 
@@ -67,9 +67,9 @@ class UserEventProducerTest {
 
         // Then
         verify(rabbitTemplate).convertAndSend(
-            RabbitMQConfig.USER_EXCHANGE, 
-            RabbitMQConfig.USER_UPDATED_ROUTING_KEY, 
-            userUpdatedEvent
+                RabbitMQConfig.USER_EXCHANGE,
+                RabbitMQConfig.USER_UPDATED_ROUTING_KEY,
+                userUpdatedEvent
         );
     }
 
@@ -80,9 +80,9 @@ class UserEventProducerTest {
 
         // Then
         verify(rabbitTemplate).convertAndSend(
-            RabbitMQConfig.USER_EXCHANGE, 
-            RabbitMQConfig.USER_DELETED_ROUTING_KEY, 
-            userDeletedEvent
+                RabbitMQConfig.USER_EXCHANGE,
+                RabbitMQConfig.USER_DELETED_ROUTING_KEY,
+                userDeletedEvent
         );
     }
 }

@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
         log.error("Invalid instructor role: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
-    
+
     @ExceptionHandler(SortOrderConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleSortOrderConflictException(SortOrderConflictException ex) {

@@ -1,16 +1,16 @@
 package com.study4ever.authservice.service;
 
+import com.study4ever.authservice.config.JwtProperties;
 import com.study4ever.authservice.dto.LoginRequest;
 import com.study4ever.authservice.dto.RegisterRequest;
-import com.study4ever.authservice.exception.NotFoundException;
-import com.study4ever.authservice.model.UserCredentials;
-import com.study4ever.authservice.dto.UserResponse;
-import com.study4ever.authservice.model.Role;
-import com.study4ever.authservice.exception.EmailAlreadyExistsException;
-import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
-import com.study4ever.authservice.config.JwtProperties;
 import com.study4ever.authservice.dto.TokenResponse;
 import com.study4ever.authservice.dto.UserCreatedEvent;
+import com.study4ever.authservice.dto.UserResponse;
+import com.study4ever.authservice.exception.EmailAlreadyExistsException;
+import com.study4ever.authservice.exception.NotFoundException;
+import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
+import com.study4ever.authservice.model.Role;
+import com.study4ever.authservice.model.UserCredentials;
 import com.study4ever.authservice.repo.RoleRepository;
 import com.study4ever.authservice.repo.UserCredentialsRepository;
 import com.study4ever.authservice.util.Mapper;
@@ -118,15 +118,15 @@ public class AuthenticationService {
         Set<String> roleNames = user.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(java.util.stream.Collectors.toSet());
-                
+
         UserCreatedEvent userCreatedEvent = new UserCreatedEvent(
-            user.getId(), 
-            user.getUsername(), 
-            user.getEmail(),
-            user.getFirstName(),
-            user.getLastName(),
-            roleNames,
-            user.isEnabled()
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                roleNames,
+                user.isEnabled()
         );
         userEventProducer.sendUserCreatedEvent(userCreatedEvent);
     }

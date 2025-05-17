@@ -22,20 +22,20 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        
+
         // Log headers for debugging
         if (log.isDebugEnabled()) {
             log.debug("=== Request Headers ===");
-            Collections.list(request.getHeaderNames()).forEach(headerName -> 
-                log.debug("{}: {}", headerName, request.getHeader(headerName))
+            Collections.list(request.getHeaderNames()).forEach(headerName ->
+                    log.debug("{}: {}", headerName, request.getHeader(headerName))
             );
-            
+
             log.debug("=== Request Info ===");
             log.debug("URI: {}", request.getRequestURI());
             log.debug("Method: {}", request.getMethod());
             log.debug("Remote Address: {}", request.getRemoteAddr());
         }
-        
+
         filterChain.doFilter(request, response);
     }
 }

@@ -1,14 +1,12 @@
 package com.study4ever.courseservice.util.mapper;
 
+import com.study4ever.courseservice.dto.ModuleDetailResponseDto;
 import com.study4ever.courseservice.dto.ModuleRequestDto;
 import com.study4ever.courseservice.dto.ModuleResponseDto;
-import com.study4ever.courseservice.dto.ModuleDetailResponseDto;
 import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Module;
 import com.study4ever.courseservice.repository.CourseRepository;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -27,7 +25,7 @@ public class ModuleMapper {
                 .orElseThrow(() -> new NotFoundException("Course not found")));
 
     }
-    
+
     public ModuleResponseDto toResponseDto(Module module) {
         return ModuleResponseDto.builder()
                 .id(module.getId())
@@ -37,7 +35,7 @@ public class ModuleMapper {
                 .lessonCount(module.getLessons() != null ? module.getLessons().size() : 0)
                 .build();
     }
-    
+
     public ModuleDetailResponseDto toDetailResponseDto(Module module) {
         ModuleDetailResponseDto responseDto = ModuleDetailResponseDto.builder()
                 .id(module.getId())
@@ -45,13 +43,13 @@ public class ModuleMapper {
                 .sortOrder(module.getSortOrder())
                 .courseId(module.getCourse() != null ? module.getCourse().getId() : null)
                 .build();
-                
+
         if (module.getLessons() != null) {
             responseDto.setLessons(module.getLessons().stream()
                     .map(lessonMapper::toResponseDto)
                     .collect(Collectors.toSet()));
         }
-        
+
         return responseDto;
     }
 }

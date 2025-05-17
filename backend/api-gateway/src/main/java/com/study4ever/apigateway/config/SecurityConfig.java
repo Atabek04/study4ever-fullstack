@@ -27,7 +27,7 @@ public class SecurityConfig {
                         .anyExchange().permitAll())
                 .build();
     }
-    
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -36,7 +36,7 @@ public class SecurityConfig {
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         config.setExposedHeaders(Arrays.asList("X-User-Id", "X-User-Roles"));
         config.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
