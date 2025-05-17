@@ -10,8 +10,10 @@ import jakarta.validation.constraints.NotBlank;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseEnrollmentRequest {
+
     @NotBlank(message = "Course ID is required")
     private String courseId;
-    
+
+    @NotBlank(message = "Course title is required")
     private String courseTitle;
 }

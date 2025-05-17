@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +55,6 @@ public class CourseProgressServiceImpl implements CourseProgressService {
                 .totalLessonsCount(0)
                 .enrollmentDate(LocalDateTime.now())
                 .lastAccessDate(LocalDateTime.now())
-                .totalStudyTimeMinutes(0L)
                 .completed(false)
                 .build();
 
@@ -70,7 +68,7 @@ public class CourseProgressServiceImpl implements CourseProgressService {
     public List<CourseProgressDto> getAllCourseProgress(String userId) {
         return courseProgressRepository.findByUserId(userId).stream()
                 .map(ProgressMapper::mapToCourseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -83,7 +81,7 @@ public class CourseProgressServiceImpl implements CourseProgressService {
 
         return moduleProgressRepository.findByUserIdAndCourseId(userId, courseId).stream()
                 .map(ProgressMapper::mapToModuleDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -149,7 +147,6 @@ public class CourseProgressServiceImpl implements CourseProgressService {
         courseProgress.setCompleted(false);
         courseProgress.setCompletionDate(null);
         courseProgress.setCompletionPercentage(0.0f);
-        courseProgress.setTotalStudyTimeMinutes(0L);
         courseProgress.setLastAccessDate(LocalDateTime.now());
         courseProgress.setCurrentModuleId(null);
         courseProgress.setCurrentLessonId(null);
@@ -163,7 +160,4 @@ public class CourseProgressServiceImpl implements CourseProgressService {
         log.info("Reset course progress for user {} and course {}", userId, courseId);
     }
 
-    private void logProgress(String userId, String courseId, String moduleId) {
-        log.debug("Updated progress for user {}, course {}, module {}", userId, courseId, moduleId);
-    }
 }

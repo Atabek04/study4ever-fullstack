@@ -49,10 +49,7 @@ public class CourseProgress extends BaseEntity {
     
     @Column
     private LocalDateTime completionDate;
-    
-    @Column(nullable = false)
-    private Long totalStudyTimeMinutes;
-    
+
     @Column(nullable = false)
     @Builder.Default
     private Integer completedLessonsCount = 0;

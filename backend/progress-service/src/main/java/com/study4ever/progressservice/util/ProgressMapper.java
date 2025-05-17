@@ -59,7 +59,6 @@ public class ProgressMapper {
                 .enrollmentDate(entity.getEnrollmentDate())
                 .lastAccessDate(entity.getLastAccessDate())
                 .completionDate(entity.getCompletionDate())
-                .totalStudyTimeMinutes(entity.getTotalStudyTimeMinutes())
                 .completedLessonsCount(entity.getCompletedLessonsCount())
                 .totalLessonsCount(entity.getTotalLessonsCount())
                 .build();
