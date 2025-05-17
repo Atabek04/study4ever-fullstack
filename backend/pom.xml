@@ -23,11 +23,12 @@
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
     <spring.boot.maven.plugin.version>3.4.1</spring.boot.maven.plugin.version>
-    <spring.boot.dependencies.version>3.4.1</spring.boot.dependencies.version>
+    <spring.boot.dependencies.version>3.4.5</spring.boot.dependencies.version>
     <spring.cloud.config.server.version>4.2.0</spring.cloud.config.server.version>
     <eureka.server.version>4.2.0</eureka.server.version>
-    <spring-cloud-starter-config.version>4.2.1</spring-cloud-starter-config.version>
-    <spring-cloud-starter-netflix-eureka-client.version>4.2.1</spring-cloud-starter-netflix-eureka-client.version>
+    <spring-cloud.version>2024.0.1</spring-cloud.version>
+    <spring.cloud.starter.config.client.version>4.2.2</spring.cloud.starter.config.client.version>
+    <spring.cloud.starter.netflix.eureka.client.version>4.2.1</spring.cloud.starter.netflix.eureka.client.version>
   </properties>
 
   <dependencyManagement>

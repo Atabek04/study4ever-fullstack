@@ -45,6 +45,21 @@ services:
     environment:
       - PGPASSWORD=${POSTGRES_PASSWORD}
 
+  progress-db-init:
+    image: postgres:17
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        psql -h postgres -U postgres -c \"CREATE USER ${PROGRESS_DB_USERNAME} WITH PASSWORD '${POSTGRES_PASSWORD}';\" &&
+        psql -h postgres -U postgres -c \"CREATE DATABASE progress_service_s4e;\" &&
+        psql -h postgres -U postgres -c \"GRANT ALL PRIVILEGES ON DATABASE progress_service_s4e TO ${PROGRESS_DB_USERNAME};\" &&
+        psql -h postgres -U postgres -d progress_service_s4e -c \"GRANT ALL ON SCHEMA public TO ${PROGRESS_DB_USERNAME};\"
+      "
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: s4e-rabbitmq
