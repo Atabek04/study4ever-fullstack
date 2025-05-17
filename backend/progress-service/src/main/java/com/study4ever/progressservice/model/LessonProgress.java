@@ -1,0 +1,49 @@
+package com.study4ever.progressservice.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "lesson_progress")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LessonProgress extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    
+    @Column(nullable = false)
+    private String userId;
+    
+    @Column(nullable = false)
+    private String courseId;
+    
+    @Column(nullable = false)
+    private String moduleId;
+    
+    @Column(nullable = false)
+    private String lessonId;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProgressStatus status;
+    
+    @Column(nullable = false)
+    private LocalDateTime firstAccessDate;
+    
+    @Column(nullable = false)
+    private LocalDateTime lastAccessDate;
+    
+    @Column
+    private LocalDateTime completionDate;
+    
+    @Column(nullable = false)
+    private Long studyTimeMinutes;
+}
