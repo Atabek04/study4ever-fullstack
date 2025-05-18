@@ -1,7 +1,22 @@
 package com.study4ever.progressservice.util;
 
-import com.study4ever.progressservice.dto.*;
-import com.study4ever.progressservice.model.*;
+import com.study4ever.progressservice.dto.CourseProgressDto;
+import com.study4ever.progressservice.dto.CourseProgressSummaryDto;
+import com.study4ever.progressservice.dto.LessonProgressDto;
+import com.study4ever.progressservice.dto.ModuleProgressDto;
+import com.study4ever.progressservice.dto.StudySessionDto;
+import com.study4ever.progressservice.dto.UserProgressDto;
+import com.study4ever.progressservice.model.CourseProgress;
+import com.study4ever.progressservice.model.LessonProgress;
+import com.study4ever.progressservice.model.ModuleProgress;
+import com.study4ever.progressservice.model.ProgressStatus;
+import com.study4ever.progressservice.model.StudySession;
+import com.study4ever.progressservice.model.StudyStreak;
+import com.study4ever.progressservice.model.UserProgress;
+
+import static com.study4ever.progressservice.model.ProgressStatus.COMPLETED;
+import static com.study4ever.progressservice.model.ProgressStatus.IN_PROGRESS;
+import static com.study4ever.progressservice.model.ProgressStatus.NOT_STARTED;
 
 /**
  * Utility class for mapping between entity and DTO objects in the progress service.
@@ -12,33 +27,33 @@ public class ProgressMapper {
     /**
      * Maps ProgressStatus entity to ProgressStatusDto
      */
-    public static ProgressStatusDto mapStatus(ProgressStatus status) {
+    public static ProgressStatus mapStatus(ProgressStatus status) {
         if (status == null) {
             return null;
         }
-        
+
         return switch (status) {
-            case NOT_STARTED -> ProgressStatusDto.NOT_STARTED;
-            case IN_PROGRESS -> ProgressStatusDto.IN_PROGRESS;
-            case COMPLETED -> ProgressStatusDto.COMPLETED;
+            case NOT_STARTED -> NOT_STARTED;
+            case IN_PROGRESS -> IN_PROGRESS;
+            case COMPLETED -> COMPLETED;
         };
     }
-    
+
     /**
      * Maps ProgressStatusDto to ProgressStatus entity
      */
-    public static ProgressStatus mapDtoStatus(ProgressStatusDto status) {
+    public static ProgressStatus mapDtoStatus(ProgressStatus status) {
         if (status == null) {
             return null;
         }
-        
+
         return switch (status) {
-            case NOT_STARTED -> ProgressStatus.NOT_STARTED;
-            case IN_PROGRESS -> ProgressStatus.IN_PROGRESS;
-            case COMPLETED -> ProgressStatus.COMPLETED;
+            case NOT_STARTED -> NOT_STARTED;
+            case IN_PROGRESS -> IN_PROGRESS;
+            case COMPLETED -> COMPLETED;
         };
     }
-    
+
     /**
      * Maps CourseProgress entity to CourseProgressDto
      */
@@ -46,7 +61,7 @@ public class ProgressMapper {
         if (entity == null) {
             return null;
         }
-        
+
         return CourseProgressDto.builder()
                 .progressId(entity.getId())
                 .userId(entity.getUserId())
@@ -63,7 +78,7 @@ public class ProgressMapper {
                 .totalLessonsCount(entity.getTotalLessonsCount())
                 .build();
     }
-    
+
     /**
      * Maps ModuleProgress entity to ModuleProgressDto
      */
@@ -71,7 +86,7 @@ public class ProgressMapper {
         if (entity == null) {
             return null;
         }
-        
+
         return ModuleProgressDto.builder()
                 .progressId(entity.getId())
                 .userId(entity.getUserId())
@@ -84,7 +99,7 @@ public class ProgressMapper {
                 .completionDate(entity.getCompletionDate())
                 .build();
     }
-    
+
     /**
      * Maps ModuleProgress entity to ModuleProgressDto with lesson counts
      */
@@ -92,7 +107,7 @@ public class ProgressMapper {
         if (entity == null) {
             return null;
         }
-        
+
         return ModuleProgressDto.builder()
                 .progressId(entity.getId())
                 .userId(entity.getUserId())
@@ -107,7 +122,7 @@ public class ProgressMapper {
                 .totalLessonsCount(totalLessons)
                 .build();
     }
-    
+
     /**
      * Maps LessonProgress entity to LessonProgressDto
      */
@@ -115,7 +130,7 @@ public class ProgressMapper {
         if (entity == null) {
             return null;
         }
-        
+
         return LessonProgressDto.builder()
                 .progressId(entity.getId())
                 .userId(entity.getUserId())
@@ -129,7 +144,7 @@ public class ProgressMapper {
                 .studyTimeMinutes(entity.getStudyTimeMinutes())
                 .build();
     }
-    
+
     /**
      * Maps StudySession entity to StudySessionDto
      */
@@ -137,7 +152,7 @@ public class ProgressMapper {
         if (session == null) {
             return null;
         }
-        
+
         return StudySessionDto.builder()
                 .sessionId(session.getId())
                 .userId(session.getUserId())
@@ -150,14 +165,14 @@ public class ProgressMapper {
                 .active(session.getActive())
                 .build();
     }
-    
+
     /**
      * Maps UserProgress entity to UserProgressDto
      */
     public static UserProgressDto mapToUserDto(UserProgress userProgress) {
         return mapToUserDto(userProgress, null);
     }
-    
+
     /**
      * Maps UserProgress entity and StudyStreak to UserProgressDto
      */
@@ -165,7 +180,7 @@ public class ProgressMapper {
         if (userProgress == null) {
             return null;
         }
-        
+
         return UserProgressDto.builder()
                 .userId(userProgress.getUserId())
                 .totalCompletedLessons(userProgress.getTotalCompletedLessons())
@@ -178,7 +193,7 @@ public class ProgressMapper {
                 .longestStreak(streak != null ? streak.getLongestStreakDays() : 0)
                 .build();
     }
-    
+
     /**
      * Maps CourseProgress entity to CourseProgressSummaryDto
      */
@@ -186,12 +201,12 @@ public class ProgressMapper {
         if (courseProgress == null) {
             return null;
         }
-        
+
         float completionPercentage = 0f;
         if (courseProgress.getTotalLessonsCount() > 0) {
             completionPercentage = (float) courseProgress.getCompletedLessonsCount() / courseProgress.getTotalLessonsCount() * 100;
         }
-        
+
         return CourseProgressSummaryDto.builder()
                 .courseId(courseProgress.getCourseId())
                 .courseTitle(courseProgress.getCourseTitle())

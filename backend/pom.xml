@@ -32,6 +32,7 @@
         <spring.cloud.starter.config.client.version>4.2.2</spring.cloud.starter.config.client.version>
         <spring.cloud.starter.netflix.eureka.client.version>4.2.1</spring.cloud.starter.netflix.eureka.client.version>
         <lombok.version>1.18.38</lombok.version>
+        <maven.surefire.plugin.version>3.5.3</maven.surefire.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -73,6 +74,11 @@
                     <configuration>
                         <parameters>true</parameters>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

@@ -12,13 +12,11 @@ import java.util.UUID;
 
 @Repository
 public interface ModuleProgressRepository extends JpaRepository<ModuleProgress, UUID> {
-    
-    List<ModuleProgress> findByUserId(String userId);
 
     List<ModuleProgress> findByUserIdAndCourseId(String userId, String courseId);
 
     Optional<ModuleProgress> findByUserIdAndCourseIdAndModuleId(String userId, String courseId, String moduleId);
-    
+
     @Modifying
     @Query("DELETE FROM ModuleProgress m WHERE m.userId = ?1 AND m.courseId = ?2")
     void deleteByUserIdAndCourseId(String userId, String courseId);

@@ -8,7 +8,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -52,7 +61,7 @@ public class CourseProgressController {
         log.debug("Getting all modules progress in course {} for user {}", courseId, userId);
         return courseProgressService.getAllModulesProgressInCourse(userId, courseId);
     }
-    
+
     @PutMapping("/{courseId}/progress/update-access")
     public String updateLastAccessed(
             @RequestHeader("X-User-Id") String userId,
@@ -61,7 +70,7 @@ public class CourseProgressController {
         courseProgressService.updateLastAccessed(userId, courseId);
         return "Last accessed updated successfully";
     }
-    
+
     @PutMapping("/{courseId}/progress/complete")
     public String markCourseCompleted(
             @RequestHeader("X-User-Id") String userId,
@@ -70,16 +79,7 @@ public class CourseProgressController {
         courseProgressService.markCourseCompleted(userId, courseId);
         return "Course marked as completed successfully";
     }
-    
-    @PostMapping("/{courseId}/enroll")
-    public String enrollInCourse(
-            @RequestHeader("X-User-Id") String userId,
-            @PathVariable String courseId) {
-        log.debug("Enrolling user {} in course {}", userId, courseId);
-        courseProgressService.enrollInCourse(userId, courseId);
-        return "Course enrolled successfully";
-    }
-    
+
     @DeleteMapping("/{courseId}/progress/reset")
     public String resetCourseProgress(
             @RequestHeader("X-User-Id") String userId,

@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface LessonProgressRepository extends JpaRepository<LessonProgress, UUID> {
-    
+
     List<LessonProgress> findByUserId(String userId);
 
     List<LessonProgress> findByUserIdAndCourseId(String userId, String courseId);

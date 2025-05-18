@@ -19,37 +19,37 @@ public class RabbitMQConfig {
 
     @Value("${rabbitmq.queues.user-created}")
     private String userCreatedQueue;
-    
+
     @Value("${rabbitmq.queues.user-deleted}")
     private String userDeletedQueue;
-    
+
     @Value("${rabbitmq.queues.course-enrollment}")
     private String courseEnrollmentQueue;
-    
+
     @Value("${rabbitmq.queues.course-completion}")
     private String courseCompletionQueue;
-    
+
     @Value("${rabbitmq.queues.lesson-completion}")
     private String lessonCompletionQueue;
-    
+
     @Value("${rabbitmq.queues.user-login}")
     private String userLoginQueue;
-    
+
     @Value("${rabbitmq.routing-keys.user-created}")
     private String userCreatedRoutingKey;
-    
+
     @Value("${rabbitmq.routing-keys.user-deleted}")
     private String userDeletedRoutingKey;
-    
+
     @Value("${rabbitmq.routing-keys.course-enrollment}")
     private String courseEnrollmentRoutingKey;
-    
+
     @Value("${rabbitmq.routing-keys.course-completion}")
     private String courseCompletionRoutingKey;
-    
+
     @Value("${rabbitmq.routing-keys.lesson-completion}")
     private String lessonCompletionRoutingKey;
-    
+
     @Value("${rabbitmq.routing-keys.user-login}")
     private String userLoginRoutingKey;
 
@@ -62,27 +62,27 @@ public class RabbitMQConfig {
     public Queue userCreatedQueue() {
         return new Queue(userCreatedQueue);
     }
-    
+
     @Bean
     public Queue userDeletedQueue() {
         return new Queue(userDeletedQueue);
     }
-    
+
     @Bean
     public Queue courseEnrollmentQueue() {
         return new Queue(courseEnrollmentQueue);
     }
-    
+
     @Bean
     public Queue courseCompletionQueue() {
         return new Queue(courseCompletionQueue);
     }
-    
+
     @Bean
     public Queue lessonCompletionQueue() {
         return new Queue(lessonCompletionQueue);
     }
-    
+
     @Bean
     public Queue userLoginQueue() {
         return new Queue(userLoginQueue);
@@ -95,7 +95,7 @@ public class RabbitMQConfig {
                 .to(eventExchange())
                 .with(userCreatedRoutingKey);
     }
-    
+
     @Bean
     public Binding userDeletedBinding() {
         return BindingBuilder
@@ -103,7 +103,7 @@ public class RabbitMQConfig {
                 .to(eventExchange())
                 .with(userDeletedRoutingKey);
     }
-    
+
     @Bean
     public Binding courseEnrollmentBinding() {
         return BindingBuilder
@@ -111,7 +111,7 @@ public class RabbitMQConfig {
                 .to(eventExchange())
                 .with(courseEnrollmentRoutingKey);
     }
-    
+
     @Bean
     public Binding courseCompletionBinding() {
         return BindingBuilder
@@ -119,7 +119,7 @@ public class RabbitMQConfig {
                 .to(eventExchange())
                 .with(courseCompletionRoutingKey);
     }
-    
+
     @Bean
     public Binding lessonCompletionBinding() {
         return BindingBuilder
@@ -127,7 +127,7 @@ public class RabbitMQConfig {
                 .to(eventExchange())
                 .with(lessonCompletionRoutingKey);
     }
-    
+
     @Bean
     public Binding userLoginBinding() {
         return BindingBuilder

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface StudySessionRepository extends JpaRepository<StudySession, UUID> {
-    
+
     List<StudySession> findByUserId(String userId);
 
     List<StudySession> findByUserIdAndActive(String userId, boolean active);

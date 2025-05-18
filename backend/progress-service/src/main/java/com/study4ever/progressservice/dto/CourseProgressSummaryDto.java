@@ -1,5 +1,6 @@
 package com.study4ever.progressservice.dto;
 
+import com.study4ever.progressservice.model.ProgressStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class CourseProgressSummaryDto {
     private String courseId;
     private String courseTitle;
-    private ProgressStatusDto status;
+    private ProgressStatus status;
     private Float completionPercentage;
     private LocalDateTime lastAccessDate;
 }

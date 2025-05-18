@@ -1,5 +1,6 @@
 package com.study4ever.progressservice.dto;
 
+import com.study4ever.progressservice.model.ProgressStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,7 @@ public class LessonProgressDto {
     private String moduleTitle;
     private String lessonId;
     private String lessonTitle;
-    private ProgressStatusDto status;
+    private ProgressStatus status;
     private LocalDateTime firstAccessDate;
     private LocalDateTime lastAccessDate;
     private LocalDateTime completionDate;

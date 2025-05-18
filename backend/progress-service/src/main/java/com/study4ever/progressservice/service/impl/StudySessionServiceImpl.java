@@ -2,6 +2,10 @@ package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.StartStudySessionRequest;
 import com.study4ever.progressservice.dto.StudySessionDto;
+import com.study4ever.progressservice.exception.BadRequestException;
+import com.study4ever.progressservice.exception.ConflictOperationException;
+import com.study4ever.progressservice.exception.ForbiddenOperationException;
+import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.StudySession;
 import com.study4ever.progressservice.repository.StudySessionRepository;
 import com.study4ever.progressservice.service.StudySessionService;
@@ -18,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,21 +36,13 @@ public class StudySessionServiceImpl implements StudySessionService {
     @Transactional
     public StudySessionDto startStudySession(String userId, StartStudySessionRequest request) {
         log.info("Starting study session for user: {}", userId);
-        
-        // Check if user already has an active session
+
         List<StudySession> activeSessions = studySessionRepository.findByUserIdAndActive(userId, true);
         if (!activeSessions.isEmpty()) {
             log.warn("User {} already has active sessions. Ending them first.", userId);
-            activeSessions.forEach(session -> {
-                session.setActive(false);
-                session.setEndTime(LocalDateTime.now());
-                int durationMinutes = (int) ChronoUnit.MINUTES.between(session.getStartTime(), session.getEndTime());
-                session.setDurationMinutes(durationMinutes);
-                studySessionRepository.save(session);
-            });
+            throw new ConflictOperationException("User " + userId + " already has active sessions.");
         }
-        
-        // Create new session
+
         StudySession newSession = StudySession.builder()
                 .userId(userId)
                 .courseId(request.getCourseId())
@@ -56,12 +51,11 @@ public class StudySessionServiceImpl implements StudySessionService {
                 .startTime(LocalDateTime.now())
                 .active(true)
                 .build();
-                
+
         StudySession savedSession = studySessionRepository.save(newSession);
-        
-        // Update user's last active timestamp
+
         userProgressService.updateLastLoginDate(userId);
-        
+
         return ProgressMapper.mapToSessionDto(savedSession);
     }
 
@@ -69,30 +63,31 @@ public class StudySessionServiceImpl implements StudySessionService {
     @Transactional
     public StudySessionDto endStudySession(String userId, UUID sessionId) {
         log.info("Ending study session for user: {} with id: {}", userId, sessionId);
-        
+
         StudySession session = studySessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Study session not found with id: " + sessionId));
-        
+                .orElseThrow(() -> new NotFoundException("Study session not found with id: " + sessionId));
+
         if (!session.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("User does not own this session");
+            throw new ForbiddenOperationException("User does not own this session");
         }
-        
-        if (!session.getActive()) {
-            throw new IllegalArgumentException("Session is already ended");
+
+        if (Boolean.FALSE.equals(session.getActive())) {
+            throw new BadRequestException("Session is already ended");
         }
-        
+
         session.setActive(false);
         session.setEndTime(LocalDateTime.now());
         int durationMinutes = (int) ChronoUnit.MINUTES.between(session.getStartTime(), session.getEndTime());
         session.setDurationMinutes(durationMinutes);
-        
+
         StudySession savedSession = studySessionRepository.save(session);
-        
-        // Update streak if the session is long enough (e.g., at least 1 minute)
+
         if (durationMinutes >= 1) {
             studyStreakService.updateStreak(userId);
         }
-        
+
+        // todo: increase the study time for the userxz
+
         return ProgressMapper.mapToSessionDto(savedSession);
     }
 
@@ -100,12 +95,12 @@ public class StudySessionServiceImpl implements StudySessionService {
     @Transactional(readOnly = true)
     public StudySessionDto getStudySession(String userId, UUID sessionId) {
         StudySession session = studySessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Study session not found with id: " + sessionId));
-        
+                .orElseThrow(() -> new NotFoundException("Study session not found with id: " + sessionId));
+
         if (!session.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("User does not own this session");
+            throw new ForbiddenOperationException("User does not own this session");
         }
-        
+
         return ProgressMapper.mapToSessionDto(session);
     }
 
@@ -114,7 +109,7 @@ public class StudySessionServiceImpl implements StudySessionService {
     public List<StudySessionDto> getUserStudySessions(String userId) {
         return studySessionRepository.findByUserId(userId).stream()
                 .map(ProgressMapper::mapToSessionDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -122,10 +117,10 @@ public class StudySessionServiceImpl implements StudySessionService {
     public List<StudySessionDto> getUserStudySessionsByDate(String userId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.plusDays(1).atStartOfDay().minusNanos(1);
-        
+
         return studySessionRepository.findByUserIdAndStartTimeBetween(userId, startOfDay, endOfDay).stream()
                 .map(ProgressMapper::mapToSessionDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -133,26 +128,22 @@ public class StudySessionServiceImpl implements StudySessionService {
     public List<StudySessionDto> getUserStudySessionsByDateRange(String userId, LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay().minusNanos(1);
-        
+
         return studySessionRepository.findByUserIdAndStartTimeBetween(userId, startDateTime, endDateTime).stream()
                 .map(ProgressMapper::mapToSessionDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional
     public void deleteStudySession(String userId, UUID sessionId) {
         StudySession session = studySessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Study session not found with id: " + sessionId));
-        
+                .orElseThrow(() -> new NotFoundException("Study session not found with id: " + sessionId));
+
         if (!session.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("User does not own this session");
+            throw new ForbiddenOperationException("User does not own this session");
         }
-        
+
         studySessionRepository.delete(session);
-    }
-    
-    private long calculateDurationMinutes(LocalDateTime startTime, LocalDateTime endTime) {
-        return ChronoUnit.MINUTES.between(startTime, endTime);
     }
 }

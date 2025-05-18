@@ -1,8 +1,10 @@
 package com.study4ever.progressservice.service.impl;
 
+import com.study4ever.progressservice.dto.CourseCompletionStatisticsDto;
 import com.study4ever.progressservice.dto.CourseProgressSummaryDto;
+import com.study4ever.progressservice.dto.EnrollmentStatisticsDto;
 import com.study4ever.progressservice.dto.UserProgressDto;
-import com.study4ever.progressservice.dto.UserStatisticsDto;
+import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.CourseProgress;
 import com.study4ever.progressservice.model.ProgressStatus;
 import com.study4ever.progressservice.model.UserProgress;
@@ -52,27 +54,12 @@ public class AdminProgressServiceImpl implements AdminProgressService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserStatisticsDto> getAllUserStatistics(int page, int size) {
-        Page<String> userIds = userProgressRepository.findAll(
-                        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "lastActiveTimestamp")))
-                .map(UserProgress::getUserId);
-
-        return userIds.stream()
-                .map(userProgressService::getUserStatistics)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public CourseProgressSummaryDto getCourseProgressSummary(String courseId) {
         List<CourseProgress> courseProgresses = courseProgressRepository.findByCourseId(courseId);
 
         if (courseProgresses.isEmpty()) {
             log.warn("No progress data found for course ID: {}", courseId);
-            return CourseProgressSummaryDto.builder()
-                    .courseId(courseId)
-                    .completionPercentage(0f)
-                    .build();
+            throw new NotFoundException("No progress data found for course ID: " + courseId);
         }
 
         CourseProgress firstProgress = courseProgresses.get(0);
@@ -85,7 +72,6 @@ public class AdminProgressServiceImpl implements AdminProgressService {
 
         float completionRate = (float) totalCompleted / totalEnrollments * 100;
 
-        // Find the most recent access date
         LocalDateTime lastAccessDate = courseProgresses.stream()
                 .map(CourseProgress::getLastAccessDate)
                 .filter(Objects::nonNull)
@@ -101,20 +87,9 @@ public class AdminProgressServiceImpl implements AdminProgressService {
                 .build();
     }
 
-    private ProgressStatus mostFrequentStatus(List<CourseProgress> progresses) {
-        Map<ProgressStatus, Long> statusCounts = progresses.stream()
-                .collect(Collectors.groupingBy(CourseProgress::getStatus, Collectors.counting()));
-
-        return statusCounts.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(ProgressStatus.NOT_STARTED);
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<CourseProgressSummaryDto> getAllCourseProgressSummaries() {
-        // Get unique course IDs
         List<String> courseIds = courseProgressRepository.findDistinctCourseIds();
 
         return courseIds.stream()
@@ -124,44 +99,44 @@ public class AdminProgressServiceImpl implements AdminProgressService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<LocalDate, Integer> getNewEnrollmentsByDateRange(LocalDate startDate, LocalDate endDate) {
-        List<CourseProgress> enrollments = courseProgressRepository.findByCreatedDateBetween(
+    public EnrollmentStatisticsDto getNewEnrollmentsByDateRange(LocalDate startDate, LocalDate endDate) {
+        List<CourseProgress> enrollments = courseProgressRepository.findByCreatedAtBetween(
                 startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay().minusSeconds(1));
 
         Map<LocalDate, Integer> enrollmentsByDate = new HashMap<>();
 
-        // Initialize all dates in range with zero
         LocalDate date = startDate;
         while (!date.isAfter(endDate)) {
             enrollmentsByDate.put(date, 0);
             date = date.plusDays(1);
         }
 
-        // Count enrollments by date
         for (CourseProgress enrollment : enrollments) {
             LocalDate enrollmentDate = enrollment.getCreatedAt().toLocalDate();
             enrollmentsByDate.put(enrollmentDate, enrollmentsByDate.getOrDefault(enrollmentDate, 0) + 1);
         }
 
-        return enrollmentsByDate;
+        return EnrollmentStatisticsDto.builder()
+                .startDate(startDate)
+                .endDate(endDate)
+                .enrollmentsByDate(enrollmentsByDate)
+                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Map<LocalDate, Integer> getCourseCompletionsByDateRange(String courseId, LocalDate startDate, LocalDate endDate) {
+    public CourseCompletionStatisticsDto getCourseCompletionsByDateRange(String courseId, LocalDate startDate, LocalDate endDate) {
         List<CourseProgress> completions = courseProgressRepository.findByCourseIdAndCompletedAndCompletionDateBetween(
                 courseId, true, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay().minusSeconds(1));
 
         Map<LocalDate, Integer> completionsByDate = new HashMap<>();
 
-        // Initialize all dates in range with zero
         LocalDate date = startDate;
         while (!date.isAfter(endDate)) {
             completionsByDate.put(date, 0);
             date = date.plusDays(1);
         }
 
-        // Count completions by date
         for (CourseProgress completion : completions) {
             if (completion.getCompletionDate() != null) {
                 LocalDate completionDate = completion.getCompletionDate().toLocalDate();
@@ -169,7 +144,12 @@ public class AdminProgressServiceImpl implements AdminProgressService {
             }
         }
 
-        return completionsByDate;
+        return CourseCompletionStatisticsDto.builder()
+                .courseId(courseId)
+                .startDate(startDate)
+                .endDate(endDate)
+                .completionsByDate(completionsByDate)
+                .build();
     }
 
     @Override
@@ -178,17 +158,23 @@ public class AdminProgressServiceImpl implements AdminProgressService {
         log.info("Resetting progress for user {} in course {}", userId, courseId);
 
         if (courseId == null) {
-            // Reset all course progress for user
             List<CourseProgress> userCourses = courseProgressRepository.findByUserId(userId);
-
             for (CourseProgress course : userCourses) {
                 courseProgressService.resetCourseProgress(userId, course.getCourseId());
             }
         } else {
-            // Reset specific course progress
             courseProgressService.resetCourseProgress(userId, courseId);
         }
-
         log.info("Progress reset completed for user {}", userId);
+    }
+
+    private ProgressStatus mostFrequentStatus(List<CourseProgress> progresses) {
+        Map<ProgressStatus, Long> statusCounts = progresses.stream()
+                .collect(Collectors.groupingBy(CourseProgress::getStatus, Collectors.counting()));
+
+        return statusCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(ProgressStatus.NOT_STARTED);
     }
 }

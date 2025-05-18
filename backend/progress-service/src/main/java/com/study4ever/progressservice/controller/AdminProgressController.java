@@ -1,19 +1,22 @@
 package com.study4ever.progressservice.controller;
 
+import com.study4ever.progressservice.dto.CourseCompletionStatisticsDto;
 import com.study4ever.progressservice.dto.CourseProgressSummaryDto;
+import com.study4ever.progressservice.dto.EnrollmentStatisticsDto;
 import com.study4ever.progressservice.dto.UserProgressDto;
-import com.study4ever.progressservice.dto.UserStatisticsDto;
 import com.study4ever.progressservice.service.AdminProgressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin/progress")
@@ -40,14 +43,6 @@ public class AdminProgressController {
         return adminProgressService.getAllUserProgress(page, size);
     }
 
-    @GetMapping("/users/statistics")
-    public List<UserStatisticsDto> getAllUsersStatistics(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        log.debug("Admin: Getting all users statistics, page {}, size {}", page, size);
-        return adminProgressService.getAllUserStatistics(page, size);
-    }
-
     @GetMapping("/courses/{courseId}")
     public CourseProgressSummaryDto getCourseProgressSummary(@PathVariable String courseId) {
         log.debug("Admin: Getting course progress summary for course {}", courseId);
@@ -61,37 +56,23 @@ public class AdminProgressController {
     }
 
     @GetMapping("/enrollments")
-    public Map<String, Object> getEnrollmentStatistics(
+    public EnrollmentStatisticsDto getEnrollmentStatistics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         log.debug("Admin: Getting enrollment statistics from {} to {}", startDate, endDate);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("enrollmentsByDate", adminProgressService.getNewEnrollmentsByDateRange(startDate, endDate));
-        result.put("startDate", startDate);
-        result.put("endDate", endDate);
-        
-        return result;
+        return adminProgressService.getNewEnrollmentsByDateRange(startDate, endDate);
     }
 
     @GetMapping("/courses/{courseId}/completions")
-    public Map<String, Object> getCourseCompletionStatistics(
+    public CourseCompletionStatisticsDto getCourseCompletionStatistics(
             @PathVariable String courseId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         log.debug("Admin: Getting course completion statistics for course {} from {} to {}", courseId, startDate, endDate);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("completionsByDate", adminProgressService.getCourseCompletionsByDateRange(courseId, startDate, endDate));
-        result.put("courseId", courseId);
-        result.put("startDate", startDate);
-        result.put("endDate", endDate);
-        
-        return result;
+        return adminProgressService.getCourseCompletionsByDateRange(courseId, startDate, endDate);
     }
 
     @DeleteMapping("/users/{userId}/reset")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resetUserProgress(
             @PathVariable String userId,
             @RequestParam(required = false) String courseId) {

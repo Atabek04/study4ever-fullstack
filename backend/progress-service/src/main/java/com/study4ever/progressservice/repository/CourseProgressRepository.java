@@ -16,18 +16,15 @@ public interface CourseProgressRepository extends JpaRepository<CourseProgress, 
     List<CourseProgress> findByUserId(String userId);
 
     Optional<CourseProgress> findByUserIdAndCourseId(String userId, String courseId);
-    
-    List<CourseProgress> findByUserIdOrderByLastAccessDateDesc(String userId);
-    
+
     List<CourseProgress> findByCourseId(String courseId);
-    
+
     @Query("SELECT DISTINCT c.courseId FROM CourseProgress c")
     List<String> findDistinctCourseIds();
-    
-    List<CourseProgress> findByCreatedDateBetween(LocalDateTime start, LocalDateTime end);
-    
+
+    List<CourseProgress> findByCreatedAtBetween(LocalDateTime createdAtAfter, LocalDateTime createdAtBefore);
+
     List<CourseProgress> findByCourseIdAndCompletedAndCompletionDateBetween(
             String courseId, Boolean completed, LocalDateTime start, LocalDateTime end);
-            
-    long countByUserId(String userId);
+
 }
