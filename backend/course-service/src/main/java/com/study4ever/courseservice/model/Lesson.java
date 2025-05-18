@@ -34,7 +34,7 @@ public class Lesson {
 
     private Integer durationMinutes;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private Integer sortOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)

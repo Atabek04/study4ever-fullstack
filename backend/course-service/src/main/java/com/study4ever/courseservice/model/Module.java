@@ -32,7 +32,7 @@ public class Module {
 
     private String title;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private Integer sortOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)

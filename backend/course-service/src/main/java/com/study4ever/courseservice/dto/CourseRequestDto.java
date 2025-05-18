@@ -19,7 +19,5 @@ public class CourseRequestDto {
     @NotNull
     private UUID instructorId;
 
-    private Integer sortOrder;
-
     private Set<Long> tagIds = new HashSet<>();
 }
