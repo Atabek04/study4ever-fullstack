@@ -66,7 +66,6 @@ public class ProgressMapper {
                 .progressId(entity.getId())
                 .userId(entity.getUserId())
                 .courseId(entity.getCourseId())
-                .courseTitle(entity.getCourseTitle())
                 .status(mapStatus(entity.getStatus()))
                 .completionPercentage(entity.getCompletionPercentage())
                 .currentModuleId(entity.getCurrentModuleId())
@@ -209,7 +208,6 @@ public class ProgressMapper {
 
         return CourseProgressSummaryDto.builder()
                 .courseId(courseProgress.getCourseId())
-                .courseTitle(courseProgress.getCourseTitle())
                 .completionPercentage(completionPercentage)
                 .status(mapStatus(courseProgress.getStatus()))
                 .lastAccessDate(courseProgress.getLastAccessDate())

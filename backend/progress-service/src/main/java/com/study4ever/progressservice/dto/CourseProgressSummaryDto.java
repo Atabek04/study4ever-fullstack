@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CourseProgressSummaryDto {
     private String courseId;
-    private String courseTitle;
     private ProgressStatus status;
     private Float completionPercentage;
     private LocalDateTime lastAccessDate;

@@ -21,5 +21,7 @@ public interface StudySessionService {
 
     List<StudySessionDto> getUserStudySessionsByDateRange(String userId, LocalDate startDate, LocalDate endDate);
 
+    List<StudySessionDto> getActiveUserStudySessions(String userId);
+
     void deleteStudySession(String userId, UUID sessionId);
 }

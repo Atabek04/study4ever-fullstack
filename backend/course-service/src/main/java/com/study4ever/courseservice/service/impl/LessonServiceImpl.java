@@ -30,6 +30,12 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public Lesson getLessonByModuleIdAndLessonId(String moduleId, String lessonId) {
+        return lessonRepository.findByModuleIdAndId(Long.valueOf(moduleId), Long.valueOf(lessonId))
+                .orElseThrow(() -> new NotFoundException("Lesson not found for moduleId: " + moduleId + " and lessonId: " + lessonId));
+    }
+
+    @Override
     public Lesson createLesson(LessonRequestDto lessonRequestDto) {
         Lesson lesson = new Lesson();
 

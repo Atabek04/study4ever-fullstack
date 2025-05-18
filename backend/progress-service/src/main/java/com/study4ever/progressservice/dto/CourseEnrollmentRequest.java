@@ -12,7 +12,4 @@ public class CourseEnrollmentRequest {
 
     @NotBlank(message = "Course ID is required")
     private String courseId;
-
-    @NotBlank(message = "Course title is required")
-    private String courseTitle;
 }

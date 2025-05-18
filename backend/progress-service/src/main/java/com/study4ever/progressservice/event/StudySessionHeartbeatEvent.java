@@ -1,4 +1,4 @@
-package com.study4ever.progressservice.dto;
+package com.study4ever.progressservice.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,14 +12,11 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StudySessionDto {
-    private UUID sessionId;
+public class StudySessionHeartbeatEvent {
     private String userId;
+    private UUID sessionId;
     private String courseId;
     private String moduleId;
     private String lessonId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private Integer durationMinutes;
-    private Boolean active;
+    private LocalDateTime timestamp;
 }

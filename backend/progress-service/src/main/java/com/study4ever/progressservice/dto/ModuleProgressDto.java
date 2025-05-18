@@ -17,9 +17,7 @@ public class ModuleProgressDto {
     private UUID progressId;
     private String userId;
     private String courseId;
-    private String courseTitle;
     private String moduleId;
-    private String moduleTitle;
     private ProgressStatus status;
     private Float completionPercentage;
     private LocalDateTime firstAccessDate;

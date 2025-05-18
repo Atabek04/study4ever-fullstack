@@ -45,15 +45,10 @@ public class CourseProgressServiceImpl implements CourseProgressService {
             return ProgressMapper.mapToCourseDto(existingProgress.get());
         }
 
-        if (request.getCourseTitle() == null || request.getCourseTitle().isBlank()) {
-            throw new BadRequestException("Course title is required");
-        }
-
         var courseProgress = CourseProgress.builder()
                 .id(UUID.randomUUID())
                 .userId(userId)
                 .courseId(courseId)
-                .courseTitle(request.getCourseTitle())
                 .status(ProgressStatus.NOT_STARTED)
                 .completionPercentage(0.0f)
                 .completedLessonsCount(0)

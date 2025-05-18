@@ -11,6 +11,8 @@ public interface LessonService {
 
     Lesson getLessonById(Long id);
 
+    Lesson getLessonByModuleIdAndLessonId(String moduleId, String lessonId);
+
     Lesson createLesson(LessonRequestDto lessonRequestDto);
 
     Lesson updateLesson(Long id, LessonRequestDto lessonRequestDto);

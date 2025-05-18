@@ -36,9 +36,6 @@ public class CourseProgress extends BaseEntity {
     @Column(nullable = false)
     private String courseId;
 
-    @Column
-    private String courseTitle;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProgressStatus status;

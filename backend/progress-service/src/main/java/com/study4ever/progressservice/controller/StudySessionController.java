@@ -64,6 +64,13 @@ public class StudySessionController {
         return studySessionService.getUserStudySessions(userId);
     }
 
+    @GetMapping("/active")
+    public List<StudySessionDto> getActiveUserStudySessions(
+            @RequestHeader("X-User-Id") String userId) {
+        log.debug("Getting active study sessions for user {}", userId);
+        return studySessionService.getActiveUserStudySessions(userId);
+    }
+
     @GetMapping("/by-date")
     public List<StudySessionDto> getUserStudySessionsByDate(
             @RequestHeader("X-User-Id") String userId,

@@ -62,9 +62,6 @@ public class AdminProgressServiceImpl implements AdminProgressService {
             throw new NotFoundException("No progress data found for course ID: " + courseId);
         }
 
-        CourseProgress firstProgress = courseProgresses.get(0);
-        String courseTitle = firstProgress.getCourseTitle();
-
         int totalEnrollments = courseProgresses.size();
         long totalCompleted = courseProgresses.stream()
                 .filter(cp -> Boolean.TRUE.equals(cp.getCompleted()))
@@ -80,7 +77,6 @@ public class AdminProgressServiceImpl implements AdminProgressService {
 
         return CourseProgressSummaryDto.builder()
                 .courseId(courseId)
-                .courseTitle(courseTitle)
                 .status(ProgressMapper.mapStatus(mostFrequentStatus(courseProgresses)))
                 .completionPercentage(completionRate)
                 .lastAccessDate(lastAccessDate)

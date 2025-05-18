@@ -17,13 +17,10 @@ public class CourseProgressDto {
     private UUID progressId;
     private String userId;
     private String courseId;
-    private String courseTitle;
     private ProgressStatus status;
     private Float completionPercentage;
     private String currentModuleId;
-    private String currentModuleTitle;
     private String currentLessonId;
-    private String currentLessonTitle;
     private LocalDateTime enrollmentDate;
     private LocalDateTime lastAccessDate;
     private LocalDateTime completionDate;
