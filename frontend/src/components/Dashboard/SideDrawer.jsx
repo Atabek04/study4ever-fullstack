@@ -1,0 +1,178 @@
+import { useState, useEffect } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Drawer, 
+  List, 
+  ListItem, 
+  ListItemButton, 
+  ListItemIcon, 
+  ListItemText, 
+  Divider,
+  useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+
+// Icons
+import HomeIcon from '@mui/icons-material/Home';
+import SchoolIcon from '@mui/icons-material/School';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import SettingsIcon from '@mui/icons-material/Settings';
+
+const drawerWidth = 240;
+
+const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Navigation items
+  const mainNavItems = [
+    { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+    { text: 'My Courses', icon: <SchoolIcon />, path: '/courses' },
+    { text: 'Assignments', icon: <AssignmentIcon />, path: '/assignments' },
+    { text: 'Schedule', icon: <CalendarTodayIcon />, path: '/schedule' },
+    { text: 'Saved', icon: <BookmarkIcon />, path: '/saved' },
+  ];
+
+  const secondaryNavItems = [
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  ];
+
+  const drawerContent = (
+    <>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        p: 2,
+      }}>
+        <Typography 
+          variant="h5" 
+          component="div" 
+          sx={{ 
+            color: 'primary.main',
+            fontWeight: 700,
+            letterSpacing: '-0.5px'
+          }}
+        >
+          Study4Ever
+        </Typography>
+      </Box>
+      <Divider />
+      <List>
+        {mainNavItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              sx={{ 
+                borderRadius: '0 20px 20px 0',
+                mx: 1,
+                '&.Mui-selected': {
+                  backgroundColor: 'rgba(199, 0, 57, 0.08)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(199, 0, 57, 0.12)',
+                  }
+                },
+                '&:hover': {
+                  backgroundColor: 'rgba(199, 0, 57, 0.04)',
+                }
+              }}
+              selected={item.text === 'Dashboard'}
+            >
+              <ListItemIcon 
+                sx={{ 
+                  color: item.text === 'Dashboard' ? 'primary.main' : 'text.secondary' 
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.text} 
+                primaryTypographyProps={{ 
+                  fontWeight: item.text === 'Dashboard' ? 600 : 500,
+                  color: item.text === 'Dashboard' ? 'primary.main' : 'text.primary'
+                }} 
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+      <Divider sx={{ my: 2 }} />
+      <List>
+        {secondaryNavItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              sx={{ 
+                borderRadius: '0 20px 20px 0',
+                mx: 1
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.secondary' }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile drawer */}
+      {isMobile && (
+        <Drawer
+          variant="temporary"
+          open={open}
+          onClose={onClose}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': { 
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
+            },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      )}
+
+      {/* Desktop drawer */}
+      {!isMobile && (
+        <Drawer
+          variant={variant}
+          open={open}
+          sx={{
+            width: open ? drawerWidth : 0,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+              height: 'calc(100% - 72px)',
+              top: 72,
+              paddingTop: 0,
+              transform: open ? 'none' : 'translateX(-100%)',
+              visibility: open ? 'visible' : 'hidden',
+              transition: theme.transitions.create(['transform', 'visibility'], {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.leavingScreen,
+              }),
+            },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      )}
+    </>
+  );
+};
+
+export default SideDrawer;
