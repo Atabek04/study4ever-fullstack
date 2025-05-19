@@ -13,7 +13,7 @@ import java.util.List;
 @Configuration
 public class GatewayRoutesConfig {
 
-    private static final ArrayList<String> ALL_ROLES = new ArrayList<>(List.of("ROLE_TRAINEE", "ROLE_INSTRUCTOR", "ROLE_ADMIN"));
+    private static final ArrayList<String> ALL_ROLES = new ArrayList<>(List.of("ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"));
     private static final ArrayList<String> INSTRUCTOR_ADMIN_ROLES = new ArrayList<>(List.of("ROLE_INSTRUCTOR", "ROLE_ADMIN"));
     private static final ArrayList<String> ADMIN_ROLES = new ArrayList<>(List.of("ROLE_ADMIN"));
 
