@@ -46,7 +46,7 @@ public class ModuleMapper {
 
         if (module.getLessons() != null) {
             responseDto.setLessons(module.getLessons().stream()
-                    .map(lessonMapper::toResponseDto)
+                    .map(lessonMapper::toSummaryResponseDto)
                     .collect(Collectors.toSet()));
         }
 

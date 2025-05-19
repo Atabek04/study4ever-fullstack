@@ -2,6 +2,7 @@ package com.study4ever.courseservice.util.mapper;
 
 import com.study4ever.courseservice.dto.LessonRequestDto;
 import com.study4ever.courseservice.dto.LessonResponseDto;
+import com.study4ever.courseservice.dto.LessonSummaryResponseDto;
 import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Lesson;
 import com.study4ever.courseservice.repository.ModuleRepository;
@@ -30,6 +31,15 @@ public class LessonMapper {
                 .title(lesson.getTitle())
                 .content(lesson.getContent())
                 .videoUrl(lesson.getVideoUrl())
+                .durationMinutes(lesson.getDurationMinutes())
+                .sortOrder(lesson.getSortOrder())
+                .build();
+    }
+
+    public LessonSummaryResponseDto toSummaryResponseDto(Lesson lesson) {
+        return LessonSummaryResponseDto.builder()
+                .id(lesson.getId())
+                .title(lesson.getTitle())
                 .durationMinutes(lesson.getDurationMinutes())
                 .sortOrder(lesson.getSortOrder())
                 .build();

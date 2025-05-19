@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class CourseServiceImpl implements CourseService {
     public List<CourseResponseDto> getAllCourses() {
         return courseRepository.findAll().stream()
                 .map(courseMapper::mapToResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -50,7 +49,14 @@ public class CourseServiceImpl implements CourseService {
     public List<CourseDetailResponseDto> getAllCoursesWithDetails() {
         return courseRepository.findAll().stream()
                 .map(courseMapper::mapToDetailResponseDto)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    public List<CourseDetailResponseDto> getCoursesWithDetails(Long id) {
+        return courseRepository.findById(id)
+                .map(course -> List.of(courseMapper.mapToDetailResponseDto(course)))
+                .orElseThrow(() -> new NotFoundException("Course not found"));
     }
 
     @Override

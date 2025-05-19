@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +25,7 @@ public class ModuleServiceImpl implements ModuleService {
     public List<ModuleResponseDto> getAllModules() {
         return moduleRepository.findAll().stream()
                 .map(moduleMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -38,7 +37,7 @@ public class ModuleServiceImpl implements ModuleService {
     public List<ModuleDetailResponseDto> getAllModulesWithDetails() {
         return moduleRepository.findAll().stream()
                 .map(moduleMapper::toDetailResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

@@ -24,5 +24,5 @@ public class CourseDetailResponseDto {
     private UUID instructorId;
 
     @Builder.Default
-    private Set<ModuleSummaryDto> modules = new HashSet<>();
+    private Set<ModuleDetailResponseDto> modules = new HashSet<>();
 }

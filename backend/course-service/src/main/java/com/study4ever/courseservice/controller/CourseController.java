@@ -42,6 +42,11 @@ public class CourseController {
         return courseService.getAllCoursesWithDetails();
     }
 
+    @GetMapping("/details/{id}")
+    public List<CourseDetailResponseDto> getCoursesWithDetails(@PathVariable("id") Long id) {
+        return courseService.getCoursesWithDetails(id);
+    }
+
     @GetMapping("/{id}")
     public CourseResponseDto getCourseById(@PathVariable("id") Long id) {
         return courseService.getCourseById(id);
