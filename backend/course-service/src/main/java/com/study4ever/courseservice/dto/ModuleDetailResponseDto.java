@@ -22,5 +22,5 @@ public class ModuleDetailResponseDto {
     private Long courseId;
 
     @Builder.Default
-    private Set<LessonResponseDto> lessons = new HashSet<>();
+    private Set<LessonSummaryResponseDto> lessons = new HashSet<>();
 }
