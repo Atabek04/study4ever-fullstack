@@ -5,6 +5,12 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add timeout to prevent hanging requests
+  timeout: 10000,
+  // Add validation for status
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Resolve for status codes 200-499
+  }
 });
 
 

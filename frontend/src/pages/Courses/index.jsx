@@ -79,6 +79,21 @@ const CoursesPage = () => {
     mutate();
   };
 
+  const handleDiagnostics = async () => {
+    try {
+      const { testApiEndpoint } = await import('../../utils/apiDiagnostics.js');
+      const result = await testApiEndpoint('/api/v1/courses');
+      console.log('API Diagnostics Results:', result);
+      
+      setError(prev => {
+        const details = `Diagnostics: ${result.success ? 'Connected' : 'Failed'} to ${result.fullUrl}`;
+        return prev + ` (${details})`;
+      });
+    } catch (e) {
+      console.error('Error running diagnostics:', e);
+    }
+  };
+
   const handleClearSearch = () => {
     setSearchTerm('');
   };
@@ -123,7 +138,7 @@ const CoursesPage = () => {
 
   return (
     <DashboardLayout>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 2 }}>
         <Box sx={{ mb: 4 }}>
           <Breadcrumbs 
             separator={<NavigateNextIcon fontSize="small" />} 
@@ -248,9 +263,14 @@ const CoursesPage = () => {
                 severity="error" 
                 sx={{ mb: 3 }}
                 action={
-                  <Button color="inherit" size="small" onClick={handleRetry}>
-                    RETRY
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button color="inherit" size="small" onClick={handleDiagnostics}>
+                      DIAGNOSE
+                    </Button>
+                    <Button color="inherit" size="small" onClick={handleRetry}>
+                      RETRY
+                    </Button>
+                  </Box>
                 }
               >
                 {error}

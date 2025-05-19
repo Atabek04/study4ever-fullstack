@@ -212,8 +212,8 @@ const DashboardLayout = ({ children }) => {
         <Container 
           maxWidth="xl" 
           sx={{ 
-            py: 3,
-            px: { xs: 1, sm: 2, md: 3 },
+            py: 1,
+            px: { xs: 1, sm: 1.5, md: 2 },
             height: '100%'
           }}
         >

@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useEnrollment } from '../../hooks/courseHooks';
+import { useEnrollment, useInstructor } from '../../hooks/courseHooks';
 import CourseDetailModal from './CourseDetailModal';
 
 const CourseItem = ({ course }) => {
@@ -23,6 +23,9 @@ const CourseItem = ({ course }) => {
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   
+  // Fetch instructor details
+  const { instructor, loading: instructorLoading } = useInstructor(course.instructorId);
+
   // Fallback image if course thumbnail fails to load
   const fallbackImage = 'https://picsum.photos/400/140?blur=2';
   
@@ -111,7 +114,7 @@ const CourseItem = ({ course }) => {
           image={course.thumbnail || courseImage}
           alt={course.title}
           sx={{
-            height: 160,
+            height: 120, // Reduced from 160 to 120 for a more compact look
             objectFit: 'cover',
             objectPosition: 'center',
             background: '#f3f6f9',
@@ -123,7 +126,7 @@ const CourseItem = ({ course }) => {
           onClick={openDetailModal}
           style={{ cursor: 'pointer' }}
         />
-        <CardContent sx={{ flexGrow: 1, pt: 2.5, pb: 1.5, px: 3 }}>
+        <CardContent sx={{ flexGrow: 1, pt: 2.5, pb: 1, px: 3 }}>
           <Tooltip title={course.title} placement="top" arrow>
             <Typography 
               gutterBottom 
@@ -155,8 +158,13 @@ const CourseItem = ({ course }) => {
               variant="body2" 
               color="text.secondary" 
               fontWeight={500}
+              sx={{ minHeight: 24 }}
             >
-              {course.instructorId ? `Instructor ID: ${course.instructorId}` : 'Unknown Instructor'}
+              {instructorLoading
+                ? 'Loading instructor...'
+                : instructor
+                  ? `${instructor.firstName} ${instructor.lastName}`
+                  : 'Unknown Instructor'}
             </Typography>
           </Box>
           
@@ -164,13 +172,13 @@ const CourseItem = ({ course }) => {
             variant="body2" 
             color="text.secondary" 
             sx={{ 
-              mb: 2.5,
+              mb: 0,
               display: '-webkit-box',
               overflow: 'hidden',
               WebkitBoxOrient: 'vertical',
               WebkitLineClamp: 3,
-              lineHeight: 1.6,
-              height: 72, // Approximately 3 lines of text
+              lineHeight: 1.5,
+              height: 30,
               fontSize: '0.9rem',
               cursor: 'pointer'
             }}
@@ -179,7 +187,7 @@ const CourseItem = ({ course }) => {
             {truncateDescription(course.description)}
           </Typography>
         </CardContent>
-        <CardActions sx={{ p: 3, pt: 0, display: 'flex', justifyContent: 'center' }}>
+        <CardActions sx={{ p: 3, pt: 1, pb: 2.5, display: 'flex', justifyContent: 'center' }}>
           <Button
             size="large"
             variant="contained"

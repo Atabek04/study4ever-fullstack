@@ -16,7 +16,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import { useState } from 'react';
-import { useEnrollment } from '../../hooks/courseHooks';
+import { useEnrollment, useInstructor } from '../../hooks/courseHooks';
 
 const CourseDetailModal = ({ course, open, onClose }) => {
   const { enrollInCourse, enrolling } = useEnrollment();
@@ -25,6 +25,9 @@ const CourseDetailModal = ({ course, open, onClose }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   
+  // Fetch instructor details
+  const { instructor, loading: instructorLoading } = useInstructor(course.instructorId);
+
   // Fallback image if course thumbnail fails to load
   const fallbackImage = 'https://picsum.photos/800/400?blur=2';
   
@@ -135,8 +138,17 @@ const CourseDetailModal = ({ course, open, onClose }) => {
           <Box>
             <Typography variant="subtitle2" fontWeight={600}>Instructor</Typography>
             <Typography variant="body2" color="text.secondary">
-              {course.instructorId ? `ID: ${course.instructorId}` : 'Unknown Instructor'}
+              {instructorLoading
+                ? 'Loading instructor...'
+                : instructor
+                  ? `${instructor.firstName} ${instructor.lastName}`
+                  : 'Unknown Instructor'}
             </Typography>
+            {instructor && (
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95em' }}>
+                {instructor.email}
+              </Typography>
+            )}
           </Box>
         </Box>
         
