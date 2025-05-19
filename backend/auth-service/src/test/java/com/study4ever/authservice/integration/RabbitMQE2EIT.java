@@ -48,10 +48,10 @@ public class RabbitMQE2EIT {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     @Autowired
     private RabbitAdmin rabbitAdmin;
-    
+
     @Autowired
     private Jackson2JsonMessageConverter messageConverter;
 
@@ -85,13 +85,13 @@ public class RabbitMQE2EIT {
     void shouldSendUserCreatedEvent() {
         // Given
         UserCreatedEvent userCreatedEvent = createUserCreatedEvent();
-        
+
         // Clear the queue first
         rabbitAdmin.purgeQueue(USER_QUEUE);
-        
+
         // When
         userEventProducer.sendUserCreatedEvent(userCreatedEvent);
-        
+
         // Then
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             Message message = rabbitTemplate.receive(USER_QUEUE, 1000);
@@ -109,13 +109,13 @@ public class RabbitMQE2EIT {
     void shouldSendUserUpdatedEvent() {
         // Given
         UserUpdatedEvent userUpdatedEvent = createUserUpdatedEvent();
-        
+
         // Clear the queue first
         rabbitAdmin.purgeQueue(USER_QUEUE);
-        
+
         // When
         userEventProducer.sendUserUpdatedEvent(userUpdatedEvent);
-        
+
         // Then
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             Message message = rabbitTemplate.receive(USER_QUEUE, 1000);
@@ -133,13 +133,13 @@ public class RabbitMQE2EIT {
     void shouldSendUserDeletedEvent() {
         // Given
         UserDeletedEvent userDeletedEvent = createUserDeletedEvent();
-        
+
         // Clear the queue first
         rabbitAdmin.purgeQueue(USER_QUEUE);
-        
+
         // When
         userEventProducer.sendUserDeletedEvent(userDeletedEvent);
-        
+
         // Then
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             Message message = rabbitTemplate.receive(USER_QUEUE, 1000);

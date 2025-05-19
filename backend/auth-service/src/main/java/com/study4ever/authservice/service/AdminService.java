@@ -8,10 +8,10 @@ import java.util.UUID;
 
 public interface AdminService {
     UserResponse createInstructor(CreateInstructorRequest request);
-    
+
     List<UserResponse> getAllInstructors();
-    
+
     UserResponse getInstructorById(UUID id);
-    
+
     void deleteInstructor(UUID id);
 }

@@ -24,27 +24,27 @@ public class ApiGatewayAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        
+
         String userId = request.getHeader("X-User-Id");
         String userRoles = request.getHeader("X-User-Roles");
-        
+
         if (userId != null && userRoles != null) {
             log.debug("Processing API Gateway headers - User: {}, Roles: {}", userId, userRoles);
-            
+
             List<SimpleGrantedAuthority> authorities = Collections.emptyList();
             if (!userRoles.isEmpty()) {
                 authorities = Arrays.stream(userRoles.split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
             }
-            
-            UsernamePasswordAuthenticationToken authentication = 
+
+            UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                    
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
             log.debug("Set authentication in context for user: {}", userId);
         }
-        
+
         filterChain.doFilter(request, response);
     }
 }

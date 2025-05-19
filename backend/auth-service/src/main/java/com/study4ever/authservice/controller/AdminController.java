@@ -26,26 +26,26 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService adminService;
-    
+
     @PostMapping("/instructors")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse createInstructor(@Valid @RequestBody CreateInstructorRequest request) {
         log.info("Received request to create instructor with username: {}", request.getUsername());
         return adminService.createInstructor(request);
     }
-    
+
     @GetMapping("/instructors")
     public List<UserResponse> getAllInstructors() {
         log.info("Received request to get all instructors");
         return adminService.getAllInstructors();
     }
-    
+
     @GetMapping("/instructors/{id}")
     public UserResponse getInstructorById(@PathVariable("id") String id) {
         log.info("Received request to get instructor with id: {}", id);
         return adminService.getInstructorById(UUID.fromString(id));
     }
-    
+
     @DeleteMapping("/instructors/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteInstructor(@PathVariable("id") UUID id) {

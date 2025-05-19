@@ -136,13 +136,13 @@ public class AdminServiceImpl implements AdminService {
                 .collect(java.util.stream.Collectors.toSet());
 
         UserCreatedEvent userCreatedEvent = new UserCreatedEvent(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getFirstName(),
-            user.getLastName(),
-            roleNames,
-            user.isEnabled()
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                roleNames,
+                user.isEnabled()
         );
         userEventProducer.sendUserCreatedEvent(userCreatedEvent);
     }

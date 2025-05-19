@@ -1,11 +1,10 @@
 package com.study4ever.courseservice.service.impl;
 
+import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
-import com.study4ever.courseservice.dto.CourseDetailResponseDto;
 import com.study4ever.courseservice.exception.InvalidInstructorRoleException;
 import com.study4ever.courseservice.exception.NotFoundException;
-import com.study4ever.courseservice.exception.SortOrderConflictException;
 import com.study4ever.courseservice.model.Course;
 import com.study4ever.courseservice.model.Role;
 import com.study4ever.courseservice.repository.CourseRepository;
@@ -39,14 +38,14 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new NotFoundException("Course not found"));
         return courseMapper.mapToResponseDto(course);
     }
-    
+
     @Override
     public CourseDetailResponseDto getCourseDetailsById(Long id) {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Course not found"));
         return courseMapper.mapToDetailResponseDto(course);
     }
-    
+
     @Override
     public List<CourseDetailResponseDto> getAllCoursesWithDetails() {
         return courseRepository.findAll().stream()
@@ -59,7 +58,7 @@ public class CourseServiceImpl implements CourseService {
         var course = courseMapper.mapToCourse(new Course(), courseRequestDto);
         return courseRepository.save(course);
     }
-    
+
     @Override
     public CourseResponseDto saveCourse(CourseRequestDto courseRequestDto) {
         var instructor = userRepository.findById(courseRequestDto.getInstructorId())
@@ -68,7 +67,7 @@ public class CourseServiceImpl implements CourseService {
         if (!instructor.getRoles().contains(Role.ROLE_INSTRUCTOR)) {
             throw new InvalidInstructorRoleException("User is not an instructor");
         }
-        
+
         var course = courseMapper.mapToCourse(new Course(), courseRequestDto);
         Course savedCourse = courseRepository.save(course);
         return courseMapper.mapToResponseDto(savedCourse);
@@ -78,7 +77,7 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponseDto updateCourse(Long id, CourseRequestDto courseRequestDto) {
         Course existingCourse = courseRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Course not found"));
-        
+
         courseMapper.mapToCourse(existingCourse, courseRequestDto);
         Course updatedCourse = courseRepository.save(existingCourse);
         return courseMapper.mapToResponseDto(updatedCourse);

@@ -20,7 +20,7 @@ public class ModuleDetailResponseDto {
     private String title;
     private Integer sortOrder;
     private Long courseId;
-    
+
     @Builder.Default
     private Set<LessonResponseDto> lessons = new HashSet<>();
 }

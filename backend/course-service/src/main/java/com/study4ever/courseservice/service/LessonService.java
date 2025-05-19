@@ -2,13 +2,16 @@ package com.study4ever.courseservice.service;
 
 import com.study4ever.courseservice.dto.LessonRequestDto;
 import com.study4ever.courseservice.model.Lesson;
+
 import java.util.List;
 
 public interface LessonService {
-    
+
     List<Lesson> getAllLessons();
 
     Lesson getLessonById(Long id);
+
+    Lesson getLessonByModuleIdAndLessonId(String moduleId, String lessonId);
 
     Lesson createLesson(LessonRequestDto lessonRequestDto);
 

@@ -1,75 +1,86 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.study4ever</groupId>
-  <artifactId>study4ever</artifactId>
-  <version>1.0.0</version>
-  <packaging>pom</packaging>
+    <groupId>com.study4ever</groupId>
+    <artifactId>study4ever</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
 
-  <name>study4ever</name>
-  <url>https://www.study4ever.com</url>
+    <name>study4ever</name>
+    <url>https://www.study4ever.com</url>
 
-  <modules>
-    <module>config-server</module>
-    <module>eureka-server</module>
-    <module>auth-service</module>
-    <module>course-service</module>
-  </modules>
+    <modules>
+        <module>config-server</module>
+        <module>eureka-server</module>
+        <module>auth-service</module>
+        <module>course-service</module>
+        <module>api-gateway</module>
+        <module>progress-service</module>
+    </modules>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
-    <spring.boot.maven.plugin.version>3.4.1</spring.boot.maven.plugin.version>
-    <spring.boot.dependencies.version>3.4.1</spring.boot.dependencies.version>
-    <spring.cloud.config.server.version>4.2.0</spring.cloud.config.server.version>
-    <eureka.server.version>4.2.0</eureka.server.version>
-    <spring-cloud-starter-config.version>4.2.1</spring-cloud-starter-config.version>
-    <spring-cloud-starter-netflix-eureka-client.version>4.2.1</spring-cloud-starter-netflix-eureka-client.version>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <spring.boot.maven.plugin.version>3.4.1</spring.boot.maven.plugin.version>
+        <spring.boot.dependencies.version>3.4.5</spring.boot.dependencies.version>
+        <spring.cloud.config.server.version>4.2.0</spring.cloud.config.server.version>
+        <eureka.server.version>4.2.0</eureka.server.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
+        <spring.cloud.starter.config.client.version>4.2.2</spring.cloud.starter.config.client.version>
+        <spring.cloud.starter.netflix.eureka.client.version>4.2.1</spring.cloud.starter.netflix.eureka.client.version>
+        <lombok.version>1.18.38</lombok.version>
+        <maven.surefire.plugin.version>3.5.3</maven.surefire.plugin.version>
+    </properties>
 
-  <dependencyManagement>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.dependencies.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring.boot.dependencies.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
     </dependencies>
-  </dependencyManagement>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>${spring.boot.maven.plugin.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${maven.compiler.plugin.version}</version>
-          <configuration>
-            <parameters>true</parameters>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring.boot.maven.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <parameters>true</parameters>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

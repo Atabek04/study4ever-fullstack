@@ -13,10 +13,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.util.UUID;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -28,7 +28,7 @@ class RabbitMQIntegrationTest {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     @Autowired
     private RabbitAdmin rabbitAdmin;
 
@@ -60,7 +60,7 @@ class RabbitMQIntegrationTest {
 
         // Then
         assertNotNull(receivedMessage);
-        
+
         UserCreatedEvent receivedEvent = (UserCreatedEvent) messageConverter.fromMessage(receivedMessage);
         assertNotNull(receivedEvent);
         assertEquals(userCreatedEvent.getId(), receivedEvent.getId());

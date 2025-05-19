@@ -1,0 +1,71 @@
+server:
+  port: 8087
+
+spring:
+  datasource:
+    url: ${PROGRESS_DB_URL}
+    username: ${PROGRESS_DB_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+logging:
+  level:
+    org.springframework.web: INFO
+    com.study4ever.progressservice: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# RabbitMQ Configurations
+rabbitmq:
+  exchanges:
+    events: study4ever.events.exchange
+    study-sessions: study4ever.study-sessions.exchange
+  queues:
+    user-created: study4ever.progress.user-created.queue
+    user-deleted: study4ever.progress.user-deleted.queue
+    course-enrollment: study4ever.progress.course-enrollment.queue
+    course-completion: study4ever.progress.course-completion.queue
+    module-completion: study4ever.progress.module-completion.queue
+    lesson-completion: study4ever.progress.lesson-completion.queue
+    user-login: study4ever.progress.user-login.queue
+    study-session-started: study4ever.progress.study-session-started.queue
+    study-session-ended: study4ever.progress.study-session-ended.queue
+    study-session-heartbeat: study4ever.progress.study-session-heartbeat.queue
+  routing-keys:
+    user-created: study4ever.events.user.created
+    user-deleted: study4ever.events.user.deleted
+    course-enrollment: study4ever.events.course.enrollment
+    course-completion: study4ever.events.course.completion
+    module-completion: study4ever.events.module.completion
+    lesson-completion: study4ever.events.lesson.completion
+    user-login: study4ever.events.user.login
+    study-session-started: study4ever.study-sessions.started
+    study-session-ended: study4ever.study-sessions.ended
+    study-session-heartbeat: study4ever.study-sessions.heartbeat
+
+# Study Session Configuration
+study-session:
+  max-inactivity-minutes: 15
+  max-session-duration-minutes: 240
+  heartbeat-check-interval-seconds: 60

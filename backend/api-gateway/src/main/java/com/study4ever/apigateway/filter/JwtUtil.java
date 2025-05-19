@@ -1,10 +1,11 @@
 package com.study4ever.apigateway.filter;
 
+import com.study4ever.apigateway.config.JwtSecurityProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,14 +15,13 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import com.study4ever.apigateway.config.JwtSecurityProperties;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class JwtUtil {
     private final JwtSecurityProperties jwtProperties;
-    
+
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

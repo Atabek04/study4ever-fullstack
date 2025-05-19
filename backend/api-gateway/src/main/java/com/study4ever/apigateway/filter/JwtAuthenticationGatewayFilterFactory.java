@@ -40,7 +40,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             String path = exchange.getRequest().getURI().getPath();
-            
+
             if (path.startsWith("/api/v1/auth/")) {
                 log.debug("Skipping JWT authentication for auth path: {}", path);
                 return chain.filter(exchange);
@@ -49,13 +49,13 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
             return validateAndProcessToken(exchange, chain, config);
         };
     }
-    
-    private Mono<Void> validateAndProcessToken(ServerWebExchange exchange, 
-                                              GatewayFilterChain chain,
-                                              Config config) {
+
+    private Mono<Void> validateAndProcessToken(ServerWebExchange exchange,
+                                               GatewayFilterChain chain,
+                                               Config config) {
         String path = exchange.getRequest().getURI().getPath();
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.warn("Missing or invalid Authorization header for path: {}", path);
             return createErrorResponse(exchange.getResponse(),
@@ -73,7 +73,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
         try {
             String username = jwtUtil.getUsernameFromToken(token);
             List<String> userRoles = jwtUtil.getRolesFromToken(token);
-            
+
             if (userRoles == null) {
                 userRoles = new ArrayList<>();
                 log.warn("No roles found in token for user: {}", username);
@@ -93,9 +93,9 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                         break;
                     }
                 }
-                
+
                 if (!hasPermission) {
-                    log.warn("Access denied for user {} with roles {} - required roles: {}", 
+                    log.warn("Access denied for user {} with roles {} - required roles: {}",
                             username, userRoles, allowedRoles);
                     return createErrorResponse(exchange.getResponse(), HttpStatus.FORBIDDEN,
                             "Access denied. Insufficient privileges.");
@@ -106,7 +106,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                     .header("X-User-Id", username)
                     .header("X-User-Roles", String.join(",", userRoles))
                     .build();
-                    
+
             return chain.filter(exchange.mutate().request(mutatedRequest).build());
         } catch (Exception e) {
             log.error("Error processing JWT token for path: {}", path, e);

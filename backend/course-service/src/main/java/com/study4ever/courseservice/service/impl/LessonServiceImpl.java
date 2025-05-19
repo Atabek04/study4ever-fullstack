@@ -30,17 +30,23 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
+    public Lesson getLessonByModuleIdAndLessonId(String moduleId, String lessonId) {
+        return lessonRepository.findByModuleIdAndId(Long.valueOf(moduleId), Long.valueOf(lessonId))
+                .orElseThrow(() -> new NotFoundException("Lesson not found for moduleId: " + moduleId + " and lessonId: " + lessonId));
+    }
+
+    @Override
     public Lesson createLesson(LessonRequestDto lessonRequestDto) {
         Lesson lesson = new Lesson();
-        
+
         if (lessonRequestDto.getSortOrder() == null) {
             lessonRequestDto.setSortOrder(getNextSortOrderForModule(lessonRequestDto.getModuleId()));
         } else if (lessonRepository.existsByModuleIdAndSortOrder(
                 lessonRequestDto.getModuleId(), lessonRequestDto.getSortOrder())) {
-            throw new SortOrderConflictException("Lesson with sort order " + lessonRequestDto.getSortOrder() + 
+            throw new SortOrderConflictException("Lesson with sort order " + lessonRequestDto.getSortOrder() +
                     " already exists in this module");
         }
-        
+
         lessonMapper.mapToLesson(lesson, lessonRequestDto);
         return lessonRepository.save(lesson);
     }
@@ -48,19 +54,19 @@ public class LessonServiceImpl implements LessonService {
     @Override
     public Lesson updateLesson(Long id, LessonRequestDto lessonRequestDto) {
         Lesson existingLesson = getLessonById(id);
-        
+
         if (lessonRequestDto.getSortOrder() == null) {
-            lessonRequestDto.setSortOrder(existingLesson.getSortOrder() != null ? 
-                existingLesson.getSortOrder() : getNextSortOrderForModule(lessonRequestDto.getModuleId()));
-        } else if (!lessonRequestDto.getSortOrder().equals(existingLesson.getSortOrder()) && 
-                   lessonRepository.existsByModuleIdAndSortOrderAndIdNot(
-                       lessonRequestDto.getModuleId(), 
-                       lessonRequestDto.getSortOrder(), 
-                       id)) {
-            throw new SortOrderConflictException("Lesson with sort order " + lessonRequestDto.getSortOrder() + 
+            lessonRequestDto.setSortOrder(existingLesson.getSortOrder() != null ?
+                    existingLesson.getSortOrder() : getNextSortOrderForModule(lessonRequestDto.getModuleId()));
+        } else if (!lessonRequestDto.getSortOrder().equals(existingLesson.getSortOrder()) &&
+                lessonRepository.existsByModuleIdAndSortOrderAndIdNot(
+                        lessonRequestDto.getModuleId(),
+                        lessonRequestDto.getSortOrder(),
+                        id)) {
+            throw new SortOrderConflictException("Lesson with sort order " + lessonRequestDto.getSortOrder() +
                     " already exists in this module");
         }
-        
+
         lessonMapper.mapToLesson(existingLesson, lessonRequestDto);
         return lessonRepository.save(existingLesson);
     }

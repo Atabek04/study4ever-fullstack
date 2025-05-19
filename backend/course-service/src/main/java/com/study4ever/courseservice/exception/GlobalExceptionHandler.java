@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
         log.error("Invalid instructor role: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
-    
+
     @ExceptionHandler(SortOrderConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleSortOrderConflictException(SortOrderConflictException ex) {
@@ -43,6 +43,20 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleTagNameConflictException(TagNameConflictException ex) {
         log.error("Tag name conflict: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), null);
+    }
+    
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadRequestException(BadRequestException ex) {
+        log.error("Bad request: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+    
+    @ExceptionHandler(ForbiddenOperationException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbiddenOperationException(ForbiddenOperationException ex) {
+        log.error("Forbidden operation: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

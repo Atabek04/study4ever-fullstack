@@ -37,3 +37,17 @@ retry:
   initialDelay: 1000
   multiplier: 2
   maxDelay: 10000
+
+# RabbitMQ Configurations
+rabbitmq:
+  exchanges:
+    events: study4ever.events.exchange
+    study-sessions: study4ever.study-sessions.exchange
+  queues:
+    study-session-started: study4ever.course.study-session-started.queue
+    study-session-ended: study4ever.course.study-session-ended.queue
+    study-session-heartbeat: study4ever.course.study-session-heartbeat.queue
+  routing-keys:
+    study-session-started: study4ever.study-sessions.started
+    study-session-ended: study4ever.study-sessions.ended
+    study-session-heartbeat: study4ever.study-sessions.heartbeat
