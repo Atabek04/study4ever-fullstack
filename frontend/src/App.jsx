@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { createTheme, ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import AuthPage from './pages/Auth';
 import Dashboard from './pages/Dashboard';
+import CoursesPage from './pages/Courses';
 import './App.css';
 
 // Create protected route component
@@ -192,6 +193,11 @@ function AppWithRouting() {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses" element={
+        <ProtectedRoute>
+          <CoursesPage />
         </ProtectedRoute>
       } />
       <Route path="/" element={<Navigate to="/auth" />} />
