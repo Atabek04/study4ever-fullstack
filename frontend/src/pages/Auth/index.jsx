@@ -59,7 +59,8 @@ const AuthPage = () => {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '100vh',
-          py: 4
+          py: 4,
+          backgroundColor: '#FFF5E0' // Ensuring the background color is applied
         }}
       >      <Paper
         elevation={3}
@@ -67,9 +68,10 @@ const AuthPage = () => {
           width: '100%',
           p: { xs: 2, sm: 4 },
           borderRadius: 3,
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+          boxShadow: '0 12px 32px rgba(199, 0, 57, 0.08)',
           overflow: 'hidden',
-          position: 'relative'
+          position: 'relative',
+          backgroundColor: '#FFF5E0', // Cream background for the paper
         }}
       >
         <Box 
@@ -100,7 +102,7 @@ const AuthPage = () => {
               centered
               sx={{
                 '& .MuiTabs-indicator': {
-                  backgroundColor: 'primary.main',
+                  backgroundColor: 'secondary.main', // Coral-pink for the active tab indicator
                   height: 3,
                   borderRadius: '3px 3px 0 0'
                 },
@@ -110,9 +112,10 @@ const AuthPage = () => {
                   fontWeight: 500,
                   minHeight: 48,
                   py: 1,
+                  color: '#141E46', // Deep navy for tab text
                   '&.Mui-selected': {
                     fontWeight: 700,
-                    color: 'primary.main'
+                    color: 'primary.main' // Rich crimson for active tab text
                   }
                 }
               }}
