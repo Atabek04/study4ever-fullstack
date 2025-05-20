@@ -11,12 +11,12 @@ import java.util.UUID;
 @Repository
 public interface LessonProgressRepository extends JpaRepository<LessonProgress, UUID> {
 
-    List<LessonProgress> findByUserId(String userId);
-
     List<LessonProgress> findByUserIdAndCourseId(String userId, String courseId);
 
     List<LessonProgress> findByUserIdAndCourseIdAndModuleId(String userId, String courseId, String moduleId);
 
     Optional<LessonProgress> findByUserIdAndCourseIdAndModuleIdAndLessonId(
             String userId, String courseId, String moduleId, String lessonId);
+
+    void deleteByUserIdAndCourseId(String userId, String courseId);
 }

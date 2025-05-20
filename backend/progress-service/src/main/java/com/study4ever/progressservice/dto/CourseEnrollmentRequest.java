@@ -1,6 +1,6 @@
 package com.study4ever.progressservice.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CourseEnrollmentRequest {
 
-    @NotBlank(message = "Course ID is required")
-    private String courseId;
+    @NotNull(message = "Total lessons count is required")
+    private Integer totalLessonsCount;
+
+    @NotNull(message = "Total modules count is required")
+    private Integer totalModulesCount;
 }

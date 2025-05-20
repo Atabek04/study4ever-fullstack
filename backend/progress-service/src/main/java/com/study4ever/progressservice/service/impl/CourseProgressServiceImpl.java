@@ -2,7 +2,6 @@ package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.CourseEnrollmentRequest;
 import com.study4ever.progressservice.dto.CourseProgressDto;
-import com.study4ever.progressservice.dto.ModuleProgressDto;
 import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.CourseProgress;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -39,45 +37,33 @@ public class CourseProgressServiceImpl implements CourseProgressService {
 
     @Override
     @Transactional
-    public CourseProgressDto initializeProgress(String userId, String courseId, CourseEnrollmentRequest request) {
+    public void enrollInCourse(String userId, String courseId, CourseEnrollmentRequest request) {
         var existingProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId);
         if (existingProgress.isPresent()) {
-            return ProgressMapper.mapToCourseDto(existingProgress.get());
+            throw new BadRequestException("User " + userId + " is already enrolled in course " + courseId);
         }
 
         var courseProgress = CourseProgress.builder()
-                .id(UUID.randomUUID())
                 .userId(userId)
                 .courseId(courseId)
                 .status(ProgressStatus.NOT_STARTED)
                 .completionPercentage(0.0f)
                 .completedLessonsCount(0)
-                .totalLessonsCount(0)   // todo: set this based on the course content
+                .totalLessonsCount(request.getTotalLessonsCount())
+                .totalModulesCount(request.getTotalModulesCount())
                 .enrollmentDate(LocalDateTime.now())
                 .lastAccessDate(LocalDateTime.now())
                 .completed(false)
                 .build();
 
-        var savedProgress = courseProgressRepository.save(courseProgress);
-        log.info("Initialized course progress for user {} and course {}", userId, courseId);
-
-        return ProgressMapper.mapToCourseDto(savedProgress);
+        courseProgressRepository.save(courseProgress);
+        log.info("User {} enrolled in course with id {}", userId, courseId);
     }
 
     @Override
     public List<CourseProgressDto> getAllCourseProgress(String userId) {
         return courseProgressRepository.findByUserId(userId).stream()
                 .map(ProgressMapper::mapToCourseDto)
-                .toList();
-    }
-
-    @Override
-    public List<ModuleProgressDto> getAllModulesProgressInCourse(String userId, String courseId) {
-        courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
-                .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
-
-        return moduleProgressRepository.findByUserIdAndCourseId(userId, courseId).stream()
-                .map(ProgressMapper::mapToModuleDto)
                 .toList();
     }
 
@@ -107,6 +93,13 @@ public class CourseProgressServiceImpl implements CourseProgressService {
         var courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
 
+        if (courseProgress.getStatus() == ProgressStatus.COMPLETED) {
+            throw new BadRequestException("Course " + courseId + " is already completed by user " + userId);
+        }
+        if (courseProgress.getCompletedLessonsCount() < courseProgress.getTotalLessonsCount()) {
+            throw new BadRequestException("Cannot mark course " + courseId + " as completed. Not all lessons are completed.");
+        }
+
         courseProgress.setStatus(ProgressStatus.COMPLETED);
         courseProgress.setCompleted(true);
         courseProgress.setCompletionPercentage(100.0f);
@@ -132,6 +125,7 @@ public class CourseProgressServiceImpl implements CourseProgressService {
 
         courseProgressRepository.save(courseProgress);
         moduleProgressRepository.deleteByUserIdAndCourseId(userId, courseId);
+        lessonProgressRepository.deleteByUserIdAndCourseId(userId, courseId);
 
         log.info("Reset course progress for user {} and course {}", userId, courseId);
     }
@@ -157,5 +151,14 @@ public class CourseProgressServiceImpl implements CourseProgressService {
         courseProgressRepository.save(courseProgress);
 
         return (int) completedLessonsCount;
+    }
+
+    @Override
+    public void removeEnrolledCourse(String userId, String courseId) {
+        var courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
+
+        courseProgressRepository.delete(courseProgress);
+        log.info("Removed course {} from enrolled courses for user {}", courseId, userId);
     }
 }

@@ -1,4 +1,4 @@
-package com.study4ever.progressservice.event;
+package com.study4ever.progressservice.event.message;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,8 +12,11 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StudySessionEndedEvent {
+public class StudySessionHeartbeatEvent {
     private String userId;
     private UUID sessionId;
+    private String courseId;
+    private String moduleId;
+    private String lessonId;
     private LocalDateTime timestamp;
 }

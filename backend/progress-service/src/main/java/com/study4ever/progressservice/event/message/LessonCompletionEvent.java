@@ -1,4 +1,4 @@
-package com.study4ever.progressservice.event;
+package com.study4ever.progressservice.event.message;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourseCompletionEvent {
+public class LessonCompletionEvent {
     private String userId;
     private String courseId;
+    private String moduleId;
+    private String lessonId;
     private LocalDateTime timestamp;
 }

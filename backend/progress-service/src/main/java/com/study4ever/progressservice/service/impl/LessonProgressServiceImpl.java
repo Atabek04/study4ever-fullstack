@@ -92,6 +92,12 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         lessonProgress.setCompletionDate(LocalDateTime.now());
         lessonProgressRepository.save(lessonProgress);
 
+        var courseProgress = courseProgressRepository
+                .findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
+        courseProgress.setCurrentLessonId(lessonId);
+        courseProgress.setCurrentModuleId(moduleId);
+        courseProgressRepository.save(courseProgress);
 
         updateCompletionProgress(userId, courseId, moduleId);
 

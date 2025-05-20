@@ -1,7 +1,6 @@
 package com.study4ever.progressservice.util;
 
 import com.study4ever.progressservice.dto.CourseProgressDto;
-import com.study4ever.progressservice.dto.CourseProgressSummaryDto;
 import com.study4ever.progressservice.dto.LessonProgressDto;
 import com.study4ever.progressservice.dto.ModuleProgressDto;
 import com.study4ever.progressservice.dto.StudySessionDto;
@@ -40,21 +39,6 @@ public class ProgressMapper {
     }
 
     /**
-     * Maps ProgressStatusDto to ProgressStatus entity
-     */
-    public static ProgressStatus mapDtoStatus(ProgressStatus status) {
-        if (status == null) {
-            return null;
-        }
-
-        return switch (status) {
-            case NOT_STARTED -> NOT_STARTED;
-            case IN_PROGRESS -> IN_PROGRESS;
-            case COMPLETED -> COMPLETED;
-        };
-    }
-
-    /**
      * Maps CourseProgress entity to CourseProgressDto
      */
     public static CourseProgressDto mapToCourseDto(CourseProgress entity) {
@@ -72,9 +56,9 @@ public class ProgressMapper {
                 .currentLessonId(entity.getCurrentLessonId())
                 .enrollmentDate(entity.getEnrollmentDate())
                 .lastAccessDate(entity.getLastAccessDate())
-                .completionDate(entity.getCompletionDate())
                 .completedLessonsCount(entity.getCompletedLessonsCount())
                 .totalLessonsCount(entity.getTotalLessonsCount())
+                .totalModulesCount(entity.getTotalModulesCount())
                 .build();
     }
 
@@ -96,29 +80,6 @@ public class ProgressMapper {
                 .firstAccessDate(entity.getFirstAccessDate())
                 .lastAccessDate(entity.getLastAccessDate())
                 .completionDate(entity.getCompletionDate())
-                .build();
-    }
-
-    /**
-     * Maps ModuleProgress entity to ModuleProgressDto with lesson counts
-     */
-    public static ModuleProgressDto mapToModuleDto(ModuleProgress entity, int completedLessons, int totalLessons) {
-        if (entity == null) {
-            return null;
-        }
-
-        return ModuleProgressDto.builder()
-                .progressId(entity.getId())
-                .userId(entity.getUserId())
-                .courseId(entity.getCourseId())
-                .moduleId(entity.getModuleId())
-                .status(mapStatus(entity.getStatus()))
-                .completionPercentage(entity.getCompletionPercentage())
-                .firstAccessDate(entity.getFirstAccessDate())
-                .lastAccessDate(entity.getLastAccessDate())
-                .completionDate(entity.getCompletionDate())
-                .completedLessonsCount(completedLessons)
-                .totalLessonsCount(totalLessons)
                 .build();
     }
 
@@ -166,13 +127,6 @@ public class ProgressMapper {
     }
 
     /**
-     * Maps UserProgress entity to UserProgressDto
-     */
-    public static UserProgressDto mapToUserDto(UserProgress userProgress) {
-        return mapToUserDto(userProgress, null);
-    }
-
-    /**
      * Maps UserProgress entity and StudyStreak to UserProgressDto
      */
     public static UserProgressDto mapToUserDto(UserProgress userProgress, StudyStreak streak) {
@@ -193,24 +147,4 @@ public class ProgressMapper {
                 .build();
     }
 
-    /**
-     * Maps CourseProgress entity to CourseProgressSummaryDto
-     */
-    public static CourseProgressSummaryDto mapToCourseProgressSummary(CourseProgress courseProgress) {
-        if (courseProgress == null) {
-            return null;
-        }
-
-        float completionPercentage = 0f;
-        if (courseProgress.getTotalLessonsCount() > 0) {
-            completionPercentage = (float) courseProgress.getCompletedLessonsCount() / courseProgress.getTotalLessonsCount() * 100;
-        }
-
-        return CourseProgressSummaryDto.builder()
-                .courseId(courseProgress.getCourseId())
-                .completionPercentage(completionPercentage)
-                .status(mapStatus(courseProgress.getStatus()))
-                .lastAccessDate(courseProgress.getLastAccessDate())
-                .build();
-    }
 }

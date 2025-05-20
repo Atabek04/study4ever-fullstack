@@ -64,7 +64,11 @@ public class CourseProgress extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private Integer totalLessonsCount = 0; // todo: this should be set when the module is created
+    private Integer totalLessonsCount = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer totalModulesCount = 0;
 
     @Column(nullable = false)
     @Builder.Default
