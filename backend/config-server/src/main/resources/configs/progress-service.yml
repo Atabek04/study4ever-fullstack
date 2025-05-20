@@ -15,8 +15,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: true
-  
+
   rabbitmq:
     host: localhost
     port: 5672
@@ -29,12 +28,6 @@ eureka:
       defaultZone: http://localhost:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-
-logging:
-  level:
-    org.springframework.web: INFO
-    com.study4ever.progressservice: DEBUG
-    org.hibernate.SQL: DEBUG
 
 # RabbitMQ Configurations
 rabbitmq:

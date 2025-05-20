@@ -47,14 +47,14 @@ const DashboardLayout = ({ children }) => {
   
   // For smoother transition of container width when drawer opens/closes
   const [mainContentStyle, setMainContentStyle] = useState({
-    marginLeft: isMobile ? 0 : drawerOpen ? `${drawerWidth}px` : 0,
-    width: isMobile ? '100%' : drawerOpen ? `calc(100% - ${drawerWidth}px)` : '100%'
+    marginLeft: 0,
+    width: '100%'
   });
   
   useEffect(() => {
     setMainContentStyle({
-      marginLeft: isMobile ? 0 : drawerOpen ? `${drawerWidth}px` : 0,
-      width: isMobile ? '100%' : drawerOpen ? `calc(100% - ${drawerWidth}px)` : '100%'
+      marginLeft: 0,
+      width: '100%'
     });
   }, [drawerOpen, isMobile]);
 

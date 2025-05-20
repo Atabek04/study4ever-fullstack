@@ -23,9 +23,6 @@ public class CourseProgressDto {
     private String currentLessonId;
     private LocalDateTime enrollmentDate;
     private LocalDateTime lastAccessDate;
-    private LocalDateTime completionDate;
-    private Long totalStudyTimeMinutes;
-    private Integer completedModulesCount;
     private Integer totalModulesCount;
     private Integer completedLessonsCount;
     private Integer totalLessonsCount;

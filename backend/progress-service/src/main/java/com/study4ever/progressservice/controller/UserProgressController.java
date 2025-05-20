@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/progress")
 @RequiredArgsConstructor
 @Slf4j
-public class GeneralProgressController {
+public class UserProgressController {
 
     private final UserProgressService userProgressService;
 

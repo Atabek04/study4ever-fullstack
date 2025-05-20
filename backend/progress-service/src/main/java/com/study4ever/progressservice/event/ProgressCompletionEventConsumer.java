@@ -1,12 +1,13 @@
 package com.study4ever.progressservice.event;
 
+import com.study4ever.progressservice.event.message.CourseCompletionEvent;
+import com.study4ever.progressservice.event.message.LessonCompletionEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.study4ever.progressservice.service.CourseProgressService;
 import com.study4ever.progressservice.service.LessonProgressService;
-import com.study4ever.progressservice.service.ModuleProgressService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ProgressCompletionEventConsumer {
 
     private final CourseProgressService courseProgressService;
-    private final ModuleProgressService moduleProgressService;
     private final LessonProgressService lessonProgressService;
 
     @RabbitListener(queues = "${rabbitmq.queues.lesson-completion}")
@@ -38,26 +38,6 @@ public class ProgressCompletionEventConsumer {
                     event.getUserId(), event.getLessonId());
         } catch (Exception e) {
             log.error("Error processing lesson completion event: {}", e.getMessage(), e);
-        }
-    }
-    
-    @RabbitListener(queues = "${rabbitmq.queues.module-completion}")
-    @Transactional
-    public void handleModuleCompletion(ModuleCompletionEvent event) {
-        log.info("Received module completion event: userId={}, courseId={}, moduleId={}", 
-                event.getUserId(), event.getCourseId(), event.getModuleId());
-        
-        try {
-            moduleProgressService.markModuleCompleted(
-                event.getUserId(),
-                event.getCourseId(),
-                event.getModuleId()
-            );
-            
-            log.info("Successfully processed module completion for userId={}, moduleId={}", 
-                    event.getUserId(), event.getModuleId());
-        } catch (Exception e) {
-            log.error("Error processing module completion event: {}", e.getMessage(), e);
         }
     }
     

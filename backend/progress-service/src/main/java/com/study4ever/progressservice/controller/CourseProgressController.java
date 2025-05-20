@@ -2,7 +2,6 @@ package com.study4ever.progressservice.controller;
 
 import com.study4ever.progressservice.dto.CourseEnrollmentRequest;
 import com.study4ever.progressservice.dto.CourseProgressDto;
-import com.study4ever.progressservice.dto.ModuleProgressDto;
 import com.study4ever.progressservice.service.CourseProgressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,22 +28,15 @@ public class CourseProgressController {
 
     private final CourseProgressService courseProgressService;
 
-    @GetMapping("/{courseId}/progress")
-    public CourseProgressDto getCourseProgress(
-            @RequestHeader("X-User-Id") String userId,
-            @PathVariable String courseId) {
-        log.debug("Getting course progress for user {} and course {}", userId, courseId);
-        return courseProgressService.getCourseProgress(userId, courseId);
-    }
-
     @PostMapping("/{courseId}/progress")
     @ResponseStatus(HttpStatus.CREATED)
-    public CourseProgressDto initializeCourseProgress(
+    public String enrollInCourse(
             @RequestHeader("X-User-Id") String userId,
             @PathVariable String courseId,
             @Valid @RequestBody CourseEnrollmentRequest request) {
         log.debug("Initializing course progress for user {} and course {}", userId, courseId);
-        return courseProgressService.initializeProgress(userId, courseId, request);
+        courseProgressService.enrollInCourse(userId, courseId, request);
+        return String.format("User %s enrolled in course with id: %s successfully", userId, courseId);
     }
 
     @GetMapping("/progress")
@@ -54,21 +46,22 @@ public class CourseProgressController {
         return courseProgressService.getAllCourseProgress(userId);
     }
 
-    @GetMapping("/{courseId}/modules/progress")
-    public List<ModuleProgressDto> getAllModulesProgressInCourse(
+    @GetMapping("/{courseId}/progress")
+    public CourseProgressDto getCourseProgress(
             @RequestHeader("X-User-Id") String userId,
             @PathVariable String courseId) {
-        log.debug("Getting all modules progress in course {} for user {}", courseId, userId);
-        return courseProgressService.getAllModulesProgressInCourse(userId, courseId);
+        log.debug("Getting course progress for user {} and course {}", userId, courseId);
+        return courseProgressService.getCourseProgress(userId, courseId);
     }
 
-    @PutMapping("/{courseId}/progress/update-access")
-    public String updateLastAccessed(
-            @RequestHeader("X-User-Id") String userId,
-            @PathVariable String courseId) {
-        log.debug("Updating last accessed for user {} and course {}", userId, courseId);
-        courseProgressService.updateLastAccessed(userId, courseId);
-        return "Last accessed updated successfully";
+    @GetMapping("/enrolled-courses")
+    public List<String> getEnrolledCourses(
+            @RequestHeader("X-User-Id") String userId) {
+        log.debug("Getting all enrolled courses for user {}", userId);
+        return courseProgressService.getAllCourseProgress(userId)
+                .stream()
+                .map(CourseProgressDto::getCourseId)
+                .toList();
     }
 
     @PutMapping("/{courseId}/progress/complete")
@@ -87,5 +80,14 @@ public class CourseProgressController {
         log.debug("Resetting progress for user {} in course {}", userId, courseId);
         courseProgressService.resetCourseProgress(userId, courseId);
         return "Course progress reset successfully";
+    }
+
+    @DeleteMapping("/{courseId}/progress/remove")
+    public String removeCourseFromEnrolledCourses(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String courseId) {
+        log.debug("Removing course {} from enrolled courses for user {}", courseId, userId);
+        courseProgressService.removeEnrolledCourse(userId, courseId);
+        return "Course removed from enrolled courses successfully";
     }
 }

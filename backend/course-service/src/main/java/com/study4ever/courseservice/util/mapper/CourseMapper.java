@@ -30,12 +30,24 @@ public class CourseMapper {
     }
 
     public CourseResponseDto mapToResponseDto(Course course) {
-        CourseResponseDto responseDto = new CourseResponseDto();
-        responseDto.setId(course.getId());
-        responseDto.setTitle(course.getTitle());
-        responseDto.setDescription(course.getDescription());
-        responseDto.setInstructorId(course.getInstructor().getId());
-        return responseDto;
+        int totalModules = 0;
+        long totalLessons = 0;
+
+        if (course.getModules() != null) {
+            totalModules = course.getModules().size();
+            totalLessons = course.getModules().stream()
+                    .mapToLong(module -> module.getLessons() != null ? module.getLessons().size() : 0)
+                    .sum();
+        }
+
+        return CourseResponseDto.builder()
+                .id(course.getId())
+                .title(course.getTitle())
+                .description(course.getDescription())
+                .instructorId(course.getInstructor().getId())
+                .totalModules(totalModules)
+                .totalLessons((int) totalLessons)
+                .build();
     }
 
     public CourseDetailResponseDto mapToDetailResponseDto(Course course) {

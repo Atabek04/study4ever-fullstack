@@ -1,5 +1,6 @@
 package com.study4ever.progressservice.exception;
 
+import jakarta.validation.UnexpectedTypeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -90,6 +91,14 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleMissingServletRequestParameterException(org.springframework.web.bind.MissingServletRequestParameterException ex) {
         log.debug("Missing request parameter: {}", ex.getMessage());
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(UnexpectedTypeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUnexpectedTypeException(UnexpectedTypeException ex) {
+        log.error("Validation configuration error: {}", ex.getMessage());
+        String message = "Validation configuration error: " + ex.getMessage();
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, null);
     }
 
     @ExceptionHandler(org.springframework.web.bind.ServletRequestBindingException.class)

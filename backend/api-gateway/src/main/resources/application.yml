@@ -17,10 +17,6 @@ spring:
     allow-bean-definition-overriding: true
     web-application-type: reactive
 
-logging:
-  level:
-    com.study4ever.apigateway.filter: DEBUG
-
 eureka:
   client:
     service-url:

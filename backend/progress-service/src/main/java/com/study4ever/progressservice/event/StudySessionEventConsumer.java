@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.study4ever.progressservice.event.message.StudySessionEndedEvent;
+import com.study4ever.progressservice.event.message.StudySessionHeartbeatEvent;
+import com.study4ever.progressservice.event.message.StudySessionStartedEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
