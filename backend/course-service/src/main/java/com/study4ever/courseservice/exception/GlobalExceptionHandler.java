@@ -87,6 +87,27 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.METHOD_NOT_ALLOWED, message, null);
     }
 
+    @ExceptionHandler(InvalidSessionIdException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidSessionIdException(InvalidSessionIdException ex) {
+        log.error("Invalid session id: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid session id", null);
+    }
+
+    @ExceptionHandler(SessionNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleSessionNotFoundException(SessionNotFoundException ex) {
+        log.error("Session not found: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Session not found", null);
+    }
+
+    @ExceptionHandler(SessionConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleSessionConflictException(SessionConflictException ex) {
+        log.error("Session conflict: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "Session conflict", null);
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGenericException(Exception ex) {

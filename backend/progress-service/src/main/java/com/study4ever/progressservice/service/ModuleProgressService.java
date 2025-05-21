@@ -13,4 +13,6 @@ public interface ModuleProgressService {
     List<ModuleProgressDto> getAllModulesProgressInCourse(String userId, String courseId);
 
     void updateLastAccessed(String userId, String courseId, String moduleId);
+
+    void removeModuleProgress(String userId, String courseId, String moduleId);
 }

@@ -5,6 +5,7 @@ import com.study4ever.progressservice.service.LessonProgressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +27,7 @@ public class LessonProgressController {
 
     @PostMapping("/{lessonId}/progress")
     @ResponseStatus(HttpStatus.CREATED)
-    public LessonProgressDto initializeLessonProgress(
+    public LessonProgressDto startNewLesson(
             @RequestHeader("X-User-Id") String userId,
             @PathVariable String courseId,
             @PathVariable String moduleId,
@@ -37,7 +38,7 @@ public class LessonProgressController {
     }
 
     @GetMapping("/progress")
-    public List<LessonProgressDto> getAllLessonsProgressInModule(
+    public List<LessonProgressDto> getAllLessonsProgress(
             @RequestHeader("X-User-Id") String userId,
             @PathVariable String courseId,
             @PathVariable String moduleId) {
@@ -69,15 +70,15 @@ public class LessonProgressController {
         lessonProgressService.markLessonCompleted(userId, courseId, moduleId, lessonId);
     }
 
-    @PutMapping("/{lessonId}/progress/update-access")
+    @DeleteMapping("/{lessonId}/progress")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateLastAccessed(
+    public void deleteLessonProgress(
             @RequestHeader("X-User-Id") String userId,
             @PathVariable String courseId,
             @PathVariable String moduleId,
             @PathVariable String lessonId) {
-        log.debug("Updating last accessed for user {} in course {}, module {}, lesson {}",
+        log.debug("Deleting lesson progress for user {} in course {}, module {}, lesson {}",
                 userId, courseId, moduleId, lessonId);
-        lessonProgressService.updateLastAccessed(userId, courseId, moduleId, lessonId);
+        lessonProgressService.deleteLessonProgress(userId, courseId, moduleId, lessonId);
     }
 }

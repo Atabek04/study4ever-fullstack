@@ -12,6 +12,12 @@ spring:
       discovery:
         locator:
           enabled: true
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
+    loadbalancer:
+      cache:
+        ttl: 5s  # Reduce cache time to live
 
   main:
     allow-bean-definition-overriding: true

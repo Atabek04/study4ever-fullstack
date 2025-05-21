@@ -44,7 +44,7 @@ public class StudySessionController {
     @PutMapping("/{sessionId}/end")
     public StudySessionDto endStudySession(
             @RequestHeader("X-User-Id") String userId,
-            @PathVariable UUID sessionId) {
+            @PathVariable("sessionId") UUID sessionId) {
         log.debug("Ending study session {} for user {}", sessionId, userId);
         return studySessionService.endStudySession(userId, sessionId);
     }
@@ -52,7 +52,7 @@ public class StudySessionController {
     @GetMapping("/{sessionId}")
     public StudySessionDto getStudySession(
             @RequestHeader("X-User-Id") String userId,
-            @PathVariable UUID sessionId) {
+            @PathVariable("sessionId") UUID sessionId) {
         log.debug("Getting study session {} for user {}", sessionId, userId);
         return studySessionService.getStudySession(userId, sessionId);
     }
@@ -92,7 +92,7 @@ public class StudySessionController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteStudySession(
             @RequestHeader("X-User-Id") String userId,
-            @PathVariable UUID sessionId) {
+            @PathVariable("sessionId") UUID sessionId) {
         log.debug("Deleting study session {} for user {}", sessionId, userId);
         studySessionService.deleteStudySession(userId, sessionId);
     }

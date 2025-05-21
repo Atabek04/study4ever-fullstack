@@ -1,0 +1,24 @@
+# Study Session Configuration Properties
+study-session:
+  heartbeat-interval-seconds: 30
+  max-inactivity-minutes: 15
+  max-session-duration-minutes: 240
+  session-check-interval-seconds: 60
+  allow-multiple-active-sessions: false
+
+# Spring Cache Configuration
+spring:
+  cache:
+    type: caffeine
+    cache-names: activeSessions, userSessions
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=30m
+
+# JPA Performance Optimization
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true

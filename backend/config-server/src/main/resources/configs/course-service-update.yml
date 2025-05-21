@@ -1,0 +1,73 @@
+server:
+  port: ${COURSE_SERVICE_PORT:0}
+
+spring:
+  datasource:
+    username: ${COURSE_DB_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    url: ${COURSE_DB_URL}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          max-interval: 10000
+          multiplier: 2
+          
+  cache:
+    type: caffeine
+    cache-names: activeSessions, userSessions
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=30m
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+# Retry configuration for @Retryable annotation
+retry:
+  maxAttempts: 3
+  initialDelay: 1000
+  multiplier: 2
+  maxDelay: 10000
+
+# RabbitMQ Configurations
+rabbitmq:
+  exchanges:
+    events: study4ever.events.exchange
+    study-sessions: study4ever.study-sessions.exchange
+  queues:
+    study-session-started: study4ever.course.study-session-started.queue
+    study-session-ended: study4ever.course.study-session-ended.queue
+    study-session-heartbeat: study4ever.course.study-session-heartbeat.queue
+  routing-keys:
+    study-session-started: study4ever.study-sessions.started
+    study-session-ended: study4ever.study-sessions.ended
+    study-session-heartbeat: study4ever.study-sessions.heartbeat
+    
+# Study Session Configuration
+study-session:
+  heartbeat-interval-seconds: 30
+  max-inactivity-minutes: 15
+  max-session-duration-minutes: 240
+  session-check-interval-seconds: 60
+  allow-multiple-active-sessions: false

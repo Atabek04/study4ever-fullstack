@@ -23,6 +23,5 @@ public class ModuleProgressDto {
     private LocalDateTime firstAccessDate;
     private LocalDateTime lastAccessDate;
     private LocalDateTime completionDate;
-    private Integer completedLessonsCount;
     private Integer totalLessonsCount;
 }

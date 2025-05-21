@@ -54,7 +54,4 @@ public class LessonProgress extends BaseEntity {
 
     @Column
     private LocalDateTime completionDate;
-
-    @Column(nullable = false)
-    private Long studyTimeMinutes;
 }

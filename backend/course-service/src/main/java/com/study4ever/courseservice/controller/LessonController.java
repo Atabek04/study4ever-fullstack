@@ -1,7 +1,6 @@
 package com.study4ever.courseservice.controller;
 
 import com.study4ever.courseservice.dto.LessonRequestDto;
-import com.study4ever.courseservice.dto.StudySessionRequest;
 import com.study4ever.courseservice.model.Lesson;
 import com.study4ever.courseservice.service.LessonService;
 import jakarta.validation.Valid;
@@ -28,7 +27,6 @@ import java.util.List;
 public class LessonController {
 
     private final LessonService lessonService;
-    private final StudySessionController studySessionController;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -57,9 +55,6 @@ public class LessonController {
                 
         Lesson lesson = lessonService.getLessonByModuleIdAndLessonId(moduleId, lessonId);
         
-        // Auto-start study session when viewing a lesson
-        autoStartStudySession(userId, courseId, moduleId, lessonId);
-        
         return lesson;
     }
 
@@ -72,25 +67,5 @@ public class LessonController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLesson(@PathVariable("id") Long id) {
         lessonService.deleteLesson(id);
-    }
-
-    private void autoStartStudySession(String userId, String courseId, String moduleId, String lessonId) {
-        try {
-            log.info("Auto-starting study session for user: {} on course: {}, module: {}, lesson: {}", 
-                    userId, courseId, moduleId, lessonId);
-                    
-            StudySessionRequest request = new StudySessionRequest();
-            request.setUserId(userId);
-            request.setCourseId(courseId);
-            request.setModuleId(moduleId);
-            request.setLessonId(lessonId);
-            
-            studySessionController.startStudySession(request);
-            
-            log.info("Study session auto-started successfully");
-        } catch (Exception e) {
-            log.error("Failed to auto-start study session: {}", e.getMessage(), e);
-            // Don't throw, we don't want to break the lesson view if session start fails
-        }
     }
 }

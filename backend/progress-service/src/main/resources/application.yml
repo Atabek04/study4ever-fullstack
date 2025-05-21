@@ -10,3 +10,10 @@ spring:
   cloud:
     config:
       fail-fast: true
+
+#logging:
+#  level:
+#    root: debug
+#    sun.rmi.transport.tcp: WARN
+#    sun.rmi.loader: WARN
+#    javax.management.remote.rmi: WARN

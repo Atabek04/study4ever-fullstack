@@ -1,6 +1,7 @@
 package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.ModuleProgressDto;
+import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.ModuleProgress;
 import com.study4ever.progressservice.model.ProgressStatus;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +41,8 @@ public class ModuleProgressServiceImpl implements ModuleProgressService {
     public ModuleProgressDto initializeModuleProgress(String userId, String courseId, String moduleId, Integer totalLessonsCount) {
         var existingProgress = moduleProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId);
         if (existingProgress.isPresent()) {
-            return ProgressMapper.mapToModuleDto(existingProgress.get());
+            throw new BadRequestException("Module progress already exists for user " +
+                    userId + " in course " + courseId + " and module " + moduleId);
         }
 
         var courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId);
@@ -51,7 +52,6 @@ public class ModuleProgressServiceImpl implements ModuleProgressService {
         }
 
         var moduleProgress = ModuleProgress.builder()
-                .id(UUID.randomUUID())
                 .userId(userId)
                 .courseId(courseId)
                 .moduleId(moduleId)
@@ -100,6 +100,16 @@ public class ModuleProgressServiceImpl implements ModuleProgressService {
         courseProgressService.updateLastAccessed(userId, courseId);
 
         log.debug("Updated last access time for user {} and module {}", userId, moduleId);
+    }
+
+    @Override
+    public void removeModuleProgress(String userId, String courseId, String moduleId) {
+        var moduleProgress = moduleProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId)
+                .orElseThrow(() -> new NotFoundException("Module progress not found for user " +
+                        userId + " in course " + courseId + " and module " + moduleId));
+
+        moduleProgressRepository.delete(moduleProgress);
+        log.info("Removed module progress for user {} and module {}", userId, moduleId);
     }
 
 }

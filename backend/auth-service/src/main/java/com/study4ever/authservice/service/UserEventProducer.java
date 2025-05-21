@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
@@ -20,52 +20,42 @@ public class UserEventProducer {
 
     public void sendUserCreatedEvent(UserCreatedEvent event) {
         log.info("Sending UserCreated event: {}", event);
-
-        // Use the configuration constants for exchange and routing key
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            // Send message after transaction commits to ensure data consistency
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     sendCreatedEventMessage(event);
                 }
             });
         } else {
-            // No transaction is active, send immediately
             sendCreatedEventMessage(event);
         }
     }
 
     public void sendUserUpdatedEvent(UserUpdatedEvent event) {
         log.info("Sending user updated event: {}", event);
-
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            // Send message after transaction commits to ensure data consistency
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     sendUpdatedEventMessage(event);
                 }
             });
         } else {
-            // No transaction is active, send immediately
             sendUpdatedEventMessage(event);
         }
     }
 
     public void sendUserDeletedEvent(UserDeletedEvent event) {
         log.info("Sending user deleted event: {}", event);
-
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            // Send message after transaction commits to ensure data consistency
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     sendDeletedEventMessage(event);
                 }
             });
         } else {
-            // No transaction is active, send immediately
             sendDeletedEventMessage(event);
         }
     }

@@ -2,7 +2,9 @@ package com.study4ever.progressservice.controller;
 
 import com.study4ever.progressservice.dto.CourseEnrollmentRequest;
 import com.study4ever.progressservice.dto.CourseProgressDto;
+import com.study4ever.progressservice.dto.ModuleProgressDto;
 import com.study4ever.progressservice.service.CourseProgressService;
+import com.study4ever.progressservice.service.ModuleProgressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import java.util.List;
 public class CourseProgressController {
 
     private final CourseProgressService courseProgressService;
+    private final ModuleProgressService moduleProgressService;
 
     @PostMapping("/{courseId}/progress")
     @ResponseStatus(HttpStatus.CREATED)
@@ -89,5 +92,13 @@ public class CourseProgressController {
         log.debug("Removing course {} from enrolled courses for user {}", courseId, userId);
         courseProgressService.removeEnrolledCourse(userId, courseId);
         return "Course removed from enrolled courses successfully";
+    }
+
+    @GetMapping("/{courseId}/modules/progress")
+    public List<ModuleProgressDto> getAllModulesProgressInCourse(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String courseId) {
+        log.debug("Getting all modules progress for user {} in course {}", userId, courseId);
+        return moduleProgressService.getAllModulesProgressInCourse(userId, courseId);
     }
 }

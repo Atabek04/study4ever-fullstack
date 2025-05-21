@@ -4,8 +4,6 @@ import com.study4ever.authservice.dto.UserCreatedEvent;
 import com.study4ever.authservice.dto.UserDeletedEvent;
 import com.study4ever.authservice.dto.UserUpdatedEvent;
 import com.study4ever.authservice.service.UserEventProducer;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -34,13 +32,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class RabbitMQE2EIT {
 
     @Container
-    private static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:14")
+    public static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:14")
             .withDatabaseName("auth_service_test")
             .withUsername("test")
             .withPassword("test");
 
     @Container
-    private static final RabbitMQContainer rabbitMQContainer = new RabbitMQContainer("rabbitmq:3.9-management")
+    public static final RabbitMQContainer rabbitMQContainer = new RabbitMQContainer("rabbitmq:3.9-management")
             .withExposedPorts(5672, 15672);
 
     @Autowired
@@ -57,18 +55,6 @@ public class RabbitMQE2EIT {
 
     private static final String USER_QUEUE = "user.queue";
     private static final UUID TEST_USER_ID = UUID.randomUUID();
-
-    @BeforeAll
-    static void setup() {
-        postgresContainer.start();
-        rabbitMQContainer.start();
-    }
-
-    @AfterAll
-    static void cleanup() {
-        postgresContainer.stop();
-        rabbitMQContainer.stop();
-    }
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {

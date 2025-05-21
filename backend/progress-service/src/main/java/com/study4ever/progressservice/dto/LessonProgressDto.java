@@ -23,5 +23,4 @@ public class LessonProgressDto {
     private LocalDateTime firstAccessDate;
     private LocalDateTime lastAccessDate;
     private LocalDateTime completionDate;
-    private Long studyTimeMinutes;
 }

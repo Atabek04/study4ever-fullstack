@@ -1,6 +1,7 @@
 package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.LessonProgressDto;
+import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.LessonProgress;
 import com.study4ever.progressservice.model.ModuleProgress;
@@ -19,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +34,9 @@ public class LessonProgressServiceImpl implements LessonProgressService {
 
     @Override
     public LessonProgressDto getLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
+        checkCourseProgressExists(userId, courseId);
+        checkModuleProgressExists(userId, courseId, moduleId);
+
         return lessonProgressRepository.findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
                 .map(ProgressMapper::mapToLessonDto)
                 .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and lesson " + lessonId));
@@ -45,16 +48,12 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         var existingProgress = lessonProgressRepository
                 .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId);
         if (existingProgress.isPresent()) {
-            return ProgressMapper.mapToLessonDto(existingProgress.get());
+            throw new BadRequestException("Lesson progress already exist for user " + userId + " and lesson " + lessonId);
         }
 
-        var moduleProgress = moduleProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId);
-        if (moduleProgress.isEmpty()) {
-            throw new NotFoundException("Module progress not found for user " + userId + " and module " + moduleId);
-        }
+        checkModuleProgressExists(userId, courseId, moduleId);
 
         var lessonProgress = LessonProgress.builder()
-                .id(UUID.randomUUID())
                 .userId(userId)
                 .courseId(courseId)
                 .moduleId(moduleId)
@@ -62,7 +61,6 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                 .status(ProgressStatus.NOT_STARTED)
                 .firstAccessDate(LocalDateTime.now())
                 .lastAccessDate(LocalDateTime.now())
-                .studyTimeMinutes(0L)
                 .build();
 
         var savedProgress = lessonProgressRepository.save(lessonProgress);
@@ -75,6 +73,8 @@ public class LessonProgressServiceImpl implements LessonProgressService {
 
     @Override
     public List<LessonProgressDto> getAllLessonsProgressInModule(String userId, String courseId, String moduleId) {
+        checkCourseProgressExists(userId, courseId);
+        checkModuleProgressExists(userId, courseId, moduleId);
         return lessonProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId).stream()
                 .map(ProgressMapper::mapToLessonDto)
                 .toList();
@@ -83,6 +83,9 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     @Override
     @Transactional
     public void markLessonCompleted(String userId, String courseId, String moduleId, String lessonId) {
+        checkCourseProgressExists(userId, courseId);
+        checkModuleProgressExists(userId, courseId, moduleId);
+
         LessonProgress lessonProgress = lessonProgressRepository
                 .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
                 .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and module " + moduleId));
@@ -121,6 +124,19 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         moduleProgressService.updateLastAccessed(userId, courseId, moduleId);
 
         log.debug("Updated last access time for user {} and lesson {}", userId, lessonId);
+    }
+
+    @Override
+    public void deleteLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
+        checkCourseProgressExists(userId, courseId);
+        checkModuleProgressExists(userId, courseId, moduleId);
+
+        var lessonProgress = lessonProgressRepository
+                .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
+                .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and lesson " + lessonId));
+
+        lessonProgressRepository.delete(lessonProgress);
+        log.info("Deleted lesson progress for user {} and lesson {}", userId, lessonId);
     }
 
     private void updateCompletionProgress(String userId, String courseId, String moduleId) {
@@ -180,6 +196,20 @@ public class LessonProgressServiceImpl implements LessonProgressService {
             moduleProgress.setCompletionDate(LocalDateTime.now());
         } else if (completedLessons > 0) {
             moduleProgress.setStatus(ProgressStatus.IN_PROGRESS);
+        }
+    }
+
+    private void checkModuleProgressExists(String userId, String courseId, String moduleId) {
+        var moduleProgress = moduleProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId);
+        if (moduleProgress.isEmpty()) {
+            throw new NotFoundException("Module progress not found for user " + userId + " and module " + moduleId);
+        }
+    }
+
+    private void checkCourseProgressExists(String userId, String courseId) {
+        var courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId);
+        if (courseProgress.isEmpty()) {
+            throw new NotFoundException("Course progress not found for user " + userId + " and course " + courseId);
         }
     }
 

@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ProgressEventPublisher {
+public class ProgressEventPublisher {       // todo: Trigger events when a lesson, module, or course is completed
 
     private final RabbitTemplate rabbitTemplate;
 

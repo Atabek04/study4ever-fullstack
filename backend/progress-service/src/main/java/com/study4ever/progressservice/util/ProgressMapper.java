@@ -80,6 +80,7 @@ public class ProgressMapper {
                 .firstAccessDate(entity.getFirstAccessDate())
                 .lastAccessDate(entity.getLastAccessDate())
                 .completionDate(entity.getCompletionDate())
+                .totalLessonsCount(entity.getTotalLessonsCount())
                 .build();
     }
 
@@ -101,7 +102,6 @@ public class ProgressMapper {
                 .firstAccessDate(entity.getFirstAccessDate())
                 .lastAccessDate(entity.getLastAccessDate())
                 .completionDate(entity.getCompletionDate())
-                .studyTimeMinutes(entity.getStudyTimeMinutes())
                 .build();
     }
 

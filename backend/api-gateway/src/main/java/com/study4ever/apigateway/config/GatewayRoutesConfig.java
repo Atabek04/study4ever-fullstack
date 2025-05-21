@@ -26,6 +26,20 @@ public class GatewayRoutesConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                .route("progress-service-modules-progress", r -> r
+                        .predicate(p -> p.getRequest().getURI().getPath().matches("/api/v1/courses/\\d+/modules/progress"))
+                        .and()
+                        .method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
+                .route("progress-service-lessons-progress", r -> r
+                        .predicate(p -> p.getRequest().getURI().getPath().matches("/api/v1/courses/\\d+/modules/\\d+/lessons/progress"))
+                        .and()
+                        .method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
                 // Course service routes
                 .route("course-service-read", r -> r
                         .path("/api/v1/courses/**")
@@ -33,7 +47,7 @@ public class GatewayRoutesConfig {
                         .and().not(p -> p.path(
                                 "/api/v1/courses/*/progress/**",
                                 "/api/v1/courses/*/modules/*/progress/**",
-                                "/api/v1/courses/*/modules/*/lessons/*/progress/**", 
+                                "/api/v1/courses/*/modules/*/lessons/*/progress/**",
                                 "/api/v1/courses/progress/**",
                                 "/api/v1/courses/enrolled-courses"))
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
@@ -55,39 +69,58 @@ public class GatewayRoutesConfig {
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(INSTRUCTOR_ADMIN_ROLES))))
                         .uri("lb://COURSE-SERVICE"))
 
+                .route("course-service-study-sessions-read", r -> r
+                        .path("/api/v1/study-sessions/**")
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://COURSE-SERVICE"))
+
+                .route("course-service-study-sessions-write", r -> r
+                        .path("/api/v1/study-sessions/**")
+                        .and().method(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://COURSE-SERVICE"))
+
                 // Progress service routes
                 .route("progress-service-course-progress-read", r -> r
-                        .path("/api/v1/courses/*/progress/**", 
-                              "/api/v1/courses/*/modules/*/progress/**", 
-                              "/api/v1/courses/*/modules/*/lessons/*/progress/**",
-                              "/api/v1/courses/progress/**",
-                              "/api/v1/courses/enrolled-courses")
+                        .path("/api/v1/courses/*/progress/**",
+                                "/api/v1/courses/*/modules/*/progress/**",
+                                "/api/v1/courses/*/modules/*/progress",
+                                "/api/v1/courses/*/modules/*/lessons/*/progress/**",
+                                "/api/v1/courses/progress/**",
+                                "/api/v1/courses/enrolled-courses")
                         .and().method(HttpMethod.GET)
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
                 .route("progress-service-course-progress-write", r -> r
-                        .path("/api/v1/courses/*/progress/**", 
-                              "/api/v1/courses/*/modules/*/progress/**", 
-                              "/api/v1/courses/*/modules/*/lessons/*/progress/**")
+                        .path("/api/v1/courses/*/progress/**",
+                                "/api/v1/courses/*/modules/*/progress/**",
+                                "/api/v1/courses/*/modules/*/lessons/*/progress/**")
                         .and().method(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH)
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
                 .route("progress-service-read", r -> r
-                        .path("/api/v1/progress/**", "/api/v1/sessions/**", "/api/v1/streaks/**")
+                        .path("/api/v1/progress/**",
+                                "/api/v1/sessions/**",
+                                "/api/v1/streaks/**")
                         .and().method(HttpMethod.GET)
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
                 .route("progress-service-write", r -> r
-                        .path("/api/v1/progress/**", "/api/v1/sessions/**", "/api/v1/streaks/**")
+                        .path("/api/v1/progress/**",
+                                "/api/v1/sessions/**",
+                                "/api/v1/streaks/**")
                         .and().method(HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH)
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
                 .route("progress-service-admin", r -> r
-                        .path("/api/v1/admin/progress/**", "/api/v1/admin/sessions/**", "/api/v1/admin/streaks/**")
+                        .path("/api/v1/admin/progress/**",
+                                "/api/v1/admin/sessions/**",
+                                "/api/v1/admin/streaks/**")
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
