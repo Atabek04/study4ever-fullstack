@@ -3,6 +3,7 @@ package com.study4ever.progressservice.service.impl;
 import com.study4ever.progressservice.dto.LessonProgressDto;
 import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.NotFoundException;
+import com.study4ever.progressservice.model.CourseProgress;
 import com.study4ever.progressservice.model.LessonProgress;
 import com.study4ever.progressservice.model.ModuleProgress;
 import com.study4ever.progressservice.model.ProgressStatus;
@@ -12,6 +13,7 @@ import com.study4ever.progressservice.repository.ModuleProgressRepository;
 import com.study4ever.progressservice.service.CourseProgressService;
 import com.study4ever.progressservice.service.LessonProgressService;
 import com.study4ever.progressservice.service.ModuleProgressService;
+import com.study4ever.progressservice.service.UserProgressService;
 import com.study4ever.progressservice.util.ProgressMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     private final CourseProgressRepository courseProgressRepository;
     private final CourseProgressService courseProgressService;
     private final ModuleProgressService moduleProgressService;
+    private final UserProgressService userProgressService;
 
     @Override
     public LessonProgressDto getLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
@@ -95,9 +98,12 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         lessonProgress.setCompletionDate(LocalDateTime.now());
         lessonProgressRepository.save(lessonProgress);
 
+        userProgressService.increaseCompletedLessonsCount(userId);
+
         var courseProgress = courseProgressRepository
                 .findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
+
         courseProgress.setCurrentLessonId(lessonId);
         courseProgress.setCurrentModuleId(moduleId);
         courseProgressRepository.save(courseProgress);
@@ -160,7 +166,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                 userId, moduleId, moduleProgress.getCompletionPercentage());
     }
 
-    private void updateModuleProgress(List<LessonProgress> moduleLessons, com.study4ever.progressservice.model.ModuleProgress moduleProgress) {
+    private void updateModuleProgress(List<LessonProgress> moduleLessons, ModuleProgress moduleProgress) {
         int totalLessons = moduleProgress.getTotalLessonsCount();
         long completedLessons = moduleLessons.stream()
                 .filter(lesson -> lesson.getStatus() == ProgressStatus.COMPLETED)
@@ -174,7 +180,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         moduleProgressRepository.save(moduleProgress);
     }
 
-    private void updateCourseProgress(String userId, String courseId, com.study4ever.progressservice.model.CourseProgress courseProgress) {
+    private void updateCourseProgress(String userId, String courseId, CourseProgress courseProgress) {
         int totalLessons = courseProgress.getTotalLessonsCount();
         long completedLessons = courseProgressService.updateCompletedLessonsCount(userId, courseId);
 
@@ -194,6 +200,8 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         if (completedLessons == totalLessons) {
             moduleProgress.setStatus(ProgressStatus.COMPLETED);
             moduleProgress.setCompletionDate(LocalDateTime.now());
+
+            userProgressService.increaseCompletedModulesCount(moduleProgress.getUserId());
         } else if (completedLessons > 0) {
             moduleProgress.setStatus(ProgressStatus.IN_PROGRESS);
         }

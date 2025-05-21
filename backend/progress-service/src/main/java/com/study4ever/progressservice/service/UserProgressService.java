@@ -7,4 +7,12 @@ public interface UserProgressService {
     UserProgressDto getUserProgress(String userId);
 
     void updateLastLoginDate(String userId);
+
+    void logStudySession(String userId, int studyTimeMinutes);
+
+    void increaseCompletedLessonsCount(String userId);
+
+    void increaseCompletedModulesCount(String userId);
+
+    void increaseCompletedCoursesCount(String userId);
 }

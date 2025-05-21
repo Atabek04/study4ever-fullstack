@@ -26,7 +26,7 @@ public class UserProgressServiceImpl implements UserProgressService {
     @Override
     @Transactional(readOnly = true)
     public UserProgressDto getUserProgress(String userId) {
-        UserProgress userProgress = userProgressRepository.findById(userId)
+        UserProgress userProgress = userProgressRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
         StudyStreak streak = studyStreakRepository.findById(userId)
                 .orElse(null);
@@ -37,12 +37,61 @@ public class UserProgressServiceImpl implements UserProgressService {
     @Override
     @Transactional
     public void updateLastLoginDate(String userId) {
-        UserProgress userProgress = userProgressRepository.findById(userId)
+        UserProgress userProgress = userProgressRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
 
         userProgress.setLastActiveTimestamp(LocalDateTime.now());
         userProgressRepository.save(userProgress);
 
         log.info("Updated last login date for user ID: {}", userId);
+    }
+
+    @Override
+    public void logStudySession(String userId, int studyTimeMinutes) {
+        UserProgress userProgress = userProgressRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+
+        userProgress.setTotalStudyTimeMinutes(userProgress.getTotalStudyTimeMinutes() + studyTimeMinutes);
+        userProgress.setLastActiveTimestamp(LocalDateTime.now());
+        userProgressRepository.save(userProgress);
+
+        log.info("Logged study session for user ID: {}. Added {} minutes.", userId, studyTimeMinutes);
+    }
+
+    @Override
+    public void increaseCompletedLessonsCount(String userId) {
+        UserProgress userProgress = userProgressRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+
+        userProgress.setTotalCompletedLessons(userProgress.getTotalCompletedLessons() + 1);
+        userProgress.setLastActiveTimestamp(LocalDateTime.now());
+        userProgressRepository.save(userProgress);
+
+        log.info("Increased completed lessons count for user ID: {}", userId);
+    }
+
+    @Override
+    public void increaseCompletedModulesCount(String userId) {
+        UserProgress userProgress = userProgressRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+
+        userProgress.setTotalCompletedModules(userProgress.getTotalCompletedModules() + 1);
+        userProgress.setLastActiveTimestamp(LocalDateTime.now());
+        userProgressRepository.save(userProgress);
+
+        log.info("Increased completed modules count for user ID: {}", userId);
+    }
+
+    @Override
+    public void increaseCompletedCoursesCount(String userId) {
+        UserProgress userProgress = userProgressRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+
+        userProgress.setTotalCompletedCourses(userProgress.getTotalCompletedCourses() + 1);
+        userProgress.setLastActiveTimestamp(LocalDateTime.now());
+        userProgressRepository.save(userProgress);
+
+        log.info("Increased completed courses count for user ID: {}", userId);
+
     }
 }

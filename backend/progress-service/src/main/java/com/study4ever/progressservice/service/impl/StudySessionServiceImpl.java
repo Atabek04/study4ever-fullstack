@@ -86,6 +86,8 @@ public class StudySessionServiceImpl implements StudySessionService {
             studyStreakService.updateStreak(userId);
         }
 
+        userProgressService.logStudySession(userId, durationMinutes);
+
         return ProgressMapper.mapToSessionDto(savedSession);
     }
 

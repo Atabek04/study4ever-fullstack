@@ -10,6 +10,7 @@ import com.study4ever.progressservice.repository.CourseProgressRepository;
 import com.study4ever.progressservice.repository.LessonProgressRepository;
 import com.study4ever.progressservice.repository.ModuleProgressRepository;
 import com.study4ever.progressservice.service.CourseProgressService;
+import com.study4ever.progressservice.service.UserProgressService;
 import com.study4ever.progressservice.util.ProgressMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class CourseProgressServiceImpl implements CourseProgressService {
     private final CourseProgressRepository courseProgressRepository;
     private final ModuleProgressRepository moduleProgressRepository;
     private final LessonProgressRepository lessonProgressRepository;
+    private final UserProgressService userProgressService;
 
     @Override
     public CourseProgressDto getCourseProgress(String userId, String courseId) {
@@ -105,6 +107,9 @@ public class CourseProgressServiceImpl implements CourseProgressService {
         courseProgress.setCompletionPercentage(100.0f);
         courseProgress.setCompletionDate(LocalDateTime.now());
         courseProgressRepository.save(courseProgress);
+
+        userProgressService.increaseCompletedCoursesCount(userId);
+
         log.info("Marked course {} as completed for user {}", courseId, userId);
     }
 
