@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UserProgressDto {
     private String userId;
-    private String username;
     private Integer totalCompletedLessons;
     private Integer totalCompletedModules;
     private Integer totalCompletedCourses;

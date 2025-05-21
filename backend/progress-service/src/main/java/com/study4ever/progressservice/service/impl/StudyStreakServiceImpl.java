@@ -33,10 +33,8 @@ public class StudyStreakServiceImpl implements StudyStreakService {
     @Override
     @Transactional(readOnly = true)
     public StudyStreakDto getUserStreak(String userId) {
-        StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElse(createInitialStreak(userId));
-
-        return mapToDto(streak);
+        return mapToDto(studyStreakRepository.findById(userId)
+                .orElse(createInitialStreak(userId)));
     }
 
     @Override
@@ -127,10 +125,20 @@ public class StudyStreakServiceImpl implements StudyStreakService {
     public List<StudyStreakDto> getTopStreaks(int limit) {
         return studyStreakRepository.findAll(
                         PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "currentStreakDays"))
-                )
-                .stream()
+                ).stream()
                 .map(this::mapToDto)
                 .toList();
+    }
+
+    @Override
+    public void updateLastStudyDateToday(String userId) {
+        StudyStreak streak = studyStreakRepository.findById(userId)
+                .orElse(createInitialStreak(userId));
+
+        streak.setLastStudyDate(LocalDate.now());
+        studyStreakRepository.save(streak);
+
+        log.info("Updated last study date for user {}", userId);
     }
 
     /**

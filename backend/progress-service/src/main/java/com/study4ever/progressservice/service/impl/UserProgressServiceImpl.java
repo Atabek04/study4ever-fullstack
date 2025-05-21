@@ -29,7 +29,7 @@ public class UserProgressServiceImpl implements UserProgressService {
         UserProgress userProgress = userProgressRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
         StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElse(null);
+                .orElseThrow(() -> new NotFoundException("Study streak not found for user ID: " + userId));
 
         return ProgressMapper.mapToUserDto(userProgress, streak);
     }

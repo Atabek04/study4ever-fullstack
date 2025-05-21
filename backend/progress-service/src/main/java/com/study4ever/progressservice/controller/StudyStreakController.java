@@ -29,6 +29,7 @@ public class StudyStreakController {
     @GetMapping
     public StudyStreakDto getUserStreak(@RequestHeader("X-User-Id") String userId) {
         log.debug("Getting study streak for user {}", userId);
+        studyStreakService.updateStreak(userId);
         return studyStreakService.getUserStreak(userId);
     }
 
@@ -39,12 +40,6 @@ public class StudyStreakController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         log.debug("Getting streak history for user {} from {} to {}", userId, startDate, endDate);
         return studyStreakService.getStreakHistoryByDateRange(userId, startDate, endDate);
-    }
-
-    @PutMapping("/update")
-    public void updateStreak(@RequestHeader("X-User-Id") String userId) {
-        log.debug("Updating streak for user {}", userId);
-        studyStreakService.updateStreak(userId);
     }
 
     @PutMapping("/reset")

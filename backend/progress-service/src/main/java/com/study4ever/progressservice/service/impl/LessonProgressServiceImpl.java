@@ -13,6 +13,7 @@ import com.study4ever.progressservice.repository.ModuleProgressRepository;
 import com.study4ever.progressservice.service.CourseProgressService;
 import com.study4ever.progressservice.service.LessonProgressService;
 import com.study4ever.progressservice.service.ModuleProgressService;
+import com.study4ever.progressservice.service.StudyStreakService;
 import com.study4ever.progressservice.service.UserProgressService;
 import com.study4ever.progressservice.util.ProgressMapper;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     private final CourseProgressService courseProgressService;
     private final ModuleProgressService moduleProgressService;
     private final UserProgressService userProgressService;
+    private final StudyStreakService studyStreakService;
 
     @Override
     public LessonProgressDto getLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
@@ -109,6 +111,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         courseProgressRepository.save(courseProgress);
 
         updateCompletionProgress(userId, courseId, moduleId);
+        studyStreakService.updateLastStudyDateToday(userId);
 
         log.info("Marked lesson {} as completed for user {}", lessonId, userId);
     }

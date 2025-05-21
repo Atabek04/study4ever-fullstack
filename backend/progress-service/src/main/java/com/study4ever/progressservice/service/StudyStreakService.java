@@ -17,4 +17,6 @@ public interface StudyStreakService {
     List<StreakHistoryEntryDto> getStreakHistoryByDateRange(String userId, LocalDate startDate, LocalDate endDate);
 
     List<StudyStreakDto> getTopStreaks(int limit);
+
+    void updateLastStudyDateToday(String userId);
 }
