@@ -34,7 +34,7 @@ public class UserProgress extends BaseEntity {
     private Integer totalCompletedCourses;
 
     @Column(nullable = false)
-    private Long totalStudyTimeMinutes;
+    private Long totalStudyTimeMinutes;  // todo: study time should be added after session is ended
 
     @Column(nullable = false)
     private LocalDateTime lastActiveTimestamp;

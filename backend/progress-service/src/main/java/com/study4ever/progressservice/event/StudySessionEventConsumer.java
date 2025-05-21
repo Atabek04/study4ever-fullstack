@@ -37,7 +37,7 @@ public class StudySessionEventConsumer {
     private final StudySessionConfirmationPublisher confirmationPublisher;
     private final SessionReconciliationHandler reconciliationHandler;
 
-    @RabbitListener(queues = "${rabbitmq.queues.study-session-started}")
+    @RabbitListener(queues = "study.session.started.queue")
     @Transactional
     public void handleStudySessionStarted(StudySessionStartedEvent event) {
         log.info("Received study session started event: userId={}, courseId={}", event.getUserId(), event.getCourseId());
@@ -62,7 +62,7 @@ public class StudySessionEventConsumer {
         }
     }
 
-    @RabbitListener(queues = "${rabbitmq.queues.study-session-ended}")
+    @RabbitListener(queues = "study.session.ended.queue")
     @Transactional
     public void handleStudySessionEnded(StudySessionEndedEvent event) {
         log.info("Received study session ended event: userId={}, sessionId={}", event.getUserId(), event.getSessionId());
@@ -88,7 +88,7 @@ public class StudySessionEventConsumer {
         }
     }
 
-    @RabbitListener(queues = "${rabbitmq.queues.study-session-heartbeat}")
+    @RabbitListener(queues = "study.session.heartbeat.queue")
     @Transactional
     public void handleStudySessionHeartbeat(StudySessionHeartbeatEvent event) {
         log.debug("Received study session heartbeat event: userId={}, sessionId={}", event.getUserId(), event.getSessionId());
@@ -124,7 +124,7 @@ public class StudySessionEventConsumer {
     /**
      * Scheduled task to check for inactive sessions and sessions exceeding maximum duration
      */
-    @Scheduled(fixedDelayString = "${study-session.heartbeat-check-interval-seconds:60}000")
+    @Scheduled(fixedDelayString = "${study-session.heartbeat-check-interval-seconds:60}000") // 60 seconds
     @Transactional
     public void checkInactiveSessions() {
         var now = LocalDateTime.now();

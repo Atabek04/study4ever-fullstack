@@ -11,6 +11,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
 
   rabbitmq:
     host: localhost
@@ -25,6 +31,12 @@ spring:
           max-attempts: 3
           max-interval: 10000
           multiplier: 2
+
+  cache:
+    type: caffeine
+    cache-names: activeSessions, userSessions
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=30m
 
 eureka:
   client:
@@ -44,10 +56,18 @@ rabbitmq:
     events: study4ever.events.exchange
     study-sessions: study4ever.study-sessions.exchange
   queues:
-    study-session-started: study4ever.course.study-session-started.queue
-    study-session-ended: study4ever.course.study-session-ended.queue
-    study-session-heartbeat: study4ever.course.study-session-heartbeat.queue
+    study-session-started: study.session.started.queue
+    study-session-ended: study.session.ended.queue
+    study-session-heartbeat: study.session.heartbeat.queue
   routing-keys:
-    study-session-started: study4ever.study-sessions.started
-    study-session-ended: study4ever.study-sessions.ended
-    study-session-heartbeat: study4ever.study-sessions.heartbeat
+    study-session-started: study.session.started
+    study-session-ended: study.session.ended
+    study-session-heartbeat: study.session.heartbeat
+
+# Study Session Configuration
+study-session:
+  heartbeat-interval-seconds: 30
+  max-inactivity-minutes: 15
+  max-session-duration-minutes: 240
+  session-check-interval-seconds: 60
+  allow-multiple-active-sessions: false

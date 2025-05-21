@@ -148,7 +148,7 @@ public class StudySessionServiceImpl implements StudySessionService {
     @Override
     @Transactional(readOnly = true)
     public List<StudySessionDto> getActiveUserStudySessions(String userId) {
-        log.info("Getting active study sessions for user: {}", userId);
+        log.debug("Getting active study sessions for user: {}", userId);
         return studySessionRepository.findByUserIdAndActive(userId, true).stream()
                 .map(ProgressMapper::mapToSessionDto)
                 .toList();
