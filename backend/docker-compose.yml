@@ -1,3 +1,5 @@
+name: Study4Ever
+
 services:
   postgres:
     image: postgres:17
@@ -71,6 +73,116 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+
+  config-server:
+    image: study4ever/config-server:latest
+    container_name: s4e-config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - CONFIG_SERVER_PORT=${CONFIG_SERVER_PORT}
+    depends_on:
+      - postgres
+
+  eureka-server:
+    image: study4ever/eureka-server:latest
+    container_name: s4e-eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_SERVER_PORT=${EUREKA_SERVER_PORT}
+    depends_on:
+      - config-server
+
+  auth-service:
+    image: study4ever/auth-service:latest
+    container_name: s4e-auth-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - AUTH_DB_URL=${DOCKER_AUTH_DB_URL}
+      - AUTH_DB_USERNAME=${AUTH_DB_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
+      - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_EXPIRATION=${JWT_ACCESS_EXPIRATION}
+      - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION}
+      - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - config-server
+      - eureka-server
+
+  course-service:
+    image: study4ever/course-service:latest
+    container_name: s4e-course-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - COURSE_DB_URL=${DOCKER_COURSE_DB_URL}
+      - COURSE_DB_USERNAME=${COURSE_DB_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
+      - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
+      - COURSE_SERVICE_PORT=${COURSE_SERVICE_PORT}
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - config-server
+      - eureka-server
+
+  progress-service:
+    image: study4ever/progress-service:latest
+    container_name: s4e-progress-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - PROGRESS_DB_URL=${DOCKER_PROGRESS_DB_URL}
+      - PROGRESS_DB_USERNAME=${PROGRESS_DB_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
+      - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
+      - PROGRESS_SERVICE_PORT=${PROGRESS_SERVICE_PORT}
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - config-server
+      - eureka-server
+
+  api-gateway:
+    image: study4ever/api-gateway:latest
+    container_name: s4e-api-gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
+      - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+    ports:
+      - "8095:8095"
+    depends_on:
+      - config-server
+      - eureka-server
+      - auth-service
+      - course-service
+      - progress-service
 
 volumes:
   postgres_data:
