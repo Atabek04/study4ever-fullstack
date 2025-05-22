@@ -1,3 +1,4 @@
+name: s4e
 services:
   postgres:
     image: postgres:17
