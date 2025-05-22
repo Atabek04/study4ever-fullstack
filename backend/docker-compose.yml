@@ -73,6 +73,11 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   config-server:
     image: study4ever/config-server:latest
@@ -81,8 +86,7 @@ services:
       - "8888:8888"
     environment:
       - CONFIG_SERVER_PORT=${CONFIG_SERVER_PORT}
-    depends_on:
-      - postgres
+    restart: on-failure
 
   eureka-server:
     image: study4ever/eureka-server:latest
@@ -92,7 +96,9 @@ services:
     environment:
       - EUREKA_SERVER_PORT=${EUREKA_SERVER_PORT}
     depends_on:
-      - config-server
+      config-server:
+        condition: service_started
+    restart: on-failure
 
   auth-service:
     image: study4ever/auth-service:latest
@@ -111,14 +117,19 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ACCESS_EXPIRATION=${JWT_ACCESS_EXPIRATION}
       - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION}
-      - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+      - AUTH_SERVICE_PORT=8081
     ports:
       - "8081:8081"
     depends_on:
-      - postgres
-      - rabbitmq
-      - config-server
-      - eureka-server
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    restart: on-failure
 
   course-service:
     image: study4ever/course-service:latest
@@ -134,14 +145,19 @@ services:
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
       - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
       - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
-      - COURSE_SERVICE_PORT=${COURSE_SERVICE_PORT}
+      - COURSE_SERVICE_PORT=8082
     ports:
       - "8082:8082"
     depends_on:
-      - postgres
-      - rabbitmq
-      - config-server
-      - eureka-server
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    restart: on-failure
 
   progress-service:
     image: study4ever/progress-service:latest
@@ -157,14 +173,19 @@ services:
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
       - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
       - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
-      - PROGRESS_SERVICE_PORT=${PROGRESS_SERVICE_PORT}
+      - PROGRESS_SERVICE_PORT=8083
     ports:
       - "8083:8083"
     depends_on:
-      - postgres
-      - rabbitmq
-      - config-server
-      - eureka-server
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    restart: on-failure
 
   api-gateway:
     image: study4ever/api-gateway:latest
@@ -174,15 +195,21 @@ services:
       - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
       - EUREKA_SERVER_URL=${EUREKA_SERVER_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+      - API_GATEWAY_PORT=8095
     ports:
       - "8095:8095"
     depends_on:
-      - config-server
-      - eureka-server
-      - auth-service
-      - course-service
-      - progress-service
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      course-service:
+        condition: service_started
+      progress-service:
+        condition: service_started
+    restart: on-failure
 
 volumes:
   postgres_data:

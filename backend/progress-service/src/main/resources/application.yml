@@ -5,7 +5,7 @@ spring:
     name: progress-service
   
   config:
-    import: optional:configserver:http://localhost:8888
+    import: optional:configserver:${CONFIG_SERVER_URL}
   
   cloud:
     config:
