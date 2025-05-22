@@ -212,9 +212,12 @@ const DashboardLayout = ({ children }) => {
         <Container 
           maxWidth="xl" 
           sx={{ 
-            py: 1,
-            px: { xs: 1, sm: 1.5, md: 2 },
-            height: '100%'
+            py: 2,
+            px: { xs: 1, sm: 2, md: 3 },
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
           {children}

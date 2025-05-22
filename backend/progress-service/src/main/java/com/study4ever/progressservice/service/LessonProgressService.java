@@ -17,4 +17,8 @@ public interface LessonProgressService {
     void updateLastAccessed(String userId, String courseId, String moduleId, String lessonId);
 
     void deleteLessonProgress(String userId, String courseId, String moduleId, String lessonId);
+
+    List<String> getCompletedLessons(String userId, String courseId, String moduleId);
+
+    List<String> getCompletedLessonsInCourse(String userId, String courseId);
 }

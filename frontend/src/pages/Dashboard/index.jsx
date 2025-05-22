@@ -1,43 +1,15 @@
-import { Box, Typography, Grid, Paper, Card, CardContent, CardHeader, Avatar, Button } from '@mui/material';
+import { Box, Typography, Grid, Paper, Card, CardContent, CardHeader, Avatar, Button, CircularProgress, Alert } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import CourseCard from '../../components/Dashboard/CourseCard';
 import DashboardLayout from '../../components/Dashboard/DashboardLayout';
-
-// Mock course data for development
-const mockCourses = [
-  {
-    id: 1,
-    title: 'React for Beginners',
-    instructor: 'Jane Doe',
-    progress: 72,
-    thumbnail: 'https://picsum.photos/id/0/400/140', // Fixed image ID
-  },
-  {
-    id: 2,
-    title: 'Advanced JavaScript',
-    instructor: 'John Smith',
-    progress: 45,
-    thumbnail: 'https://picsum.photos/id/1/400/140', // Fixed image ID
-  },
-  {
-    id: 3,
-    title: 'UI/UX Design Fundamentals',
-    instructor: 'Emily Clark',
-    progress: 90,
-    thumbnail: 'https://picsum.photos/id/2/400/140', // Fixed image ID
-  },
-  {
-    id: 4,
-    title: 'Data Structures & Algorithms',
-    instructor: 'Michael Lee',
-    progress: 30,
-    thumbnail: 'https://picsum.photos/id/3/400/140', // Fixed image ID
-  },
-];
+import { useEnrolledCourses } from '../../hooks/courseHooks';
 
 const Dashboard = () => {
   // Auth context for logout functionality
   const { logout } = useAuth();
+  
+  // Fetch enrolled courses with progress data
+  const { enrolledCourses, loading, error } = useEnrolledCourses();
 
   return (
     <DashboardLayout>
@@ -71,30 +43,42 @@ const Dashboard = () => {
             Your Courses
           </Typography>
           
-          <Grid container spacing={3} sx={{ px: { xs: 0, sm: 1, md: 2 } }}>
-            {mockCourses.map((course) => (
-              <Grid 
-                item 
-                xs={12} 
-                sm={6} 
-                md={4} 
-                key={course.id}
-              >
-                <Box sx={{ 
-                  display: 'flex',
-                  justifyContent: 'center',
-                  width: '100%',
-                  maxWidth: '100%'
-                }}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ maxWidth: 600, mx: 'auto', my: 3 }}>
+              {error}
+            </Alert>
+          ) : enrolledCourses.length === 0 ? (
+            <Alert severity="info" sx={{ maxWidth: 600, mx: 'auto', my: 3 }}>
+              You are not enrolled in any courses yet. Browse our course catalog to find courses that interest you.
+            </Alert>
+          ) : (
+            <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2, md: 4 }, justifyContent: 'center' }}>
+              {enrolledCourses.map((course) => (
+                <Grid 
+                  item 
+                  xs={12} 
+                  sm={6} 
+                  md={4} 
+                  key={course.id}
+                  sx={{ 
+                    display: 'flex',
+                    justifyContent: 'center',
+                    maxWidth: { xs: '100%', sm: '100%', md: '400px' } 
+                  }}
+                >
                   <CourseCard course={course} />
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Box>
         
         {/* Dashboard Widgets */}
-        <Grid container spacing={3}>
+        <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2, md: 4 }, justifyContent: 'center' }}>
           {/* Main Content Area */}
           <Grid item xs={12} md={8}>
             <Paper 

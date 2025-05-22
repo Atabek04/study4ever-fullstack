@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Card, 
   CardMedia, 
@@ -15,16 +15,37 @@ import {
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useEnrollment, useInstructor } from '../../hooks/courseHooks';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useEnrollment, useInstructor, useEnrolledCourseIds } from '../../hooks/courseHooks';
 import CourseDetailModal from './CourseDetailModal';
 
 const CourseItem = ({ course }) => {
-  const { enrollInCourse, enrolling } = useEnrollment();
+  const { enrollInCourse, enrolling, enrollmentSuccess } = useEnrollment();
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  
+  // Fetch enrolled course IDs
+  const { enrolledCourseIds, mutate: refreshEnrolledCourses } = useEnrolledCourseIds();
   
   // Fetch instructor details
   const { instructor, loading: instructorLoading } = useInstructor(course.instructorId);
+
+  // Check if the course is already enrolled
+  useEffect(() => {
+    if (enrolledCourseIds && course.id) {
+      // Course IDs could be stored as strings or numbers, so use loose equality
+      const enrolled = enrolledCourseIds.some(id => id == course.id);
+      setIsEnrolled(enrolled);
+    }
+  }, [enrolledCourseIds, course.id]);
+  
+  // Refresh enrolled courses when enrollment is successful
+  useEffect(() => {
+    if (enrollmentSuccess) {
+      refreshEnrolledCourses();
+    }
+  }, [enrollmentSuccess, refreshEnrolledCourses]);
 
   // Fallback image if course thumbnail fails to load
   const fallbackImage = 'https://picsum.photos/400/140?blur=2';
@@ -39,7 +60,14 @@ const CourseItem = ({ course }) => {
   
   const handleEnroll = async () => {
     try {
-      const success = await enrollInCourse(course.id);
+      // Extract course details for the enrollment request
+      const courseDetails = {
+        totalLessons: course.lessonsCount || course.totalLessons || course.lessons?.length,
+        totalModules: course.modulesCount || course.totalModules || course.modules?.length,
+        // Default values will be used in the hook if these are undefined
+      };
+      
+      const success = await enrollInCourse(course.id, courseDetails);
       
       setNotification({
         open: true,
@@ -48,6 +76,11 @@ const CourseItem = ({ course }) => {
           : 'Failed to enroll in course. Please try again.',
         severity: success ? 'success' : 'error'
       });
+      
+      // If enrollment was successful, refresh the enrolled courses list
+      if (success) {
+        await refreshEnrolledCourses();
+      }
     } catch (error) {
       setNotification({
         open: true,
@@ -79,6 +112,9 @@ const CourseItem = ({ course }) => {
           flexDirection: 'column',
           height: '100%',
           width: '100%',
+          maxWidth: 380,
+          minWidth: 260,
+          margin: '0 auto',
           transition: 'transform 0.3s, box-shadow 0.3s',
           '&:hover': {
             transform: 'translateY(-6px)',
@@ -188,29 +224,51 @@ const CourseItem = ({ course }) => {
           </Typography>
         </CardContent>
         <CardActions sx={{ p: 3, pt: 1, pb: 2.5, display: 'flex', justifyContent: 'center' }}>
-          <Button
-            size="large"
-            variant="contained"
-            color="secondary"
-            fullWidth
-            disabled={enrolling}
-            onClick={handleEnroll}
-            sx={{ 
-              borderRadius: 2, 
-              fontWeight: 600, 
-              textTransform: 'none', 
-              py: 1.2,
-              fontSize: '1rem',
-              boxShadow: '0 4px 12px rgba(255, 105, 105, 0.3)',
-              '&:hover': {
-                boxShadow: '0 6px 16px rgba(255, 105, 105, 0.4)',
-                transform: 'translateY(-2px)'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {enrolling ? 'Enrolling...' : 'Enroll Now'}
-          </Button>
+          {isEnrolled ? (
+            <Button
+              size="large"
+              variant="outlined"
+              color="success"
+              fullWidth
+              disabled={true}
+              startIcon={<CheckCircleIcon />}
+              sx={{ 
+                borderRadius: 2, 
+                fontWeight: 600, 
+                textTransform: 'none', 
+                py: 1.2,
+                fontSize: '1rem',
+                borderWidth: 2,
+                backgroundColor: 'rgba(76, 175, 80, 0.08)',
+              }}
+            >
+              Already Enrolled
+            </Button>
+          ) : (
+            <Button
+              size="large"
+              variant="contained"
+              color="secondary"
+              fullWidth
+              disabled={enrolling}
+              onClick={handleEnroll}
+              sx={{ 
+                borderRadius: 2, 
+                fontWeight: 600, 
+                textTransform: 'none', 
+                py: 1.2,
+                fontSize: '1rem',
+                boxShadow: '0 4px 12px rgba(255, 105, 105, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(255, 105, 105, 0.4)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {enrolling ? 'Enrolling...' : 'Enroll Now'}
+            </Button>
+          )}
         </CardActions>
       </Card>
       

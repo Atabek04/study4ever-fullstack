@@ -165,7 +165,8 @@ public class StudyStreakServiceImpl implements StudyStreakService {
         }
     }
 
-    private StudyStreak createInitialStreak(String userId) {
+    @Override
+    public StudyStreak createInitialStreak(String userId) {
         StudyStreak streak = StudyStreak.builder()
                 .userId(userId)
                 .currentStreakDays(0)

@@ -4,6 +4,8 @@ import { createTheme, ThemeProvider, CssBaseline, Box, CircularProgress } from '
 import AuthPage from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import CoursesPage from './pages/Courses';
+import LessonPage from './pages/Lesson';
+import BookmarksPage from './pages/Bookmarks';
 import './App.css';
 
 // Create protected route component
@@ -198,6 +200,16 @@ function AppWithRouting() {
       <Route path="/courses" element={
         <ProtectedRoute>
           <CoursesPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/courses/:courseId/lessons/:lessonId" element={
+        <ProtectedRoute>
+          <LessonPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/bookmarks" element={
+        <ProtectedRoute>
+          <BookmarksPage />
         </ProtectedRoute>
       } />
       <Route path="/" element={<Navigate to="/auth" />} />

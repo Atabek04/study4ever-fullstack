@@ -56,6 +56,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
             throw new BadRequestException("Lesson progress already exist for user " + userId + " and lesson " + lessonId);
         }
 
+        checkCourseProgressExists(userId, courseId);
         checkModuleProgressExists(userId, courseId, moduleId);
 
         var lessonProgress = LessonProgress.builder()
@@ -146,6 +147,27 @@ public class LessonProgressServiceImpl implements LessonProgressService {
 
         lessonProgressRepository.delete(lessonProgress);
         log.info("Deleted lesson progress for user {} and lesson {}", userId, lessonId);
+    }
+
+    @Override
+    public List<String> getCompletedLessons(String userId, String courseId, String moduleId) {
+        checkCourseProgressExists(userId, courseId);
+        checkModuleProgressExists(userId, courseId, moduleId);
+
+        return lessonProgressRepository.findByUserIdAndCourseIdAndModuleIdAndStatus(userId, courseId, moduleId, ProgressStatus.COMPLETED)
+                .stream()
+                .map(LessonProgress::getLessonId)
+                .toList();
+    }
+
+    @Override
+    public List<String> getCompletedLessonsInCourse(String userId, String courseId) {
+        checkCourseProgressExists(userId, courseId);
+
+        return lessonProgressRepository.findByUserIdAndCourseIdAndStatus(userId, courseId, ProgressStatus.COMPLETED)
+                .stream()
+                .map(LessonProgress::getLessonId)
+                .toList();
     }
 
     private void updateCompletionProgress(String userId, String courseId, String moduleId) {

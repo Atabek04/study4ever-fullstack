@@ -42,17 +42,28 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/api/v1/auth/login', credentials);
       const { accessToken, refreshToken } = response.data;
-      
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      
-      setUser({ isAuthenticated: true });
-      return { success: true };
+      if (response.status === 200 && accessToken && refreshToken) {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        setUser({ isAuthenticated: true });
+        navigate('/dashboard');
+        return { success: true };
+      } else {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        setUser(null);
+        return {
+          success: false,
+          error: 'Invalid credentials or missing tokens.'
+        };
+      }
     } catch (error) {
-      console.error('Login failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Invalid username or password' 
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Invalid username or password'
       };
     }
   };

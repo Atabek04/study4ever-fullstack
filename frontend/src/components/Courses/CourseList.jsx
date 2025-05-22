@@ -54,7 +54,7 @@ const CourseList = ({ courses, searchTerm }) => {
 
   // Display the grid of courses with animation
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={3} justifyContent="center">
       {courses.map((course, index) => (
         <Grow
           in={true}
@@ -62,8 +62,10 @@ const CourseList = ({ courses, searchTerm }) => {
           style={{ transformOrigin: '0 0 0' }}
           timeout={(index % 4) * 150 + 300}
         >
-          <Grid item xs={12} sm={6} md={4} lg={3}>
-            <CourseItem course={course} />
+          <Grid item xs={12} sm={6} md={4} lg={3} xl={2} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Box sx={{ width: { xs: '100%', sm: 340, md: 300, lg: 270, xl: 250 }, maxWidth: '100%' }}>
+              <CourseItem course={course} />
+            </Box>
           </Grid>
         </Grow>
       ))}

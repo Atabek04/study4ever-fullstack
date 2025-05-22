@@ -47,6 +47,16 @@ public class LessonProgressController {
         return lessonProgressService.getAllLessonsProgressInModule(userId, courseId, moduleId);
     }
 
+    @GetMapping("/completed")
+    public List<String> getCompletedLessons(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String courseId,
+            @PathVariable String moduleId) {
+        log.debug("Getting completed lessons for user {} in course {}, module {}",
+                userId, courseId, moduleId);
+        return lessonProgressService.getCompletedLessons(userId, courseId, moduleId);
+    }
+
     @GetMapping("/{lessonId}/progress")
     public LessonProgressDto getLessonProgress(
             @RequestHeader("X-User-Id") String userId,

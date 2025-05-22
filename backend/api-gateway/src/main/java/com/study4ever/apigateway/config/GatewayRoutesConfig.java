@@ -40,6 +40,20 @@ public class GatewayRoutesConfig {
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
+                .route("progress-service-lessons-completed-progress", r -> r
+                        .predicate(p -> p.getRequest().getURI().getPath().matches("/api/v1/courses/\\d+/modules/\\d+/lessons/completed"))
+                        .and()
+                        .method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
+                .route("progress-service-lessons-completed-progress-course", r -> r
+                        .predicate(p -> p.getRequest().getURI().getPath().matches("/api/v1/courses/\\d+/completed"))
+                        .and()
+                        .method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
                 // Course service routes
                 .route("course-service-read", r -> r
                         .path("/api/v1/courses/**")

@@ -6,6 +6,7 @@ import com.study4ever.progressservice.model.StudyStreak;
 import com.study4ever.progressservice.model.UserProgress;
 import com.study4ever.progressservice.repository.StudyStreakRepository;
 import com.study4ever.progressservice.repository.UserProgressRepository;
+import com.study4ever.progressservice.service.StudyStreakService;
 import com.study4ever.progressservice.service.UserProgressService;
 import com.study4ever.progressservice.util.ProgressMapper;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +23,15 @@ public class UserProgressServiceImpl implements UserProgressService {
 
     private final UserProgressRepository userProgressRepository;
     private final StudyStreakRepository studyStreakRepository;
+    private final StudyStreakService studyStreakService;
 
     @Override
     @Transactional(readOnly = true)
     public UserProgressDto getUserProgress(String userId) {
-        UserProgress userProgress = userProgressRepository.findByUserId(userId)
-                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+        UserProgress userProgress = userProgressRepository.findById(userId)
+                .orElse(initUserProgress(userId));
         StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Study streak not found for user ID: " + userId));
+                .orElse(studyStreakService.createInitialStreak(userId));
 
         return ProgressMapper.mapToUserDto(userProgress, streak);
     }
@@ -38,7 +40,7 @@ public class UserProgressServiceImpl implements UserProgressService {
     @Transactional
     public void updateLastLoginDate(String userId) {
         UserProgress userProgress = userProgressRepository.findByUserId(userId)
-                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+                .orElse(initUserProgress(userId));
 
         userProgress.setLastActiveTimestamp(LocalDateTime.now());
         userProgressRepository.save(userProgress);
@@ -49,7 +51,7 @@ public class UserProgressServiceImpl implements UserProgressService {
     @Override
     public void logStudySession(String userId, int studyTimeMinutes) {
         UserProgress userProgress = userProgressRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+                .orElse(initUserProgress(userId));
 
         userProgress.setTotalStudyTimeMinutes(userProgress.getTotalStudyTimeMinutes() + studyTimeMinutes);
         userProgress.setLastActiveTimestamp(LocalDateTime.now());
@@ -61,7 +63,7 @@ public class UserProgressServiceImpl implements UserProgressService {
     @Override
     public void increaseCompletedLessonsCount(String userId) {
         UserProgress userProgress = userProgressRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User progress not found for user ID: " + userId));
+                .orElse(initUserProgress(userId));
 
         userProgress.setTotalCompletedLessons(userProgress.getTotalCompletedLessons() + 1);
         userProgress.setLastActiveTimestamp(LocalDateTime.now());
@@ -93,5 +95,20 @@ public class UserProgressServiceImpl implements UserProgressService {
 
         log.info("Increased completed courses count for user ID: {}", userId);
 
+    }
+
+    public UserProgress initUserProgress(String userId) {
+        UserProgress userProgress = new UserProgress();
+        userProgress.setUserId(userId);
+        userProgress.setTotalStudyTimeMinutes(0L);
+        userProgress.setTotalCompletedLessons(0);
+        userProgress.setTotalCompletedModules(0);
+        userProgress.setTotalCompletedCourses(0);
+        userProgress.setLastActiveTimestamp(LocalDateTime.now());
+        userProgress.setRegistrationDate(LocalDateTime.now());
+
+        userProgressRepository.save(userProgress);
+        log.info("Initialized user progress for user ID: {}", userId);
+        return userProgress;
     }
 }

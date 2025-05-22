@@ -4,6 +4,7 @@ import com.study4ever.progressservice.dto.CourseEnrollmentRequest;
 import com.study4ever.progressservice.dto.CourseProgressDto;
 import com.study4ever.progressservice.dto.ModuleProgressDto;
 import com.study4ever.progressservice.service.CourseProgressService;
+import com.study4ever.progressservice.service.LessonProgressService;
 import com.study4ever.progressservice.service.ModuleProgressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class CourseProgressController {
 
     private final CourseProgressService courseProgressService;
     private final ModuleProgressService moduleProgressService;
+    private final LessonProgressService lessonProgressService;
 
     @PostMapping("/{courseId}/progress")
     @ResponseStatus(HttpStatus.CREATED)
@@ -100,5 +102,14 @@ public class CourseProgressController {
             @PathVariable String courseId) {
         log.debug("Getting all modules progress for user {} in course {}", userId, courseId);
         return moduleProgressService.getAllModulesProgressInCourse(userId, courseId);
+    }
+
+    // get all completed lessons id in course
+    @GetMapping("/{courseId}/completed")
+    public List<String> getCompletedLessonsInCourse(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String courseId) {
+        log.debug("Getting all completed lessons for user {} in course {}", userId, courseId);
+        return lessonProgressService.getCompletedLessonsInCourse(userId, courseId);
     }
 }

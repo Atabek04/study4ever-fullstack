@@ -40,11 +40,20 @@ const CoursesPage = () => {
   
   // Filter and sort courses
   const filteredAndSortedCourses = useMemo(() => {
-    // First filter courses
-    let result = courses.filter(course => 
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    // Ensure courses is an array before filtering
+    if (!Array.isArray(courses)) {
+      console.warn('Courses is not an array:', courses);
+      return [];
+    }
+    
+    // First filter courses - handle potential missing properties safely
+    let result = courses.filter(course => {
+      const title = course.title?.toLowerCase() || '';
+      const description = course.description?.toLowerCase() || '';
+      const term = searchTerm.toLowerCase();
+      
+      return title.includes(term) || description.includes(term);
+    });
     
     // Then sort courses
     if (activeSort) {
@@ -57,15 +66,15 @@ const CoursesPage = () => {
       if (field && order) {
         result = [...result].sort((a, b) => {
           if (field === 'title') {
-            const titleA = a.title.toLowerCase();
-            const titleB = b.title.toLowerCase();
+            const titleA = (a.title || '').toLowerCase();
+            const titleB = (b.title || '').toLowerCase();
             return order === 'asc' 
               ? titleA.localeCompare(titleB)
               : titleB.localeCompare(titleA);
           } else if (field === 'id') {
             return order === 'asc'
-              ? a.id - b.id
-              : b.id - a.id;
+              ? (a.id || 0) - (b.id || 0)
+              : (b.id || 0) - (a.id || 0);
           }
           return 0;
         });

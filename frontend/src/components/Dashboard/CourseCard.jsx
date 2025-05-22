@@ -1,8 +1,44 @@
 import { Card, CardMedia, CardContent, CardActions, Typography, Button, LinearProgress, Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import { useFirstLesson } from '../../hooks/navigationHooks';
 
 const CourseCard = ({ course }) => {
   // Fallback image if course thumbnail fails to load
   const fallbackImage = 'https://picsum.photos/400/140?blur=2';
+  const navigate = useNavigate();
+  
+  // Log course data structure for debugging if needed
+  // console.log('CourseCard received course data:', course);
+  
+  // Handle invalid or empty course data
+  if (!course) {
+    console.warn('CourseCard received null or undefined course data');
+    return null;
+  }
+  
+  // Extract course data, handling different API response formats
+  // The progress API might return nested course object with progress information
+  // or flat structure with course data and progress information
+  const courseData = course.course || course;
+  
+  // Extract title from the enriched course data
+  const courseTitle = courseData.title || 'Untitled Course';
+  
+  // Extract instructor information - now directly available from the enriched data
+  const instructorName = courseData.instructor || 'Instructor';
+  
+  // Extract progress percentage - should be in completionPercentage from progress data
+  const courseProgress = course.completionPercentage || course.progress || 0;
+  
+  // Extract course thumbnail/image with fallback
+  const courseThumbnail = courseData.thumbnail || courseData.imageUrl || fallbackImage;
+  
+  // Extract course ID for navigation
+  const courseId = courseData.id || courseData.courseId;
+  
+  // Use our custom hook to get the first lesson ID
+  const { firstLessonId } = useFirstLesson(courseId);
 
   return (
     <Card
@@ -13,6 +49,9 @@ const CourseCard = ({ course }) => {
         flexDirection: 'column',
         height: '100%',
         width: '100%',
+        maxWidth: 380,
+        minWidth: 260,
+        margin: '0 auto',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-4px)',
@@ -22,8 +61,8 @@ const CourseCard = ({ course }) => {
     >
       <CardMedia
         component="img"
-        image={course.thumbnail || fallbackImage}
-        alt={course.title}
+        image={courseThumbnail || fallbackImage}
+        alt={courseTitle}
         sx={{
           height: { xs: 120, sm: 140 },
           objectFit: 'cover',
@@ -46,7 +85,7 @@ const CourseCard = ({ course }) => {
           noWrap
           sx={{ fontSize: '1.1rem', mb: 0.5, pt: 0.5 }}
         >
-          {course.title}
+          {courseTitle}
         </Typography>
         <Typography 
           variant="body2" 
@@ -54,7 +93,7 @@ const CourseCard = ({ course }) => {
           noWrap
           sx={{ mb: 2 }}
         >
-          {course.instructor}
+          {instructorName}
         </Typography>
         <Box sx={{ mt: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
@@ -62,12 +101,13 @@ const CourseCard = ({ course }) => {
               Progress
             </Typography>
             <Typography variant="caption" color="primary" fontWeight={500}>
-              {course.progress}%
+              {courseProgress}%
             </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
-            value={course.progress}
+            // Ensure progress is a valid value between 0-100
+            value={Math.min(Math.max(parseFloat(courseProgress) || 0, 0), 100)}
             sx={{ 
               height: 8, 
               borderRadius: 5, 
@@ -82,6 +122,16 @@ const CourseCard = ({ course }) => {
           size="small"
           variant="contained"
           color="primary"
+          onClick={() => {
+            if (courseId && firstLessonId) {
+              console.log(`Navigating to lesson page: /courses/${courseId}/lessons/${firstLessonId}`);
+              navigate(`/courses/${courseId}/lessons/${firstLessonId}`);
+            } else if (courseId) {
+              console.log(`No lesson ID available, navigating to course page: /courses/${courseId}`);
+              navigate(`/courses/${courseId}`);
+            }
+          }}
+          disabled={!courseId}
           sx={{ 
             borderRadius: 2, 
             fontWeight: 600, 
@@ -91,11 +141,13 @@ const CourseCard = ({ course }) => {
             mr: 1
           }}
         >
-          Continue
+          {firstLessonId ? 'Continue Learning' : 'View Course'}
         </Button>
         <Button 
           size="small" 
-          color="secondary" 
+          color="secondary"
+          onClick={() => courseId && navigate(`/courses/${courseId}/details`)}
+          disabled={!courseId}
           sx={{ textTransform: 'none', fontWeight: 500 }}
         >
           Details
@@ -103,6 +155,47 @@ const CourseCard = ({ course }) => {
       </CardActions>
     </Card>
   );
+};
+
+// Add PropTypes validation for better developer experience
+CourseCard.propTypes = {
+  course: PropTypes.shape({
+    // Progress information from /api/v1/courses/progress
+    courseId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    completionPercentage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    progress: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    completed: PropTypes.bool,
+    
+    // Course details from /api/v1/courses/{courseId}
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    title: PropTypes.string,
+    description: PropTypes.string,
+    instructorId: PropTypes.string,
+    totalModules: PropTypes.number,
+    totalLessons: PropTypes.number,
+    thumbnail: PropTypes.string,
+    imageUrl: PropTypes.string,
+    
+    // Instructor details added by our hook
+    instructor: PropTypes.string,
+    instructorDetails: PropTypes.shape({
+      id: PropTypes.string,
+      firstName: PropTypes.string,
+      lastName: PropTypes.string,
+      email: PropTypes.string,
+      username: PropTypes.string,
+      roles: PropTypes.arrayOf(PropTypes.string)
+    }),
+    
+    // Legacy support for nested course data
+    course: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      title: PropTypes.string,
+      instructor: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+      thumbnail: PropTypes.string,
+      imageUrl: PropTypes.string
+    })
+  }).isRequired
 };
 
 export default CourseCard;
