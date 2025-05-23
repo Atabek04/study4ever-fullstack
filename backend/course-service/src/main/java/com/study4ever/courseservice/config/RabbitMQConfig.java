@@ -39,6 +39,7 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
     public static final String STUDY_SESSION_STARTED_QUEUE = "study.session.started.queue";
     public static final String STUDY_SESSION_ENDED_QUEUE = "study.session.ended.queue";
     public static final String STUDY_SESSION_HEARTBEAT_QUEUE = "study.session.heartbeat.queue";
+    public static final String STUDY_SESSION_CONFIRMATION_QUEUE = "study.session.confirmation.queue";
     
     // Progress Completion Queues
     public static final String LESSON_COMPLETION_QUEUE = "lesson.completion.queue";
@@ -54,6 +55,7 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
     public static final String STUDY_SESSION_STARTED_ROUTING_KEY = "study.session.started";
     public static final String STUDY_SESSION_ENDED_ROUTING_KEY = "study.session.ended";
     public static final String STUDY_SESSION_HEARTBEAT_ROUTING_KEY = "study.session.heartbeat";
+    public static final String STUDY_SESSION_CONFIRMATION_ROUTING_KEY = "study4ever.study-sessions.confirmation";
     
     // Progress Completion Routing Keys
     public static final String LESSON_COMPLETION_ROUTING_KEY = "study4ever.events.lesson.completion";
@@ -154,6 +156,13 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
                 .build();
     }
 
+    @Bean
+    public Queue studySessionConfirmationQueue() {
+        log.info("Creating study session confirmation queue: {}", STUDY_SESSION_CONFIRMATION_QUEUE);
+        return QueueBuilder.durable(STUDY_SESSION_CONFIRMATION_QUEUE)
+                .build();
+    }
+
     // Bindings for topic exchange
     @Bean
     public Binding userCreatedBinding(@Qualifier("userCreatedQueue") Queue queue, TopicExchange userExchange) {
@@ -187,6 +196,12 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
     public Binding studySessionHeartbeatBinding(@Qualifier("studySessionHeartbeatQueue") Queue queue, 
                                              @Qualifier("studySessionExchange") TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(STUDY_SESSION_HEARTBEAT_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding studySessionConfirmationBinding(@Qualifier("studySessionConfirmationQueue") Queue queue, 
+                                             @Qualifier("studySessionExchange") TopicExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(STUDY_SESSION_CONFIRMATION_ROUTING_KEY);
     }
 
     // Dead Letter Exchange

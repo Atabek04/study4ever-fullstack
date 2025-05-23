@@ -24,4 +24,6 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
     List<LessonProgress> findByUserIdAndCourseIdAndModuleIdAndStatus(String userId, String courseId, String moduleId, ProgressStatus status);
 
     List<LessonProgress> findByUserIdAndCourseIdAndStatus(String userId, String courseId, ProgressStatus status);
+
+    Optional<LessonProgress> findByUserIdAndCourseIdAndLessonId(String userId, String courseId, String lessonId);
 }

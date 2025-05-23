@@ -32,17 +32,15 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public Lesson getLessonById(Long id) {
-        Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new NotFoundException("Lesson not found"));
-        ensureActiveSessionForLesson(lesson);
-        return lesson;
+        //        ensureActiveSessionForLesson(lesson); todo: uncomment when session service is available
+        return lessonRepository.findById(id).orElseThrow(() -> new NotFoundException("Lesson not found"));
     }
 
     @Override
     public Lesson getLessonByModuleIdAndLessonId(String moduleId, String lessonId) {
-        Lesson lesson = lessonRepository.findByModuleIdAndId(Long.valueOf(moduleId), Long.valueOf(lessonId))
+        //        ensureActiveSessionForLesson(lesson); todo: uncomment when session service is available
+        return lessonRepository.findByModuleIdAndId(Long.valueOf(moduleId), Long.valueOf(lessonId))
                 .orElseThrow(() -> new NotFoundException("Lesson not found for moduleId: " + moduleId + " and lessonId: " + lessonId));
-        ensureActiveSessionForLesson(lesson);
-        return lesson;
     }
 
     @Override

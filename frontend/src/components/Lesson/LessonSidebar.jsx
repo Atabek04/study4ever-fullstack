@@ -17,7 +17,8 @@ import {
   Stack,
   Tooltip,
   Snackbar,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
@@ -51,9 +52,14 @@ LessonDuration.propTypes = {
 // Helper component for each individual lesson item
 const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
   // Track lesson completion status
-  const { isCompleted, toggleCompletion } = useLessonCompletion(lesson.id, courseId, moduleId);
+  const { isCompleted, loading, toggleCompletion } = useLessonCompletion(lesson.id, courseId, moduleId);
   // Track bookmark status
   const { isBookmarked, toggleBookmark } = useLessonBookmark(lesson.id);
+
+  // Debug log to track completion status changes
+  React.useEffect(() => {
+    console.log(`LessonItem: Lesson ${lesson.id} - isCompleted: ${isCompleted}, loading: ${loading}`);
+  }, [lesson.id, isCompleted, loading]);
 
   // Snackbar state
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
@@ -68,13 +74,21 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
   const handleCompletionClick = async (e) => {
     e.stopPropagation();
     try {
+      const prevState = isCompleted;
       const result = await toggleCompletion();
+      
       if (result?.success || result === true) {
-        setSnackbar({ open: true, message: isCompleted ? 'Lesson marked as incomplete.' : 'Lesson marked as completed!', severity: 'success' });
+        // Use the negation of previous state to ensure UI reflects the change immediately
+        setSnackbar({ 
+          open: true, 
+          message: prevState ? 'Lesson marked as incomplete.' : 'Lesson marked as completed!', 
+          severity: 'success' 
+        });
       } else {
         setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
       }
-    } catch {
+    } catch (error) {
+      console.error('Error toggling completion status:', error);
       setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
     }
   };
@@ -93,7 +107,11 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
                 edge="end"
                 size="small"
                 onClick={handleCompletionClick}
-                sx={{ color: isCompleted ? 'success.main' : 'text.secondary' }}
+                disabled={loading}
+                sx={{ 
+                  color: isCompleted ? 'success.main' : 'text.secondary',
+                  opacity: loading ? 0.5 : 1
+                }}
               >
                 {isCompleted ? <CheckCircleIcon fontSize="small" /> : <CheckCircleOutlineIcon fontSize="small" />}
               </IconButton>
@@ -135,10 +153,12 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
           }}
         >
           <ListItemIcon sx={{ minWidth: 32 }}>
-            {isCompleted ? (
+            {loading ? (
+              <CircularProgress size={16} />
+            ) : isCompleted ? (
               <CheckCircleIcon color="success" fontSize="small" />
             ) : (
-              <PlayCircleOutlineIcon fontSize="small" sx={{ color: isCompleted ? 'success.main' : 'action.active' }} />
+              <PlayCircleOutlineIcon fontSize="small" sx={{ color: 'action.active' }} />
             )}
           </ListItemIcon>
           <ListItemText 

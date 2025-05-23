@@ -197,6 +197,7 @@ const LessonContent = ({ courseId, lessonId }) => {
   // Track lesson completion status
   const { 
     isCompleted, 
+    loading: completionLoading,
     toggleCompletion, 
     markAsComplete 
   } = useLessonCompletion(
@@ -204,6 +205,11 @@ const LessonContent = ({ courseId, lessonId }) => {
     courseId, 
     lesson?.moduleId // Use moduleId from the lesson data
   );
+  
+  // Debug log to track completion status changes
+  React.useEffect(() => {
+    console.log(`LessonContent: Lesson ${lessonId} - isCompleted: ${isCompleted}, loading: ${completionLoading}`);
+  }, [lessonId, isCompleted, completionLoading]);
   
   // Track bookmark status
   const { isBookmarked, toggleBookmark } = useLessonBookmark(lessonId);
@@ -219,17 +225,25 @@ const LessonContent = ({ courseId, lessonId }) => {
 
   // Custom handler for completion with feedback
   const handleCompletion = async () => {
-    if (!isCompleted) {
-      const result = await markAsComplete();
-      if (result) {
-        setSnackbar({ open: true, message: 'Lesson marked as completed!', severity: 'success' });
+    const prevState = isCompleted;
+    
+    try {
+      if (!prevState) {
+        // Marking as complete - make API call
+        const result = await markAsComplete();
+        if (result) {
+          setSnackbar({ open: true, message: 'Lesson marked as completed!', severity: 'success' });
+        } else {
+          setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
+        }
       } else {
-        setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
+        // Marking as incomplete - just UI update, no API call
+        setSnackbar({ open: true, message: 'Lesson marked as incomplete (UI only)', severity: 'info' });
+        toggleCompletion();
       }
-    } else {
-      // If toggling to incomplete, just update UI (no API call)
-      setSnackbar({ open: true, message: 'Lesson marked as incomplete (UI only)', severity: 'info' });
-      toggleCompletion();
+    } catch (error) {
+      console.error('Error handling completion:', error);
+      setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
     }
   };
   
@@ -374,8 +388,10 @@ const LessonContent = ({ courseId, lessonId }) => {
             <Tooltip title={isCompleted ? "Mark as incomplete" : "Mark as complete"}>
               <IconButton 
                 onClick={handleCompletion}
+                disabled={completionLoading}
                 color={isCompleted ? "success" : "default"}
                 aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+                sx={{ opacity: completionLoading ? 0.5 : 1 }}
               >
                 {isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlineIcon />}
               </IconButton>

@@ -59,7 +59,9 @@ rabbitmq:
     study-session-started: study.session.started.queue
     study-session-ended: study.session.ended.queue
     study-session-heartbeat: study.session.heartbeat.queue
+    study-session-confirmation: study.session.confirmation.queue
   routing-keys:
+    study-session-confirmation: study4ever.study-sessions.confirmation
     study-session-started: study.session.started
     study-session-ended: study.session.ended
     study-session-heartbeat: study.session.heartbeat

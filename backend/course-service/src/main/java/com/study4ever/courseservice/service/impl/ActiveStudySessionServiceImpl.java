@@ -8,8 +8,8 @@ import com.study4ever.courseservice.config.StudySessionProperties;
 import org.springframework.stereotype.Service;
 
 import com.study4ever.courseservice.event.StudySessionEventPublisher;
-import com.study4ever.courseservice.event.StudySessionStartedEvent;
-import com.study4ever.courseservice.event.StudySessionHeartbeatEvent;
+import com.study4ever.courseservice.event.message.StudySessionStartedEvent;
+import com.study4ever.courseservice.event.message.StudySessionHeartbeatEvent;
 import com.study4ever.courseservice.exception.SessionNotFoundException;
 import com.study4ever.courseservice.exception.SessionConflictException;
 import com.study4ever.courseservice.model.ActiveStudySession;

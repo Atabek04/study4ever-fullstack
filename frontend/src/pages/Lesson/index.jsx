@@ -131,6 +131,7 @@ const LessonPage = () => {
         }}
       >
         <LessonContent 
+          key={currentLessonId} // Add key to force re-render when lesson changes
           courseId={courseId} 
           lessonId={currentLessonId} 
         />
