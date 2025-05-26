@@ -102,12 +102,21 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                 }
             }
 
+            // Add user information to request headers for downstream services
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", username)
                     .header("X-User-Roles", String.join(",", userRoles))
                     .build();
 
-            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+            // Set user information on the response headers for the frontend
+            exchange.getResponse().getHeaders().set("X-User-Id", username);
+            exchange.getResponse().getHeaders().set("X-User-Roles", String.join(",", userRoles));
+
+            log.info("Added user roles to response headers: {} for user: {}", userRoles, username);
+            
+            return chain.filter(exchange.mutate()
+                    .request(mutatedRequest)
+                    .build());
         } catch (Exception e) {
             log.error("Error processing JWT token for path: {}", path, e);
             return createErrorResponse(exchange.getResponse(),

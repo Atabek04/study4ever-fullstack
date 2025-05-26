@@ -37,11 +37,15 @@ public class JwtTokenProvider {
 
     private String generateToken(Authentication authentication, long expirationMs) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        List<String> roles = extractRoles(userDetails);
+        
+        log.info("Generating token for user: {} with roles: {}", userDetails.getUsername(), roles);
+        
         return Jwts.builder()
                 .claims()
                 .issuer(jwtProperties.getIssuer())
                 .subject(userDetails.getUsername())
-                .add("roles", extractRoles(userDetails))
+                .add("roles", roles)
                 .and()
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
@@ -50,9 +54,12 @@ public class JwtTokenProvider {
     }
 
     private List<String> extractRoles(UserDetails userDetails) {
-        return userDetails.getAuthorities().stream()
+        List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
+        
+        log.info("Extracted roles for user {}: {}", userDetails.getUsername(), roles);
+        return roles;
     }
 
     public String getUsernameFromToken(String token) {

@@ -31,16 +31,23 @@ public class JwtUtil {
     }
 
     public String getUsernameFromToken(String token) {
-        return extractAllClaims(token).getSubject();
+        String username = extractAllClaims(token).getSubject();
+        log.info("Extracted username from token: {}", username);
+        return username;
     }
 
     @SuppressWarnings("unchecked")
     public List<String> getRolesFromToken(String token) {
         Claims claims = extractAllClaims(token);
+        log.info("Token claims: {}", claims);
+        
         List<String> roles = claims.get("roles", List.class);
         if (roles == null) {
+            log.warn("No roles found in token claims");
             return new ArrayList<>();
         }
+        
+        log.info("Extracted roles from token: {}", roles);
         return roles;
     }
 

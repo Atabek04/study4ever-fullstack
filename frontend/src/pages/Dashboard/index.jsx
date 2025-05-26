@@ -5,8 +5,8 @@ import DashboardLayout from '../../components/Dashboard/DashboardLayout';
 import { useEnrolledCourses } from '../../hooks/courseHooks';
 
 const Dashboard = () => {
-  // Auth context for logout functionality
-  const { logout } = useAuth();
+  // Auth context for user profile and logout functionality
+  const { user, logout } = useAuth();
   
   // Fetch enrolled courses with progress data
   const { enrolledCourses, loading, error } = useEnrolledCourses();
@@ -26,7 +26,7 @@ const Dashboard = () => {
             textAlign: 'center' 
           }}
         >
-          Welcome to Study4Ever
+          Welcome to Study4Ever{user?.firstName ? `, ${user.firstName}` : ''}
         </Typography>
         
         {/* Course Grid - exactly 3 per row */}
@@ -173,11 +173,17 @@ const Dashboard = () => {
                       fontWeight: 'bold'
                     }}
                   >
-                    U
+                    {user?.firstName ? user.firstName.charAt(0) : 'U'}
                   </Avatar>
                   <Box sx={{ ml: 2 }}>
-                    <Typography variant="h6" sx={{ color: 'text.primary' }}>User</Typography>
-                    <Typography variant="body2" color="text.secondary">Student</Typography>
+                    <Typography variant="h6" sx={{ color: 'text.primary' }}>
+                      {user?.firstName && user?.lastName 
+                        ? `${user.firstName} ${user.lastName}` 
+                        : user?.username || 'User'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {user?.email || 'Student'}
+                    </Typography>
                   </Box>
                 </Box>
                 <Button

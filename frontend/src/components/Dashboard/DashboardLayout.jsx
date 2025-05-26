@@ -27,7 +27,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 const drawerWidth = 240;
 
 const DashboardLayout = ({ children }) => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -157,7 +157,7 @@ const DashboardLayout = ({ children }) => {
                       fontSize: 20,
                     }}
                   >
-                    U
+                    {user?.firstName ? user.firstName.charAt(0) : 'U'}
                   </Avatar>
                 </IconButton>
               </Tooltip>
@@ -171,10 +171,12 @@ const DashboardLayout = ({ children }) => {
                 sx={{ mt: 1 }}
               >
                 <MenuItem onClick={handleCloseUserMenu}>
-                  <Typography>Profile</Typography>
+                  <Typography>{user?.firstName && user?.lastName 
+                    ? `${user.firstName} ${user.lastName}` 
+                    : user?.username || 'Profile'}</Typography>
                 </MenuItem>
                 <MenuItem onClick={handleCloseUserMenu}>
-                  <Typography>Account</Typography>
+                  <Typography>{user?.email || 'Account'}</Typography>
                 </MenuItem>
                 <Divider />
                 <MenuItem onClick={handleLogout}>

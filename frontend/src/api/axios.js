@@ -4,30 +4,24 @@ import axios from 'axios';
 let adminToken = null;
 let adminTokenExpiry = null;
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8095',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  // Add timeout to prevent hanging requests
-  timeout: 10000,
-  // Add validation for status
-  validateStatus: function (status) {
-    return status >= 200 && status < 500; // Resolve for status codes 200-499
-  }
-});
+// Function to create axios instance with proper CORS settings
+const createApiInstance = (config = {}) => {
+  return axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8095',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    timeout: 10000,
+    validateStatus: function (status) {
+      return status >= 200 && status < 500;
+    },
+    withCredentials: false, // Changed to false as we're manually handling auth
+    ...config
+  });
+};
 
-// Create a separate instance for admin-only API calls
-export const adminApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8095',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000,
-  validateStatus: function (status) {
-    return status >= 200 && status < 500;
-  }
-});
+const api = createApiInstance();
+export const adminApi = createApiInstance();
 
 // Function to get admin token
 export const getAdminToken = async (force = false) => {
@@ -64,19 +58,11 @@ adminApi.interceptors.request.use(
     const token = await getAdminToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      
-      // Log request details (truncating token for security)
-      const truncatedToken = token.substring(0, 10) + '...' + token.substring(token.length - 5);
-      console.log(`Admin API Request: ${config.method.toUpperCase()} ${config.url}`, {
-        headers: {
-          ...config.headers,
-          Authorization: `Bearer ${truncatedToken}`
-        },
-        baseURL: config.baseURL,
-        data: config.data
-      });
+      if (!config.url?.includes('/auth/')) {
+        console.log(`Admin Request: ${config.method.toUpperCase()} ${config.url}`);
+      }
     } else {
-      console.warn(`Admin API Request failed - could not get admin token: ${config.method.toUpperCase()} ${config.url}`);
+      console.warn(`Admin Request failed - no token: ${config.method.toUpperCase()} ${config.url}`);
     }
     return config;
   },
@@ -86,12 +72,21 @@ adminApi.interceptors.request.use(
 // Admin API response interceptor
 adminApi.interceptors.response.use(
   (response) => {
-    console.log(`Admin API Response: ${response.status} ${response.statusText} for ${response.config.method.toUpperCase()} ${response.config.url}`);
+    const url = response.config.url;
+    
+    // For important endpoints, log the response body
+    if (url?.includes('/courses') || url?.includes('/lessons') || url?.includes('/modules')) {
+      console.log(`Admin Response ${response.status} for ${response.config.method.toUpperCase()} ${url}:`, {
+        status: response.status,
+        data: response.data
+      });
+    } else if (!url?.includes('/auth/')) {
+      // For other non-auth endpoints, just log status
+      console.log(`Admin Response ${response.status} for ${response.config.method.toUpperCase()} ${url}`);
+    }
     return response;
   },
   async (error) => {
-    console.error(`Admin API Error Response: ${error.response?.status} ${error.response?.statusText} for ${error.config?.method?.toUpperCase() || 'unknown'} ${error.config?.url || 'unknown'}`, error);
-    
     // If we get a 401 Unauthorized, try refreshing the admin token once
     if (error.response?.status === 401 && !error.config._retry) {
       error.config._retry = true;
@@ -106,6 +101,13 @@ adminApi.interceptors.response.use(
       }
     }
     
+    // Log error details for non-auth endpoints
+    if (!error.config?.url?.includes('/auth/')) {
+      console.error(`Admin Error ${error.response?.status} for ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, {
+        status: error.response?.status,
+        data: error.response?.data
+      });
+    }
     return Promise.reject(error);
   }
 );
@@ -117,18 +119,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       
-      // Log request details for debugging (truncate token for security)
-      const truncatedToken = token.substring(0, 10) + '...' + token.substring(token.length - 5);
-      console.log(`User API Request: ${config.method.toUpperCase()} ${config.url}`, {
-        headers: {
-          ...config.headers,
-          Authorization: `Bearer ${truncatedToken}`  // Only show parts of the token
-        },
-        baseURL: config.baseURL,
-        data: config.data
-      });
-    } else {
-      console.warn(`User API Request without auth token: ${config.method.toUpperCase()} ${config.url}`);
+      // Only log non-auth requests to reduce noise
+      if (!config.url?.includes('/auth/')) {
+        console.log(`Request: ${config.method.toUpperCase()} ${config.url}`);
+      }
     }
     return config;
   },
@@ -138,12 +132,17 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    // Log successful responses
-    console.log(`User API Response: ${response.status} ${response.statusText} for ${response.config.method.toUpperCase()} ${response.config.url}`);
+    const url = response.config.url;
     
-    // Special handling for 204 No Content responses
-    if (response.status === 204) {
-      console.log('Received 204 No Content response');
+    // For important endpoints, log the response body
+    if (url?.includes('/courses') || url?.includes('/lessons') || url?.includes('/modules')) {
+      console.log(`Response ${response.status} for ${response.config.method.toUpperCase()} ${url}:`, {
+        status: response.status,
+        data: response.data
+      });
+    } else if (!url?.includes('/auth/')) {
+      // For other non-auth endpoints, just log status
+      console.log(`Response ${response.status} for ${response.config.method.toUpperCase()} ${url}`);
     }
     
     return response;
@@ -155,7 +154,6 @@ api.interceptors.response.use(
 
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
-        // No refresh token, do not attempt refresh
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         window.location.href = '/auth';
@@ -178,6 +176,13 @@ api.interceptors.response.use(
         window.location.href = '/auth';
         return Promise.reject(refreshError);
       }
+    }
+    // Log error details for non-auth endpoints
+    if (!error.config?.url?.includes('/auth/')) {
+      console.error(`Error ${error.response?.status} for ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, {
+        status: error.response?.status,
+        data: error.response?.data
+      });
     }
     return Promise.reject(error);
   }

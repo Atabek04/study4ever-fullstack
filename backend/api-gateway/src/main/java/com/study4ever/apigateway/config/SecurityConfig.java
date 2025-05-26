@@ -31,9 +31,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*")); // In production, restrict to specific origins
+        config.setAllowCredentials(true); // Enable credentials
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173")); // Add specific origins
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "X-User-Id", "X-User-Roles"));
         config.setExposedHeaders(Arrays.asList("X-User-Id", "X-User-Roles"));
         config.setMaxAge(3600L);
 

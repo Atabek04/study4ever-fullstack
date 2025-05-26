@@ -25,4 +25,7 @@ public class CourseDetailResponseDto {
 
     @Builder.Default
     private Set<ModuleDetailResponseDto> modules = new HashSet<>();
+
+    @Builder.Default
+    private Set<Long> tagIds = new HashSet<>();
 }

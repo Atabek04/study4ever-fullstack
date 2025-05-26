@@ -1,4 +1,3 @@
-// filepath: /Users/salahaddin/IdeaProjects/study4ever-fullstack/frontend/src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
@@ -20,17 +19,40 @@ export const AuthProvider = ({ children }) => {
       api.get('/api/v1/auth/validate')
         .then(response => {
           if (response.data.valid) {
-            // Get user info if needed
-            setUser({ isAuthenticated: true });
+            // Get user profile with roles directly from the profile endpoint
+            api.get('/api/v1/auth/profile')
+              .then(profileResponse => {
+                const profile = profileResponse.data;
+                
+                // Log user authentication details
+                console.log('User profile loaded:', profile);
+                
+                setUser({ 
+                  isAuthenticated: true,
+                  username: profile.username || '',
+                  firstName: profile.firstName || '',
+                  lastName: profile.lastName || '',
+                  email: profile.email || '',
+                  roles: profile.roles || [],
+                  hasRole: (role) => (profile.roles || []).includes(role)
+                });
+              })
+              .catch(profileError => {
+                console.error('Profile loading error:', profileError);
+                logout();
+              })
+              .finally(() => {
+                setLoading(false);
+              });
           } else {
             // Invalid token, clear storage
             logout();
+            setLoading(false);
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error('Token validation error:', error);
           logout();
-        })
-        .finally(() => {
           setLoading(false);
         });
     } else {
@@ -45,9 +67,54 @@ export const AuthProvider = ({ children }) => {
       if (response.status === 200 && accessToken && refreshToken) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        setUser({ isAuthenticated: true });
-        navigate('/dashboard');
-        return { success: true };
+        
+        try {
+          // Fetch user profile to get user details including roles
+          const profileResponse = await api.get('/api/v1/auth/profile');
+          const profile = profileResponse.data;
+          
+          // Log user login details
+          console.log('User logged in, profile data:', profile);
+          
+          // Log the raw profile data
+          console.log('Raw profile data:', profile);
+          
+          const userRoles = profile.roles || [];
+          console.log('User roles from profile:', userRoles);
+          
+          setUser({ 
+            isAuthenticated: true,
+            username: profile.username || '',
+            firstName: profile.firstName || '',
+            lastName: profile.lastName || '',
+            email: profile.email || '',
+            roles: userRoles,
+            hasRole: (role) => {
+              const normalizedRole = role.toUpperCase().replace('ROLE_', '');
+              return userRoles.some(userRole => 
+                userRole.toUpperCase().replace('ROLE_', '') === normalizedRole
+              );
+            }
+          });
+          
+          navigate('/dashboard');
+          return { success: true };
+        } catch (profileError) {
+          console.error('Error fetching profile after login:', profileError);
+          // Continue with login but without full profile data
+          // Handle login with missing profile data
+          console.error('Profile fetch failed but login succeeded. Using minimal user data.');
+          const minimalUser = { 
+            isAuthenticated: true,
+            username: '',
+            roles: [],
+            hasRole: () => false
+          };
+          console.log('Setting minimal user state:', minimalUser);
+          setUser(minimalUser);
+          navigate('/dashboard');
+          return { success: true };
+        }
       } else {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -58,6 +125,7 @@ export const AuthProvider = ({ children }) => {
         };
       }
     } catch (error) {
+      console.error('Login error:', error);
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);

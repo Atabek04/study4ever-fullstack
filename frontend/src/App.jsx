@@ -1,3 +1,4 @@
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { createTheme, ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
@@ -6,6 +7,9 @@ import Dashboard from './pages/Dashboard';
 import CoursesPage from './pages/Courses';
 import LessonPage from './pages/Lesson';
 import BookmarksPage from './pages/Bookmarks';
+import AdminPage from './pages/Admin';
+import ForbiddenPage from './pages/Forbidden';
+import RoleBasedRoute from './components/Auth/RoleBasedRoute';
 import './App.css';
 
 // Create protected route component
@@ -189,6 +193,20 @@ const theme = createTheme({
 
 // App component with routing
 function AppWithRouting() {
+  // Lazy loading for admin page components
+  const CourseModules = lazy(() => import('./pages/Admin/CourseModules'));
+  const ModuleLessons = lazy(() => import('./pages/Admin/ModuleLessons'));
+  
+  const renderWithSuspense = (Component) => (
+    <Suspense fallback={
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
+        <CircularProgress />
+      </Box>
+    }>
+      <Component />
+    </Suspense>
+  );
+
   return (
     <Routes>
       <Route path="/auth" element={<AuthPage />} />
@@ -212,6 +230,22 @@ function AppWithRouting() {
           <BookmarksPage />
         </ProtectedRoute>
       } />
+      <Route path="/admin" element={
+        <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ADMIN', 'ROLE_INSTRUCTOR', 'INSTRUCTOR']}>
+          <AdminPage />
+        </RoleBasedRoute>
+      } />
+      <Route path="/admin/courses/:courseId" element={
+        <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ADMIN', 'ROLE_INSTRUCTOR', 'INSTRUCTOR']}>
+          {renderWithSuspense(CourseModules)}
+        </RoleBasedRoute>
+      } />
+      <Route path="/admin/courses/:courseId/modules/:moduleId" element={
+        <RoleBasedRoute allowedRoles={['ROLE_ADMIN', 'ADMIN', 'ROLE_INSTRUCTOR', 'INSTRUCTOR']}>
+          {renderWithSuspense(ModuleLessons)}
+        </RoleBasedRoute>
+      } />
+      <Route path="/forbidden" element={<ForbiddenPage />} />
       <Route path="/" element={<Navigate to="/auth" />} />
       <Route path="*" element={<Navigate to="/auth" />} />
     </Routes>

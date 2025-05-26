@@ -5,11 +5,13 @@ import com.study4ever.courseservice.dto.CourseRequestDto;
 import com.study4ever.courseservice.dto.CourseResponseDto;
 import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Course;
+import com.study4ever.courseservice.model.Tag;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
 import com.study4ever.courseservice.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,31 +33,44 @@ public class CourseMapper {
 
     public CourseResponseDto mapToResponseDto(Course course) {
         int totalModules = 0;
-        long totalLessons = 0;
+        int totalLessons = 0;
 
         if (course.getModules() != null) {
             totalModules = course.getModules().size();
             totalLessons = course.getModules().stream()
-                    .mapToLong(module -> module.getLessons() != null ? module.getLessons().size() : 0)
+                    .filter(module -> module.getLessons() != null)
+                    .mapToInt(module -> module.getLessons().size())
                     .sum();
         }
+
+        Set<Long> tagIds = course.getTags().stream()
+                .map(Tag::getId)
+                .collect(Collectors.toSet());
 
         return CourseResponseDto.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .instructorId(course.getInstructor().getId())
+                .instructorFirstName(course.getInstructor().getFirstName())
+                .instructorLastName(course.getInstructor().getLastName())
                 .totalModules(totalModules)
-                .totalLessons((int) totalLessons)
+                .totalLessons(totalLessons)
+                .tagIds(tagIds)
                 .build();
     }
 
     public CourseDetailResponseDto mapToDetailResponseDto(Course course) {
+        Set<Long> tagIds = course.getTags().stream()
+                .map(Tag::getId)
+                .collect(Collectors.toSet());
+
         CourseDetailResponseDto detailDto = CourseDetailResponseDto.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .instructorId(course.getInstructor().getId())
+                .tagIds(tagIds)
                 .build();
 
         if (course.getModules() != null) {

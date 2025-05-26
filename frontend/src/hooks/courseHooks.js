@@ -23,25 +23,37 @@ export const useCourses = () => {
 
       // Make the API request with proper error handling
       const response = await api.get('/api/v1/courses');
+      console.log('GET /api/v1/courses Response:', {
+        status: response.status,
+        data: response.data
+      });
       
       // Handle different response formats
       let coursesData;
       
       if (Array.isArray(response.data)) {
-        coursesData = response.data;
+        coursesData = response.data.map(course => {
+          const processed = {
+            ...course,
+            instructorName: course.instructorFirstName && course.instructorLastName
+              ? `${course.instructorFirstName} ${course.instructorLastName}`
+              : 'Not assigned',
+            totalModules: course.totalModules ?? 0,
+            totalLessons: course.totalLessons ?? 0
+          };
+          return processed;
+        });
       } else if (response.data && typeof response.data === 'object') {
-        // If response is an object that contains courses array
-        if (Array.isArray(response.data.courses)) {
-          coursesData = response.data.courses;
-        } else if (Array.isArray(response.data.content)) {
-          // Spring pagination format
-          coursesData = response.data.content;
-        } else {
-          // If no recognizable array is found, create array from object values
-          coursesData = Object.values(response.data).filter(item => typeof item === 'object');
-        }
+        const sourceArray = response.data.courses || response.data.content || [];
+        coursesData = sourceArray.map(course => ({
+          ...course,
+          instructorName: course.instructorFirstName && course.instructorLastName
+            ? `${course.instructorFirstName} ${course.instructorLastName}`
+            : 'Not assigned',
+          totalModules: course.totalModules ?? 0,
+          totalLessons: course.totalLessons ?? 0
+        }));
       } else {
-        // Fallback to empty array if data is null, undefined, or invalid format
         coursesData = [];
         console.warn('API returned unexpected data format:', response.data);
       }
@@ -50,6 +62,18 @@ export const useCourses = () => {
       if (!Array.isArray(coursesData)) {
         coursesData = [];
       }
+      
+      if (coursesData.length > 0) {
+        console.log('Sample course data:', {
+          first: coursesData[0],
+          count: coursesData.length,
+          hasInstructor: coursesData.some(c => c.instructorName !== 'Not assigned'),
+          hasCounts: coursesData.some(c => c.totalModules > 0 || c.totalLessons > 0)
+        });
+      } else {
+        console.log('No courses data available');
+      }
+      
       setCourses(coursesData);
       return coursesData;
     } catch (err) {

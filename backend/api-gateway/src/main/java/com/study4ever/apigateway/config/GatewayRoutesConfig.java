@@ -147,6 +147,11 @@ public class GatewayRoutesConfig {
                 .route("auth-service", r -> r
                         .path("/api/v1/auth/**")
                         .uri("lb://AUTH-SERVICE"))
+
+                .route("auth-service-profile", r -> r
+                        .path("/api/v1/auth/profile")
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://AUTH-SERVICE"))
                 .build();
     }
 }

@@ -7,12 +7,16 @@ import com.study4ever.courseservice.exception.InvalidInstructorRoleException;
 import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.model.Course;
 import com.study4ever.courseservice.model.Role;
+import com.study4ever.courseservice.model.Tag;
 import com.study4ever.courseservice.repository.CourseRepository;
+import com.study4ever.courseservice.repository.TagRepository;
 import com.study4ever.courseservice.repository.UserReferenceRepository;
 import com.study4ever.courseservice.service.CourseService;
 import com.study4ever.courseservice.util.mapper.CourseMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
 
 import java.util.List;
 
@@ -22,6 +26,7 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final UserReferenceRepository userRepository;
+    private final TagRepository tagRepository;
     private final CourseMapper courseMapper;
 
     @Override
@@ -75,6 +80,13 @@ public class CourseServiceImpl implements CourseService {
         }
 
         var course = courseMapper.mapToCourse(new Course(), courseRequestDto);
+        course.setTags(new HashSet<>()); // Initialize tags
+        if (courseRequestDto.getTagIds() != null) {
+            courseRequestDto.getTagIds().forEach(tagId -> 
+                course.getTags().add(tagRepository.findById(tagId)
+                    .orElseThrow(() -> new NotFoundException("Tag not found with id: " + tagId))));
+        }
+        
         Course savedCourse = courseRepository.save(course);
         return courseMapper.mapToResponseDto(savedCourse);
     }
@@ -85,6 +97,15 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new NotFoundException("Course not found"));
 
         courseMapper.mapToCourse(existingCourse, courseRequestDto);
+        
+        // Update tags
+        existingCourse.getTags().clear();
+        if (courseRequestDto.getTagIds() != null) {
+            courseRequestDto.getTagIds().forEach(tagId -> 
+                existingCourse.getTags().add(tagRepository.findById(tagId)
+                    .orElseThrow(() -> new NotFoundException("Tag not found with id: " + tagId))));
+        }
+        
         Course updatedCourse = courseRepository.save(existingCourse);
         return courseMapper.mapToResponseDto(updatedCourse);
     }
