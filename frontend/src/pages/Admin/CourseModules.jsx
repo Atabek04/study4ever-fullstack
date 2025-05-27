@@ -21,16 +21,21 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormHelperText
+  FormHelperText,
+  Tooltip,
+  Stack,
+  Snackbar
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Visibility as VisibilityIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/Dashboard/DashboardLayout';
 import api from '../../api/axios';
-import { createModule } from '../../hooks/moduleManagementHooks';
+import { createModule, updateModule, deleteModule } from '../../hooks/moduleManagementHooks';
 
 const CourseModules = () => {
   const { courseId } = useParams();
@@ -41,11 +46,15 @@ const CourseModules = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedModule, setSelectedModule] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     sortOrder: 1
   });
   const [formError, setFormError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     fetchCourseDetails();
@@ -78,21 +87,35 @@ const CourseModules = () => {
   };
 
   const handleOpenCreateDialog = () => {
-    // Calculate next sortOrder (max + 1) or 1 if no modules exist
-    const nextSortOrder = modules.length > 0 
-      ? Math.max(...modules.map(module => module.sortOrder || 0)) + 1 
-      : 1;
-    
     setFormData({
       title: '',
-      sortOrder: nextSortOrder
+      sortOrder: ''  // Empty string to make it truly optional
     });
     setFormError(null);
     setOpenCreateDialog(true);
   };
 
+  const handleOpenEditDialog = (module) => {
+    setSelectedModule(module);
+    setFormData({
+      title: module.title,
+      sortOrder: module.sortOrder || ''
+    });
+    setFormError(null);
+    setOpenEditDialog(true);
+  };
+
+  const handleOpenDeleteDialog = (module) => {
+    setSelectedModule(module);
+    setOpenDeleteDialog(true);
+  };
+
   const handleCloseDialog = () => {
     setOpenCreateDialog(false);
+    setOpenEditDialog(false);
+    setOpenDeleteDialog(false);
+    setSelectedModule(null);
+    setFormError(null);
   };
 
   const handleInputChange = (e) => {
@@ -115,20 +138,14 @@ const CourseModules = () => {
       
       const moduleData = {
         title: formData.title,
-        courseId,
-        // Only include sortOrder if the user didn't clear it
-        ...(formData.sortOrder ? { sortOrder: formData.sortOrder } : {})
+        courseId
+        // Not passing sortOrder - let backend handle it automatically
       };
       
       await createModule(moduleData);
       await fetchCourseDetails(); // Refresh the module list
+      setSnackbar({ open: true, message: 'Module created successfully!', severity: 'success' });
       handleCloseDialog();
-      
-      // Show success message
-      setError({ severity: 'success', message: 'Module created successfully!' });
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setError(null), 3000);
     } catch (err) {
       console.error('Error creating module:', err);
       
@@ -138,6 +155,73 @@ const CourseModules = () => {
       } else {
         setFormError(`Failed to create module: ${err.response?.data?.message || err.response?.data || err.message}`);
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
+    setSelectedModule(null);
+  };
+
+  const handleEditModule = async () => {
+    try {
+      if (!formData.title.trim()) {
+        setFormError('Module title is required');
+        return;
+      }
+
+      setFormError(null);
+      setLoading(true);
+      
+      const moduleData = {
+        title: formData.title,
+        courseId,
+        // Only include sortOrder if it has a value
+        ...(formData.sortOrder ? { sortOrder: formData.sortOrder } : {})
+      };
+      
+      await updateModule(selectedModule.id, moduleData);
+      await fetchCourseDetails(); // Refresh the module list
+      handleCloseDialog();
+      
+      // Show success message
+      setSnackbar({ open: true, message: 'Module updated successfully!', severity: 'success' });
+    } catch (err) {
+      console.error('Error updating module:', err);
+      
+      // Special handling for 409 Conflict errors (sort order conflict)
+      if (err.response?.status === 409) {
+        setFormError(`Position conflict: ${err.response.data.message || err.response.data || 'A module with this position already exists'}.\n\nPlease choose a different position or leave it blank for automatic assignment.`);
+      } else {
+        setFormError(`Failed to update module: ${err.response?.data?.message || err.response?.data || err.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
+    setSelectedModule(null);
+  };
+
+  const handleDeleteModule = async () => {
+    try {
+      setLoading(true);
+      await deleteModule(selectedModule.id);
+      await fetchCourseDetails(); // Refresh the module list
+      handleCloseDialog();
+      
+      // Show success message
+      setSnackbar({ open: true, message: 'Module deleted successfully!', severity: 'success' });
+    } catch (err) {
+      console.error('Error deleting module:', err);
+      setError({ 
+        severity: 'error', 
+        message: `Failed to delete module: ${err.response?.data?.message || err.message}` 
+      });
     } finally {
       setLoading(false);
     }
@@ -197,16 +281,14 @@ const CourseModules = () => {
           <Link component="button" onClick={handleGoBack} underline="hover" color="inherit">
             Admin Panel
           </Link>
-          <Typography color="text.primary">{course?.title || 'Course Modules'}</Typography>
+          <Typography color="text.primary">{course?.title}</Typography>
         </Breadcrumbs>
 
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack} sx={{ mr: 2 }}>
             Back
           </Button>
-          <Typography variant="h5" component="h1" sx={{ flexGrow: 1 }}>
-            {course?.title || 'Course'} - Modules
-          </Typography>
+          <Box sx={{ flexGrow: 1 }}></Box> {/* Empty flex space */}
           <Button
             variant="contained"
             color="primary"
@@ -245,6 +327,20 @@ const CourseModules = () => {
                           onClick={() => handleNavigateToModuleLessons(module.id)}
                         >
                           <VisibilityIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="edit module"
+                          color="secondary"
+                          onClick={() => handleOpenEditDialog(module)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="delete module"
+                          color="error"
+                          onClick={() => handleOpenDeleteDialog(module)}
+                        >
+                          <DeleteIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -311,6 +407,100 @@ const CourseModules = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Edit Module Dialog */}
+        <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="md" fullWidth>
+          <DialogTitle>Edit Module</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2 }}>
+              <TextField
+                name="title"
+                label="Module Title"
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                value={formData.title}
+                onChange={handleInputChange}
+                required
+                error={formError && formError.includes('title')}
+              />
+
+              <TextField
+                name="sortOrder"
+                label="Position (optional)"
+                fullWidth
+                margin="normal"
+                variant="outlined"
+                type="number"
+                inputProps={{ min: 1 }}
+                value={formData.sortOrder}
+                onChange={handleInputChange}
+                helperText="Position determines the order of this module in the course. If left empty, the system will assign a position automatically."
+              />
+
+              {formError && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mt: 2,
+                    '& .MuiAlert-message': { 
+                      whiteSpace: 'pre-line' 
+                    }
+                  }}
+                >
+                  {formError}
+                </Alert>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseEditDialog}>Cancel</Button>
+            <Button 
+              onClick={handleEditModule}
+              variant="contained"
+              color="primary"
+              disabled={!formData.title.trim()}
+            >
+              Update Module
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Module Confirmation Dialog */}
+        <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
+          <DialogTitle>Confirm Module Deletion</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1">
+              Are you sure you want to delete the module "{selectedModule?.title}"? This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+            <Button 
+              onClick={handleDeleteModule}
+              variant="contained"
+              color="error"
+            >
+              Delete Module
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar for success/error messages */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

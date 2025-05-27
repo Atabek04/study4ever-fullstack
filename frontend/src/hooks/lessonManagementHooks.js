@@ -24,7 +24,7 @@ export const createLesson = async (lessonData) => {
   const formattedData = {
     title: lessonData.title,
     content: lessonData.content,
-    videoUrl: lessonData.videoUrl || '',
+    videoUrl: lessonData.videoUrl,
     durationMinutes: parseInt(lessonData.durationMinutes) || 0,
     moduleId: parseInt(lessonData.moduleId)
   };
@@ -50,11 +50,13 @@ export const createLesson = async (lessonData) => {
  * @returns {Promise} Promise that resolves to the updated lesson
  */
 export const updateLesson = async (lessonId, lessonData) => {
+  console.log('updateLesson called with ID:', lessonId, 'and data:', lessonData);
+  
   // Format data for API request
   const formattedData = {
     title: lessonData.title,
     content: lessonData.content,
-    videoUrl: lessonData.videoUrl || '',
+    videoUrl: lessonData.videoUrl,
     durationMinutes: parseInt(lessonData.durationMinutes) || 0,
     moduleId: parseInt(lessonData.moduleId)
   };
@@ -64,11 +66,16 @@ export const updateLesson = async (lessonId, lessonData) => {
     formattedData.sortOrder = parseInt(lessonData.sortOrder);
   }
   
+  console.log('Formatted data for API:', formattedData);
+  
   try {
+    console.log(`Making API request to: /api/v1/lessons/${lessonId}`);
     const response = await api.put(`/api/v1/lessons/${lessonId}`, formattedData);
+    console.log('API response for update lesson:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error updating lesson:', error);
+    console.error('Error response:', error.response?.data);
     throw error;
   }
 };

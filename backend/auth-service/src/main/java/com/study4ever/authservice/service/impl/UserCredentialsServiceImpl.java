@@ -17,8 +17,8 @@ public class UserCredentialsServiceImpl implements UserCredentialsService {
 
     @Override
     public UserResponse getProfile(String userId) {
-        var user = userCredentialsRepository.findByEmail(userId)
-                .orElseThrow(() -> new NotFoundException("User with email " + userId + " not found"));
+        var user = userCredentialsRepository.findByUsername(userId)
+                .orElseThrow(() -> new NotFoundException("User with username " + userId + " not found"));
         var roleString = user.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.toSet());

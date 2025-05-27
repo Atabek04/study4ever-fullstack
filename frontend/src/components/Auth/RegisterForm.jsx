@@ -50,8 +50,8 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
           setError(result.error)
         }
       } catch (err) {
-        setError('An unexpected error occurred. Please try again.')
-        console.error(err)
+        console.error('Unexpected registration error:', err);
+        setError('An unexpected error occurred. Please try again later.')
       } finally {
         setLoading(false)
       }
@@ -61,7 +61,14 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
   return (
     <Box component='form' onSubmit={formik.handleSubmit} sx={{ mt: 1 }}>
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }}>
+        <Alert 
+          severity='error' 
+          sx={{ 
+            mb: 2,
+            fontWeight: error.includes('server') || error.includes('unavailable') ? 'bold' : 'normal'
+          }}
+          variant={error.includes('server') || error.includes('unavailable') ? 'filled' : 'standard'}
+        >
           {error}
         </Alert>
       )}

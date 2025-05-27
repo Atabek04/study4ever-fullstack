@@ -36,8 +36,8 @@ const LoginForm = ({ onSwitchToRegister }) => {
           setError(result.error);
         }
       } catch (err) {
-        setError('An unexpected error occurred. Please try again.');
-        console.error(err);
+        console.error('Unexpected login error:', err);
+        setError('An unexpected error occurred. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -52,7 +52,14 @@ const LoginForm = ({ onSwitchToRegister }) => {
       noValidate // Prevent browser validation which can cause reloads
     >
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 2, 
+            fontWeight: error.includes('server') || error.includes('unavailable') ? 'bold' : 'normal'
+          }}
+          variant={error.includes('server') || error.includes('unavailable') ? 'filled' : 'standard'}
+        >
           {error}
         </Alert>
       )}
