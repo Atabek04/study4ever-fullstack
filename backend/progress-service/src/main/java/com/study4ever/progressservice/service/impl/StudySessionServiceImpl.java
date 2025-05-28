@@ -40,11 +40,17 @@ public class StudySessionServiceImpl implements StudySessionService {
     @Override
     @Transactional
     public StudySessionDto startStudySession(String userId, StartStudySessionRequest request) {
-        log.info("Starting study session for user: {}", userId);
+        log.info("Starting study session for user: {} with course: {}, module: {}, lesson: {}", 
+                userId, request.getCourseId(), request.getModuleId(), request.getLessonId());
 
         List<StudySession> activeSessions = studySessionRepository.findByUserIdAndActive(userId, true);
+        log.info("Found {} active sessions for user {} during session start", activeSessions.size(), userId);
+        
         if (!activeSessions.isEmpty()) {
-            log.warn("User {} already has active sessions. Ending them first.", userId);
+            StudySession existingSession = activeSessions.get(0);
+            log.warn("User {} already has active session: {} (course: {}, module: {}, lesson: {}). Cannot start new session.", 
+                    userId, existingSession.getId(), existingSession.getCourseId(), 
+                    existingSession.getModuleId(), existingSession.getLessonId());
             throw new ConflictOperationException("User " + userId + " already has active sessions.");
         }
 
@@ -167,7 +173,16 @@ public class StudySessionServiceImpl implements StudySessionService {
     public StudySessionDto getActiveUserSession(String userId) {
         log.debug("Getting active session for user: {}", userId);
         List<StudySession> activeSessions = studySessionRepository.findByUserIdAndActive(userId, true);
-        return activeSessions.isEmpty() ? null : ProgressMapper.mapToSessionDto(activeSessions.get(0));
+        log.debug("Found {} active sessions for user {}", activeSessions.size(), userId);
+        
+        if (!activeSessions.isEmpty()) {
+            StudySession session = activeSessions.get(0);
+            log.debug("Returning active session: {} for user {}", session.getId(), userId);
+            return ProgressMapper.mapToSessionDto(session);
+        } else {
+            log.debug("No active sessions found for user {}", userId);
+            return null;
+        }
     }
 
     @Override

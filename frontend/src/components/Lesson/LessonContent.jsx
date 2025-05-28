@@ -12,6 +12,8 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Popover,
+  ClickAwayListener,
   useTheme,
   Snackbar
 } from '@mui/material';
@@ -27,6 +29,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { 
   useLesson, 
   useLessonCompletion, 
@@ -307,6 +310,10 @@ const LessonContent = ({ courseId, lessonId }) => {
 
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Help popover state
+  const [helpAnchorEl, setHelpAnchorEl] = useState(null);
+  const helpOpen = Boolean(helpAnchorEl);
 
   // Custom handler for completion with feedback - only allows marking as complete
   const handleCompletion = async () => {
@@ -649,14 +656,8 @@ const LessonContent = ({ courseId, lessonId }) => {
               </span>
             </Tooltip>
 
-            {/* Session status indicator */}
-            <Tooltip title={
-              sessionWarning
-                ? "Session expiring soon! Continue studying to maintain your session."
-                : isSessionActive 
-                  ? `Study session active (ID: ${sessionId?.slice(-8) || 'unknown'})` 
-                  : "No active study session"
-            }>
+            {/* Session status indicator with help */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <IconButton 
                 disabled
                 size="small"
@@ -690,7 +691,91 @@ const LessonContent = ({ courseId, lessonId }) => {
               >
                 {isSessionActive ? <RadioButtonCheckedIcon /> : <RadioButtonUncheckedIcon />}
               </IconButton>
-            </Tooltip>
+              
+              <IconButton
+                size="small"
+                onClick={(event) => setHelpAnchorEl(event.currentTarget)}
+                sx={{ 
+                  color: 'text.secondary',
+                  fontSize: '0.75rem',
+                  p: 0.25,
+                  '&:hover': {
+                    color: 'primary.main',
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                  }
+                }}
+                aria-label="Study session help"
+              >
+                <HelpOutlineIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Box>
+
+            {/* Help Popover */}
+            <Popover
+              open={helpOpen}
+              anchorEl={helpAnchorEl}
+              onClose={() => setHelpAnchorEl(null)}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'center',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
+              sx={{
+                '& .MuiPopover-paper': {
+                  maxWidth: 300,
+                  p: 2
+                }
+              }}
+            >
+              <Box sx={{ fontSize: '0.875rem', lineHeight: 1.4 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Study Session Tracking
+                </Typography>
+                
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <RadioButtonCheckedIcon sx={{ fontSize: 16, mr: 1, color: 'success.main' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      Green (Active)
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 3, display: 'block' }}>
+                    Your progress is being tracked
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <RadioButtonUncheckedIcon sx={{ fontSize: 16, mr: 1, color: 'text.disabled' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      Gray (Inactive)
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 3, display: 'block' }}>
+                    No active study session
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <RadioButtonCheckedIcon sx={{ fontSize: 16, mr: 1, color: 'warning.main' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      Orange (Warning)
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 3, display: 'block' }}>
+                    Session expiring soon
+                  </Typography>
+                </Box>
+
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  Sessions auto-end after 30 minutes of inactivity
+                </Typography>
+              </Box>
+            </Popover>
           </Stack>
         </Box>
         

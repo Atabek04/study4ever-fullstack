@@ -20,12 +20,21 @@ export const useStudySessionHeartbeat = (courseId, moduleId, lessonId, isActive 
   const warningTimeoutRef = useRef(null);
   const lastLocationRef = useRef(null);
   const lastHeartbeatRef = useRef(null);
+  const isStartingSessionRef = useRef(false); // Prevent race conditions
 
   // Configuration
   const HEARTBEAT_INTERVAL = 30000; // 30 seconds - reasonable for study tracking
   const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes - match backend timeout
   const SESSION_WARNING_TIME = 5 * 60 * 1000; // 5 minutes before timeout
   
+  /**
+   * Check if existing session is compatible with current lesson
+   */
+  const isSessionCompatible = (session, currentCourseId, currentModuleId, currentLessonId) => {
+    // If session is for same course, it's compatible (user can navigate within course)
+    return session.courseId === currentCourseId;
+  };
+
   /**
    * Start a new study session or get existing active session
    */
@@ -35,44 +44,147 @@ export const useStudySessionHeartbeat = (courseId, moduleId, lessonId, isActive 
       return;
     }
 
+    // Prevent race conditions - only one session start at a time
+    if (isStartingSessionRef.current) {
+      console.log('[StudySession] Session start already in progress, skipping');
+      return sessionId;
+    }
+
+    isStartingSessionRef.current = true;
+    
     try {
       console.log('[StudySession] Starting study session', { courseId, moduleId, lessonId });
       
       // First, check if there's already an active session
-      const activeSessionResponse = await api.get('/api/v1/sessions/active/single');
+      try {
+        console.log('[StudySession] Checking for existing active session...');
+        const activeSessionResponse = await api.get('/api/v1/sessions/active/single');
       
-      if (activeSessionResponse.data && activeSessionResponse.data.id) {
-        console.log('[StudySession] Found existing active session:', activeSessionResponse.data.id);
-        setSessionId(activeSessionResponse.data.id);
-        setIsSessionActive(true);
-        setError(null);
-        setSessionWarning(false);
-        lastHeartbeatRef.current = new Date();
-        scheduleSessionWarning();
-        return activeSessionResponse.data.id;
+      console.log('[StudySession] Active session response:', {
+        status: activeSessionResponse.status,
+        data: activeSessionResponse.data,
+        hasData: !!activeSessionResponse.data,
+        hasId: !!(activeSessionResponse.data && activeSessionResponse.data.sessionId)
+      });
+      
+      if (activeSessionResponse.data && activeSessionResponse.data.sessionId) {
+        const existingSession = activeSessionResponse.data;
+        
+        console.log('[StudySession] Found existing session:', {
+          sessionId: existingSession.sessionId,
+          sessionCourse: existingSession.courseId,
+          currentCourse: courseId,
+          isCompatible: isSessionCompatible(existingSession, courseId, moduleId, lessonId)
+        });
+        
+        // Check if existing session is compatible with current lesson
+        if (isSessionCompatible(existingSession, courseId, moduleId, lessonId)) {
+          console.log('[StudySession] Using compatible existing session:', existingSession.sessionId);
+          setSessionId(existingSession.sessionId);
+          setIsSessionActive(true);
+          setError(null);
+          setSessionWarning(false);
+          lastHeartbeatRef.current = new Date();
+          scheduleSessionWarning();
+          return existingSession.sessionId;
+        } else {
+          // Session exists but for different course - end it first
+          console.log('[StudySession] Found incompatible session, ending it first');
+          try {
+            await api.put(`/api/v1/sessions/${existingSession.sessionId}/end`);
+            console.log('[StudySession] Ended incompatible session');
+          } catch (endErr) {
+            console.warn('[StudySession] Failed to end incompatible session:', endErr.message);
+          }
+        }
+      } else {
+        console.log('[StudySession] No active session found, will create new one');
       }
+    } catch (activeSessionErr) {
+      console.log('[StudySession] Error checking for active session:', {
+        status: activeSessionErr.response?.status,
+        message: activeSessionErr.message,
+        responseData: activeSessionErr.response?.data
+      });
+      
+      // If 404, no active session exists, continue to create new one
+      // If other error, log but still try to create session
+      if (activeSessionErr.response?.status !== 404) {
+        console.warn('[StudySession] Unexpected error checking for active session:', activeSessionErr.message);
+      }
+    }
 
-      // No active session, create a new one
+    // No active session found or incompatible session ended, create a new one
+    try {
+      console.log('[StudySession] Creating new session with:', { courseId, moduleId, lessonId });
       const response = await api.post('/api/v1/sessions/start', {
         courseId,
         moduleId, 
         lessonId
       });
 
-      if (response.data && response.data.id) {
-        console.log('[StudySession] Started new session:', response.data.id);
-        setSessionId(response.data.id);
+      console.log('[StudySession] Session creation response:', {
+        status: response.status,
+        data: response.data,
+        hasId: !!(response.data && response.data.sessionId)
+      });
+
+      if (response.data && response.data.sessionId) {
+        console.log('[StudySession] Started new session successfully:', response.data.sessionId);
+        setSessionId(response.data.sessionId);
         setIsSessionActive(true);
         setError(null);
         setSessionWarning(false);
         lastHeartbeatRef.current = new Date();
         scheduleSessionWarning();
-        return response.data.id;
+        return response.data.sessionId;
       }
-    } catch (err) {
-      console.error('[StudySession] Error starting session:', err);
+    } catch (createSessionErr) {
+      console.log('[StudySession] Session creation failed:', {
+        status: createSessionErr.response?.status,
+        message: createSessionErr.message,
+        responseData: createSessionErr.response?.data
+      });
+      
+      // If 409 conflict, there might be an active session - try to get it again
+      if (createSessionErr.response?.status === 409) {
+        console.log('[StudySession] Session creation conflict detected, retrying to get active session');
+        try {
+          const retryActiveResponse = await api.get('/api/v1/sessions/active/single');
+          console.log('[StudySession] Retry active session response:', {
+            status: retryActiveResponse.status,
+            data: retryActiveResponse.data,
+            hasId: !!(retryActiveResponse.data && retryActiveResponse.data.sessionId)
+          });
+          
+          if (retryActiveResponse.data && retryActiveResponse.data.sessionId) {
+            console.log('[StudySession] Successfully found active session on retry:', retryActiveResponse.data.sessionId);
+            setSessionId(retryActiveResponse.data.sessionId);
+            setIsSessionActive(true);
+            setError(null);
+            setSessionWarning(false);
+            lastHeartbeatRef.current = new Date();
+            scheduleSessionWarning();
+            return retryActiveResponse.data.sessionId;
+          } else {
+            console.error('[StudySession] Retry found no active session despite 409 error');
+          }
+        } catch (retryErr) {
+          console.error('[StudySession] Failed to get active session on retry:', {
+            status: retryErr.response?.status,
+            message: retryErr.message,
+            responseData: retryErr.response?.data
+          });
+        }
+      }
+      
+      console.error('[StudySession] Final error creating session - giving up');
       setError('Failed to start study session');
       setIsSessionActive(false);
+    }
+    } finally {
+      // Always release the race condition lock
+      isStartingSessionRef.current = false;
     }
   };
 

@@ -1,5 +1,5 @@
 server:
-  port: 0
+  port: ${PROGRESS_SERVICE_PORT:8083}
 
 spring:
   datasource:
