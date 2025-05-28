@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import { 
   Drawer, 
   Box, 
@@ -26,6 +27,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import HomeIcon from '@mui/icons-material/Home';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -52,14 +54,27 @@ LessonDuration.propTypes = {
 // Helper component for each individual lesson item
 const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
   // Track lesson completion status
-  const { isCompleted, loading, toggleCompletion } = useLessonCompletion(lesson.id, courseId, moduleId);
+  const { 
+    isCompleted, 
+    loading, 
+    toggleCompletion, 
+    markAsComplete, // Include the markAsComplete function
+    error: completionError 
+  } = useLessonCompletion(lesson.id, courseId, moduleId);
+  
+  // Add local state to manage completion status in component
+  const [localCompleted, setLocalCompleted] = React.useState(isCompleted);
+  
   // Track bookmark status
   const { isBookmarked, toggleBookmark } = useLessonBookmark(lesson.id);
 
-  // Debug log to track completion status changes
+  // Update local state when the hook's state changes
   React.useEffect(() => {
-    console.log(`LessonItem: Lesson ${lesson.id} - isCompleted: ${isCompleted}, loading: ${loading}`);
-  }, [lesson.id, isCompleted, loading]);
+    // Avoid unnecessary logging to reduce console spam
+    if (isCompleted !== localCompleted) {
+      setLocalCompleted(isCompleted);
+    }
+  }, [lesson.id, isCompleted, loading, localCompleted]);
 
   // Snackbar state
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
@@ -70,28 +85,35 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
     toggleBookmark();
   };
 
-  // Handle completion toggle
-  const handleCompletionClick = async (e) => {
-    e.stopPropagation();
-    try {
-      const prevState = isCompleted;
-      const result = await toggleCompletion();
-      
-      if (result?.success || result === true) {
-        // Use the negation of previous state to ensure UI reflects the change immediately
-        setSnackbar({ 
-          open: true, 
-          message: prevState ? 'Lesson marked as incomplete.' : 'Lesson marked as completed!', 
-          severity: 'success' 
-        });
-      } else {
-        setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
-      }
-    } catch (error) {
-      console.error('Error toggling completion status:', error);
-      setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
+  // Update localStorage when completion status changes
+  React.useEffect(() => {
+    if (isCompleted || localCompleted) {
+      // Store the completion state in localStorage for our ModuleSection component to use
+      localStorage.setItem(`lesson-${lesson.id}-completed`, 'true');
     }
-  };
+  }, [isCompleted, localCompleted, lesson.id]);
+  
+  // Listen for custom lessonCompleted events to update UI immediately
+  React.useEffect(() => {
+    const handleLessonCompleted = (e) => {
+      // If this is our lesson, update the completion status
+      if (e.detail.lessonId === lesson.id) {
+        console.log(`LessonItem: Received completion event for this lesson: ${lesson.id}`);
+        setLocalCompleted(true);
+        
+        // Also update localStorage directly for immediate effect
+        localStorage.setItem(`lesson-${lesson.id}-completed`, 'true');
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('lessonCompleted', handleLessonCompleted);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('lessonCompleted', handleLessonCompleted);
+    };
+  }, [lesson.id]);
 
   const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
@@ -102,20 +124,7 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
         selected={isSelected}
         secondaryAction={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Tooltip title={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}>
-              <IconButton
-                edge="end"
-                size="small"
-                onClick={handleCompletionClick}
-                disabled={loading}
-                sx={{ 
-                  color: isCompleted ? 'success.main' : 'text.secondary',
-                  opacity: loading ? 0.5 : 1
-                }}
-              >
-                {isCompleted ? <CheckCircleIcon fontSize="small" /> : <CheckCircleOutlineIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
+            {/* Bookmark action button */}
             <Tooltip title={isBookmarked ? "Remove bookmark" : "Add bookmark"}>
               <IconButton 
                 edge="end" 
@@ -155,25 +164,37 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
           <ListItemIcon sx={{ minWidth: 32 }}>
             {loading ? (
               <CircularProgress size={16} />
-            ) : isCompleted ? (
-              <CheckCircleIcon color="success" fontSize="small" />
             ) : (
-              <PlayCircleOutlineIcon fontSize="small" sx={{ color: 'action.active' }} />
+              isCompleted || localCompleted || localStorage.getItem(`lesson-${lesson.id}-completed`) === 'true' ? (
+                <CheckCircleIcon fontSize="small" sx={{ color: 'success.main' }} />
+              ) : (
+                <PlayCircleOutlineIcon fontSize="small" sx={{ color: 'action.active' }} />
+              )
             )}
           </ListItemIcon>
           <ListItemText 
             primary={
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  fontWeight: isSelected ? 600 : 400,
-                  color: isSelected ? 'primary.main' : isCompleted ? 'text.secondary' : 'text.primary',
-                  pr: 3, // Make room for the bookmark icon
-                  textDecoration: isCompleted ? 'none' : 'none',
-                }}
-              >
-                {lesson.title}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: isSelected ? 600 : 400,
+                    color: isSelected ? 'primary.main' : 
+                           (isCompleted || localCompleted || localStorage.getItem(`lesson-${lesson.id}-completed`) === 'true') ? 
+                           'text.secondary' : 'text.primary',
+                    pr: 1, // Reduced right padding
+                    display: 'flex',
+                    alignItems: 'center',
+                    // Add subtle visual indicator for completed lessons
+                    ...((isCompleted || localCompleted || localStorage.getItem(`lesson-${lesson.id}-completed`) === 'true') && {
+                      fontStyle: 'normal',
+                      opacity: 0.85
+                    })
+                  }}
+                >
+                  {lesson.title}
+                </Typography>
+              </Box>
             }
             secondary={<LessonDuration duration={lesson.duration} />}
           />
@@ -205,12 +226,116 @@ LessonItem.propTypes = {
  * Represents a module with its lessons as a collapsible section
  */
 const ModuleSection = ({ module, currentLessonId, courseId, onLessonSelect }) => {
-  // Check if this module contains the current lesson to auto-expand it
+  // Track if all lessons in the module are completed
+  const [allLessonsCompleted, setAllLessonsCompleted] = React.useState(false);
+  
+  // Check if this module contains the current lesson to ensure we highlight it
   const containsCurrentLesson = module.lessons.some(lesson => lesson.id === currentLessonId);
-  const [open, setOpen] = React.useState(containsCurrentLesson);
+  // Initialize open state based on module completion and if it contains current lesson
+  const [open, setOpen] = React.useState(() => {
+    // Check if module is already marked as completed in localStorage
+    const isModuleCompleted = localStorage.getItem(`module-${module.id}-completed`) === 'true';
+    
+    // If module is completed, collapse it by default unless it contains the current lesson
+    return !isModuleCompleted || containsCurrentLesson;
+  });
+  
+  // Track completion status of all lessons in this module
+  React.useEffect(() => {
+    // Check if all lessons in this module are completed
+    const checkModuleCompletion = () => {
+      if (!module.lessons || module.lessons.length === 0) return false;
+      
+      // Check if every lesson is marked as completed
+      const isModuleCompleted = module.lessons.every(lesson => {
+        // Using localStorage to check completion status
+        return localStorage.getItem(`lesson-${lesson.id}-completed`) === 'true';
+      });
+      
+      // Only update state if there's been a change to reduce renders
+      if (isModuleCompleted !== allLessonsCompleted) {
+        console.log(`Module ${module.id} completion status changed: ${isModuleCompleted ? 'COMPLETED' : 'IN PROGRESS'}`);
+        setAllLessonsCompleted(isModuleCompleted);
+        
+        // If module was just completed and doesn't contain current lesson, collapse it
+        if (isModuleCompleted && !containsCurrentLesson) {
+          setOpen(false);
+        }
+      }
+      
+      // Update localStorage with module completion status for other components
+      if (isModuleCompleted) {
+        localStorage.setItem(`module-${module.id}-completed`, 'true');
+      } else {
+        // If not completed, remove the flag from localStorage
+        localStorage.removeItem(`module-${module.id}-completed`);
+      }
+    };
+    
+    // Check initially
+    checkModuleCompletion();
+    
+    // Listen for changes to localStorage (when lessons are marked complete)
+    const handleStorageChange = (e) => {
+      // Only check if the changed key is relevant to our module's lessons
+      if (e.key && e.key.startsWith('lesson-') && e.key.includes('-completed')) {
+        console.log(`Storage change detected: ${e.key} = ${e.newValue}`);
+        checkModuleCompletion();
+      }
+    };
+    
+    // Listen for custom lessonCompleted events
+    const handleLessonCompleted = (e) => {
+      // Check if this event is for a lesson in our module
+      const { lessonId, moduleId: completedModuleId } = e.detail;
+      if (completedModuleId === module.id || module.lessons.some(l => l.id === lessonId)) {
+        console.log(`Lesson completion event detected for module ${module.id}, lesson ${lessonId}`);
+        
+        // Update localStorage immediately to ensure components have the latest status
+        localStorage.setItem(`lesson-${lessonId}-completed`, 'true');
+        
+        // Check overall module completion
+        checkModuleCompletion();
+      }
+    };
+    
+    // Set up event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('lessonCompleted', handleLessonCompleted);
+    
+    // No need to check completion on regular intervals anymore
+    // This was causing excessive API calls
+    // Force a check only once when the component mounts
+    setTimeout(checkModuleCompletion, 100);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('lessonCompleted', handleLessonCompleted);
+      // No need to clear interval as we're not using it anymore
+    };
+  }, [module.lessons, module.id]);
   
   const handleToggle = () => {
-    setOpen(!open);
+    // Always allow the module to be opened
+    if (!open) {
+      setOpen(true);
+      return;
+    }
+    
+    // For closing the module:
+    
+    // If this module contains the current lesson, don't allow it to be closed
+    if (containsCurrentLesson) {
+      return;
+    }
+    
+    // Only allow toggling closed if all lessons are completed or module is explicitly opened
+    if (allLessonsCompleted || open) {
+      setOpen(false);
+    } else {
+      // If not all lessons are completed, module must stay open by default
+      setOpen(true);
+    }
   };
   
   return (
@@ -227,18 +352,44 @@ const ModuleSection = ({ module, currentLessonId, courseId, onLessonSelect }) =>
         <ListItemText 
           disableTypography
           primary={
-            <Typography 
-              variant="subtitle2" 
-              fontWeight={600} 
-              sx={{ color: 'text.primary' }}
-            >
-              {module.title}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <Typography 
+                variant="subtitle2" 
+                fontWeight={600} 
+                sx={{ color: 'text.primary', mr: 1 }}
+              >
+                {module.title}
+              </Typography>
+              {allLessonsCompleted && (
+                <CheckCircleIcon 
+                  fontSize="small" 
+                  color="success"
+                />
+              )}
+            </Box>
           }
         />
-        <IconButton edge="end" onClick={handleToggle} size="small">
-          {open ? <ExpandLess /> : <ExpandMore />}
-        </IconButton>
+        <Tooltip title={
+          containsCurrentLesson && open ? "This module contains your current lesson" :
+          !allLessonsCompleted && !open ? "Expand module" : 
+          !allLessonsCompleted && open ? "Complete all lessons to collapse this module" :
+          open ? "Collapse module" : "Expand module"
+        }>
+          <span>
+            <IconButton 
+              edge="end" 
+              onClick={handleToggle} 
+              size="small"
+              disabled={(containsCurrentLesson && open) || (!allLessonsCompleted && !open)}
+              sx={{ 
+                opacity: (containsCurrentLesson && open) || (!allLessonsCompleted && open) ? 0.5 : 1,
+                cursor: (containsCurrentLesson && open) || (!allLessonsCompleted && open) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {open ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          </span>
+        </Tooltip>
       </ListItem>
       
       <Collapse in={open} timeout="auto" unmountOnExit>
@@ -280,6 +431,8 @@ ModuleSection.propTypes = {
  * Course Header in the sidebar
  */
 const CourseHeader = ({ course }) => {
+  const navigate = useNavigate();
+  
   if (!course) return null;
   
   return (
@@ -290,15 +443,28 @@ const CourseHeader = ({ course }) => {
         backgroundColor: 'background.paper'
       }}
     >
-      <Typography 
-        variant="subtitle1" 
-        fontWeight={700} 
-        color="primary.main" 
-        gutterBottom
-        noWrap
-      >
-        {course.title}
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography 
+          variant="subtitle1" 
+          fontWeight={700} 
+          color="primary.main" 
+          gutterBottom
+          noWrap
+          sx={{ flex: 1 }}
+        >
+          {course.title}
+        </Typography>
+        <Tooltip title="Back to Dashboard">
+          <IconButton 
+            color="primary" 
+            size="small" 
+            onClick={() => navigate('/dashboard')}
+            sx={{ ml: 1 }}
+          >
+            <HomeIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
       
       {course.instructor && (
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>

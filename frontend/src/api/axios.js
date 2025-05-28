@@ -224,6 +224,32 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    
+    // For progress/completion related endpoints, we'll handle errors in a special way
+    // to ensure that the UI doesn't break when these API calls fail
+    if (originalRequest?.url?.includes('/progress') || 
+        originalRequest?.url?.includes('/complete') || 
+        originalRequest?.url?.includes('/completed')) {
+      
+      console.warn('Progress/completion API call failed, but will continue UI flow:', {
+        url: originalRequest?.url,
+        method: originalRequest?.method,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      
+      // For GET requests that check completion status, we'll return an empty array
+      // This prevents the UI from breaking when these calls fail
+      if (originalRequest?.method?.toLowerCase() === 'get' && 
+          (originalRequest?.url?.includes('/completed'))) {
+        console.warn('Returning empty completion data as fallback for failed API call');
+        return Promise.resolve({ data: [] });
+      }
+      
+      // For progress initialization or completion marking, we'll just log and let the UI continue
+      // The UI will update based on localStorage regardless of API success
+    }
+    
     // Don't retry for server errors (5xx)
     if (error.response?.status >= 500) {
       console.error('Server error detected:', error.response.status);

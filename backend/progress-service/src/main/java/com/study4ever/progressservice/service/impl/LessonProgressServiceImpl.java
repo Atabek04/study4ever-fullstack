@@ -1,7 +1,6 @@
 package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.LessonProgressDto;
-import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.CourseProgress;
 import com.study4ever.progressservice.model.LessonProgress;
@@ -12,6 +11,7 @@ import com.study4ever.progressservice.repository.LessonProgressRepository;
 import com.study4ever.progressservice.repository.ModuleProgressRepository;
 import com.study4ever.progressservice.service.CourseProgressService;
 import com.study4ever.progressservice.service.LessonProgressService;
+import com.study4ever.progressservice.service.LessonProgressTransactionalService;
 import com.study4ever.progressservice.service.ModuleProgressService;
 import com.study4ever.progressservice.service.StudyStreakService;
 import com.study4ever.progressservice.service.UserProgressService;
@@ -22,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -36,52 +38,98 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     private final ModuleProgressService moduleProgressService;
     private final UserProgressService userProgressService;
     private final StudyStreakService studyStreakService;
+    private final LessonProgressTransactionalService lessonProgressTransactionalService;
+
+    /**
+     * Gets a unique lesson progress entry, handling duplicates appropriately.
+     * If duplicates exist, keeps the oldest one and removes others.
+     * This method delegates to {@link LessonProgressTransactionalService} to ensure proper transaction management.
+     */
+    public LessonProgress getOrCleanupLessonProgress(String userId,
+                                                     String courseId,
+                                                     String moduleId,
+                                                     String lessonId,
+                                                     boolean throwIfNotFound) {
+        return lessonProgressTransactionalService.getOrCleanupLessonProgress(userId, courseId, moduleId, lessonId, throwIfNotFound);
+    }
 
     @Override
     public LessonProgressDto getLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
         checkCourseProgressExists(userId, courseId);
         checkModuleProgressExists(userId, courseId, moduleId);
 
-        return lessonProgressRepository.findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
-                .map(ProgressMapper::mapToLessonDto)
-                .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and lesson " + lessonId));
+        LessonProgress progress = getOrCleanupLessonProgress(userId, courseId, moduleId, lessonId, true);
+        return ProgressMapper.mapToLessonDto(progress);
     }
+
 
     @Override
     @Transactional
     public LessonProgressDto initializeLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
-        var existingProgress = lessonProgressRepository
-                .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId);
-        if (existingProgress.isPresent()) {
-            throw new BadRequestException("Lesson progress already exist for user " + userId + " and lesson " + lessonId);
+        // First, try to get existing progress - this will also clean up any duplicates
+        LessonProgress existingProgress = getOrCleanupLessonProgress(userId, courseId, moduleId, lessonId, false);
+        if (existingProgress != null) {
+            log.info("Lesson progress already exists for user {}, course {}, module {}, lesson {}, returning existing",
+                    userId, courseId, moduleId, lessonId);
+            return ProgressMapper.mapToLessonDto(existingProgress);
         }
 
         checkCourseProgressExists(userId, courseId);
         checkModuleProgressExists(userId, courseId, moduleId);
 
-        var lessonProgress = LessonProgress.builder()
-                .userId(userId)
-                .courseId(courseId)
-                .moduleId(moduleId)
-                .lessonId(lessonId)
-                .status(ProgressStatus.NOT_STARTED)
-                .firstAccessDate(LocalDateTime.now())
-                .lastAccessDate(LocalDateTime.now())
-                .build();
+        try {
+            var lessonProgress = LessonProgress.builder()
+                    .userId(userId)
+                    .courseId(courseId)
+                    .moduleId(moduleId)
+                    .lessonId(lessonId)
+                    .status(ProgressStatus.NOT_STARTED)
+                    .firstAccessDate(LocalDateTime.now())
+                    .lastAccessDate(LocalDateTime.now())
+                    .build();
 
-        var savedProgress = lessonProgressRepository.save(lessonProgress);
-        log.info("Initialized lesson progress for user {} and lesson {}", userId, lessonId);
+            var savedProgress = lessonProgressRepository.save(lessonProgress);
+            log.info("Initialized lesson progress for user {} and lesson {}", userId, lessonId);
 
-        moduleProgressService.updateLastAccessed(userId, courseId, moduleId);
+            moduleProgressService.updateLastAccessed(userId, courseId, moduleId);
 
-        return ProgressMapper.mapToLessonDto(savedProgress);
+            return ProgressMapper.mapToLessonDto(savedProgress);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Handle race condition - another thread might have created the record
+            log.warn("Constraint violation when creating lesson progress, checking for existing record: {}", e.getMessage());
+            
+            // Try to get the record that was just created by another thread
+            LessonProgress raceConditionProgress = getOrCleanupLessonProgress(userId, courseId, moduleId, lessonId, false);
+            if (raceConditionProgress != null) {
+                log.info("Found lesson progress created by concurrent request for user {}, lesson {}", userId, lessonId);
+                return ProgressMapper.mapToLessonDto(raceConditionProgress);
+            } else {
+                // If we still can't find it, something is seriously wrong
+                log.error("Failed to create or find lesson progress after constraint violation for user {}, lesson {}", userId, lessonId);
+                throw new RuntimeException("Failed to initialize lesson progress due to concurrent access issues", e);
+            }
+        }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<LessonProgressDto> getAllLessonsProgressInModule(String userId, String courseId, String moduleId) {
         checkCourseProgressExists(userId, courseId);
         checkModuleProgressExists(userId, courseId, moduleId);
-        return lessonProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId).stream()
+
+        Map<String, LessonProgress> uniqueLessonProgresses = new HashMap<>();
+
+        List<LessonProgress> allProgresses = lessonProgressRepository.findByUserIdAndCourseIdAndModuleId(userId, courseId, moduleId);
+
+        for (LessonProgress progress : allProgresses) {
+            String lessonId = progress.getLessonId();
+            uniqueLessonProgresses.compute(lessonId, (key, existingProgress) ->
+                    existingProgress == null ||
+                            existingProgress.getFirstAccessDate().isAfter(progress.getFirstAccessDate()) ?
+                            progress : existingProgress);
+        }
+
+        return uniqueLessonProgresses.values().stream()
                 .map(ProgressMapper::mapToLessonDto)
                 .toList();
     }
@@ -92,10 +140,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         checkCourseProgressExists(userId, courseId);
         checkModuleProgressExists(userId, courseId, moduleId);
 
-        LessonProgress lessonProgress = lessonProgressRepository
-                .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
-                .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and module " + moduleId));
-
+        LessonProgress lessonProgress = getOrCleanupLessonProgress(userId, courseId, moduleId, lessonId, true);
 
         lessonProgress.setStatus(ProgressStatus.COMPLETED);
         lessonProgress.setCompletionDate(LocalDateTime.now());
@@ -120,9 +165,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     @Override
     @Transactional
     public void updateLastAccessed(String userId, String courseId, String moduleId, String lessonId) {
-        var lessonProgress = lessonProgressRepository
-                .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
-                .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and lesson " + lessonId));
+        LessonProgress lessonProgress = getOrCleanupLessonProgress(userId, courseId, moduleId, lessonId, true);
 
         lessonProgress.setLastAccessDate(LocalDateTime.now());
 
@@ -137,16 +180,20 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     }
 
     @Override
+    @Transactional
     public void deleteLessonProgress(String userId, String courseId, String moduleId, String lessonId) {
         checkCourseProgressExists(userId, courseId);
         checkModuleProgressExists(userId, courseId, moduleId);
 
-        var lessonProgress = lessonProgressRepository
-                .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId)
-                .orElseThrow(() -> new NotFoundException("Lesson progress not found for user " + userId + " and lesson " + lessonId));
+        List<LessonProgress> progressEntries = lessonProgressRepository
+                .findByUserIdAndCourseIdAndModuleIdAndLessonId(userId, courseId, moduleId, lessonId);
 
-        lessonProgressRepository.delete(lessonProgress);
-        log.info("Deleted lesson progress for user {} and lesson {}", userId, lessonId);
+        if (progressEntries.isEmpty()) {
+            throw new NotFoundException("Lesson progress not found for user " + userId + " and lesson " + lessonId);
+        }
+
+        lessonProgressRepository.deleteAll(progressEntries);
+        log.info("Deleted {} lesson progress entries for user {} and lesson {}", progressEntries.size(), userId, lessonId);
     }
 
     @Override
@@ -157,6 +204,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         return lessonProgressRepository.findByUserIdAndCourseIdAndModuleIdAndStatus(userId, courseId, moduleId, ProgressStatus.COMPLETED)
                 .stream()
                 .map(LessonProgress::getLessonId)
+                .distinct()
                 .toList();
     }
 
@@ -167,6 +215,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         return lessonProgressRepository.findByUserIdAndCourseIdAndStatus(userId, courseId, ProgressStatus.COMPLETED)
                 .stream()
                 .map(LessonProgress::getLessonId)
+                .distinct()
                 .toList();
     }
 

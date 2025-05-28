@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +19,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "module_progress")
+@Table(name = "module_progress",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_module_progress_user_course_module",
+                        columnNames = {"user_id", "course_id", "module_id"}
+                )
+        })
 @Getter
 @Setter
 @NoArgsConstructor

@@ -53,6 +53,13 @@ public class GatewayRoutesConfig {
                         .method(HttpMethod.GET)
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
+                        
+                .route("progress-service-continue-learning", r -> r
+                        .predicate(p -> p.getRequest().getURI().getPath().matches("/api/v1/courses/\\d+/continue-learning"))
+                        .and()
+                        .method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
 
                 // Course service routes
                 .route("course-service-read", r -> r

@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -16,7 +15,7 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
 
     List<LessonProgress> findByUserIdAndCourseIdAndModuleId(String userId, String courseId, String moduleId);
 
-    Optional<LessonProgress> findByUserIdAndCourseIdAndModuleIdAndLessonId(
+    List<LessonProgress> findByUserIdAndCourseIdAndModuleIdAndLessonId(
             String userId, String courseId, String moduleId, String lessonId);
 
     void deleteByUserIdAndCourseId(String userId, String courseId);
@@ -25,5 +24,4 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
 
     List<LessonProgress> findByUserIdAndCourseIdAndStatus(String userId, String courseId, ProgressStatus status);
 
-    Optional<LessonProgress> findByUserIdAndCourseIdAndLessonId(String userId, String courseId, String lessonId);
 }

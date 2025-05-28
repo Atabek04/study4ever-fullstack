@@ -2,6 +2,7 @@ import { Card, CardMedia, CardContent, CardActions, Typography, Button, LinearPr
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useFirstLesson } from '../../hooks/navigationHooks';
+import { useContinueLearning } from '../../hooks/useContinueLearning';
 
 const CourseCard = ({ course }) => {
   // Fallback image if course thumbnail fails to load
@@ -37,8 +38,17 @@ const CourseCard = ({ course }) => {
   // Extract course ID for navigation
   const courseId = courseData.id || courseData.courseId;
   
-  // Use our custom hook to get the first lesson ID
-  const { firstLessonId } = useFirstLesson(courseId);
+  // Use our custom hooks to get the first lesson ID and continue-learning data
+  const { firstLessonId, loading: firstLessonLoading } = useFirstLesson(courseId);
+  const { nextLesson, loading: nextLessonLoading, error: nextLessonError } = useContinueLearning(courseId);
+  
+  // Track loading states for the button
+  const isLoading = firstLessonLoading || nextLessonLoading;
+  
+  // For debugging
+  if (nextLessonError) {
+    console.warn(`Continue learning error for course ${courseId}:`, nextLessonError);
+  }
 
   return (
     <Card
@@ -123,15 +133,23 @@ const CourseCard = ({ course }) => {
           variant="contained"
           color="primary"
           onClick={() => {
-            if (courseId && firstLessonId) {
-              console.log(`Navigating to lesson page: /courses/${courseId}/lessons/${firstLessonId}`);
+            // If we have next lesson data from continue-learning endpoint, use it
+            if (courseId && nextLesson && nextLesson.lessonId) {
+              console.log(`Navigating to continue learning: /courses/${courseId}/lessons/${nextLesson.lessonId}`);
+              navigate(`/courses/${courseId}/lessons/${nextLesson.lessonId}`);
+            }
+            // Fallback to first lesson if continue-learning didn't return data
+            else if (courseId && firstLessonId) {
+              console.log(`Navigating to first lesson: /courses/${courseId}/lessons/${firstLessonId}`);
               navigate(`/courses/${courseId}/lessons/${firstLessonId}`);
-            } else if (courseId) {
+            }
+            // Last resort is course details page if no lesson data is available
+            else if (courseId) {
               console.log(`No lesson ID available, navigating to course page: /courses/${courseId}`);
               navigate(`/courses/${courseId}`);
             }
           }}
-          disabled={!courseId}
+          disabled={!courseId || isLoading}
           sx={{ 
             borderRadius: 2, 
             fontWeight: 600, 
@@ -141,7 +159,8 @@ const CourseCard = ({ course }) => {
             mr: 1
           }}
         >
-          {firstLessonId ? 'Continue Learning' : 'View Course'}
+          {isLoading ? 'Loading...' : 
+            (nextLesson && nextLesson.lessonId) || firstLessonId ? 'Continue Learning' : 'View Course'}
         </Button>
         <Button 
           size="small" 
@@ -185,6 +204,15 @@ CourseCard.propTypes = {
       email: PropTypes.string,
       username: PropTypes.string,
       roles: PropTypes.arrayOf(PropTypes.string)
+    }),
+    
+    // Next lesson information from continue-learning endpoint
+    nextLesson: PropTypes.shape({
+      lessonId: PropTypes.string,
+      lessonTitle: PropTypes.string,
+      moduleId: PropTypes.string,
+      moduleTitle: PropTypes.string,
+      courseCompletionPercentage: PropTypes.number
     }),
     
     // Legacy support for nested course data

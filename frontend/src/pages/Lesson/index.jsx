@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Box, 
-  Typography, 
   CircularProgress, 
   Container, 
-  Grid, 
   Alert,
   useMediaQuery,
   useTheme,
-  IconButton
-} from '@mui/material';
+  IconButton} from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useCourseDetails } from '../../hooks/lessonHooks';
 import LessonSidebar from '../../components/Lesson/LessonSidebar';

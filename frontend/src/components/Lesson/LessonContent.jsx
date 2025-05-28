@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { 
   Box, 
@@ -13,13 +13,11 @@ import {
   IconButton,
   Tooltip,
   useTheme,
-  Avatar,
-  Chip,
-  LinearProgress,
   Snackbar
 } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -27,15 +25,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import EmailIcon from '@mui/icons-material/Email';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import { 
   useLesson, 
   useLessonCompletion, 
   useLessonBookmark,
-  useCourseDetails,
-  useModuleProgress
-} from '../../hooks/lessonHooks';
+  useCourseDetails} from '../../hooks/lessonHooks';
 
 /**
  * Helper function to get YouTube embed URL
@@ -63,11 +57,7 @@ const VideoPlayer = ({ videoUrl, title }) => {
       sx={{ 
         width: '100%',
         position: 'relative',
-        paddingTop: '56.25%', // 16:9 aspect ratio
-        marginBottom: 4,
-        borderRadius: 2,
-        overflow: 'hidden',
-        backgroundColor: 'black'
+        paddingTop: '56.25%' // 16:9 aspect ratio
       }}
     >
       {canEmbed ? (
@@ -170,7 +160,24 @@ const MarkdownContent = ({ content }) => {
         lineHeight: 1.7
       }}
     >
-      <ReactMarkdown>
+      <ReactMarkdown 
+        rehypePlugins={[rehypeRaw]} // Enable raw HTML support
+        components={{
+          img: ({ node, ...props }) => {
+            // Enhanced image rendering with support for HTML attributes
+            return <img 
+              style={{ 
+                maxWidth: '100%', 
+                height: props.height || 'auto',
+                width: props.width || 'auto',
+                borderRadius: '4px', 
+                margin: '16px 0' 
+              }} 
+              {...props}
+            />;
+          }
+        }}
+      >
         {content}
       </ReactMarkdown>
     </Box>
@@ -194,6 +201,31 @@ const LessonContent = ({ courseId, lessonId }) => {
   // Fetch course details to get navigation context
   const { courseDetails } = useCourseDetails(courseId);
   
+  // State to store moduleId, initialized with lesson.moduleId if available
+  const [moduleId, setModuleId] = useState(lesson?.moduleId);
+  
+  // Find moduleId from course structure if not available from lesson data
+  React.useEffect(() => {
+    // If we already have moduleId from lesson, keep it
+    if (lesson?.moduleId) {
+      setModuleId(lesson.moduleId);
+      return;
+    }
+    
+    // If we have courseDetails but no moduleId, try to find it
+    if (courseDetails?.modules && lessonId) {
+      // Search for the lesson in all modules to find its moduleId
+      for (const module of courseDetails.modules) {
+        const foundLesson = module.lessons?.find(l => String(l.id) === String(lessonId));
+        if (foundLesson) {
+          console.log(`Found moduleId ${module.id} for lesson ${lessonId}`);
+          setModuleId(module.id);
+          break;
+        }
+      }
+    }
+  }, [lesson, courseDetails, lessonId]);
+  
   // Track lesson completion status
   const { 
     isCompleted, 
@@ -203,13 +235,35 @@ const LessonContent = ({ courseId, lessonId }) => {
   } = useLessonCompletion(
     lessonId, 
     courseId, 
-    lesson?.moduleId // Use moduleId from the lesson data
+    moduleId // Use our tracked moduleId instead of lesson?.moduleId
   );
   
-  // Debug log to track completion status changes
+  // Debug log to track completion status changes and update localStorage
   React.useEffect(() => {
     console.log(`LessonContent: Lesson ${lessonId} - isCompleted: ${isCompleted}, loading: ${completionLoading}`);
+    
+    // Update localStorage when completion status changes
+    if (isCompleted && lessonId) {
+      localStorage.setItem(`lesson-${lessonId}-completed`, 'true');
+    }
   }, [lessonId, isCompleted, completionLoading]);
+  
+  // Double-check completion status from localStorage on mount and whenever lessonId changes
+  React.useEffect(() => {
+    if (!lessonId) return;
+    
+    // Check localStorage immediately for better UX
+    const localStorageCompleted = localStorage.getItem(`lesson-${lessonId}-completed`) === 'true';
+    
+    if (localStorageCompleted) {
+      console.log(`LessonContent: Found completed status in localStorage for lesson ${lessonId}`);
+      // We can't use setIsCompleted directly since it's from the hook
+      // This will be handled by the useLessonCompletion hook
+    }
+    
+    // No need for interval checking - this was causing excessive API calls
+    // and potential memory leaks. Instead, rely on events and normal completion status
+  }, [lessonId, isCompleted]);
   
   // Track bookmark status
   const { isBookmarked, toggleBookmark } = useLessonBookmark(lessonId);
@@ -223,27 +277,58 @@ const LessonContent = ({ courseId, lessonId }) => {
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Custom handler for completion with feedback
+  // Custom handler for completion with feedback - only allows marking as complete
   const handleCompletion = async () => {
-    const prevState = isCompleted;
+    // Don't do anything if already completed
+    if (isCompleted) {
+      return;
+    }
+    
+    // Check if we have all the required IDs first
+    if (!moduleId) {
+      console.warn('Missing moduleId - waiting for course data to load');
+      setSnackbar({ 
+        open: true, 
+        message: 'Loading course structure... Please try again in a moment.', 
+        severity: 'warning' 
+      });
+      return;
+    }
+    
+    // Show feedback that we're processing the request
+    setSnackbar({
+      open: true,
+      message: 'Marking lesson as complete...',
+      severity: 'info'
+    });
     
     try {
-      if (!prevState) {
-        // Marking as complete - make API call
-        const result = await markAsComplete();
-        if (result) {
-          setSnackbar({ open: true, message: 'Lesson marked as completed!', severity: 'success' });
-        } else {
-          setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
-        }
+      // Call the markAsComplete function that makes the API request and updates state
+      const result = await markAsComplete();
+      if (result) {
+        setSnackbar({ open: true, message: 'Lesson marked as completed!', severity: 'success' });
       } else {
-        // Marking as incomplete - just UI update, no API call
-        setSnackbar({ open: true, message: 'Lesson marked as incomplete (UI only)', severity: 'info' });
-        toggleCompletion();
+        // The error message will be set in the markAsComplete function
+        setSnackbar({ 
+          open: true, 
+          message: 'Failed to mark lesson as completed. Please try again in a moment.',
+          severity: 'error' 
+        });
       }
     } catch (error) {
       console.error('Error handling completion:', error);
-      setSnackbar({ open: true, message: 'Error occurred. Please try again.', severity: 'error' });
+      
+      // Determine if this is a 404 error (module progress initialization needed)
+      const is404 = error.response?.status === 404;
+      const errorMessage = is404 
+        ? 'Module progress needs to be initialized. Please try again.' 
+        : 'Failed to mark lesson as completed. Please try again.';
+      
+      setSnackbar({ 
+        open: true, 
+        message: errorMessage, 
+        severity: 'error' 
+      });
     }
   };
   
@@ -279,8 +364,86 @@ const LessonContent = ({ courseId, lessonId }) => {
     });
   }, [courseDetails, lessonId]);
   
-  // Show loading state while fetching lesson data
-  if (loading) {
+  // Automatically initialize module progress when lesson loads
+  React.useEffect(() => {
+    // Only initialize if we have all needed IDs
+    if (lessonId && courseId && moduleId) {
+      // Function to initialize module progress
+      const initializeModuleProgress = async () => {
+        const cacheKey = `module-${moduleId}-initialized`;
+        
+        try {
+          // Check localStorage first to avoid redundant API calls
+          if (localStorage.getItem(cacheKey) === 'true') {
+            console.log(`[LessonContent] Module ${moduleId} was previously initialized (cached)`);
+            return;
+          }
+
+          console.log(`[LessonContent] Checking if module progress exists for module ${moduleId}`);
+          
+          try {
+            // First check if module progress already exists on the server
+            const progressResponse = await api.get(`/api/v1/courses/${courseId}/modules/${moduleId}/progress`);
+            if (progressResponse.status >= 200 && progressResponse.status < 300) {
+              console.log(`[LessonContent] Module progress already exists for module ${moduleId}`);
+              localStorage.setItem(cacheKey, 'true'); // Cache that this module is initialized
+              return; // Module progress already exists, no need to initialize
+            }
+          } catch (checkError) {
+            // If 404, module progress doesn't exist and we should create it
+            if (checkError.response?.status !== 404) {
+              console.warn(`[LessonContent] Error checking module progress: ${checkError}`);
+            } else {
+              console.log(`[LessonContent] Module progress doesn't exist yet for module ${moduleId}, will create it`);
+            }
+          }
+          
+          // Get module details to know the total lesson count
+          console.log(`[LessonContent] Getting module details for module ${moduleId}`);
+          const moduleResponse = await api.get(`/api/v1/modules/${moduleId}`);
+          const { lessonCount } = moduleResponse.data;
+          
+          // Initialize module progress
+          console.log(`[LessonContent] Initializing module progress for module ${moduleId} with ${lessonCount} lessons`);
+          await api.post(`/api/v1/courses/${courseId}/modules/${moduleId}/progress?totalLessonsCount=${lessonCount}`);
+          console.log(`[LessonContent] Successfully initialized module progress for module ${moduleId}`);
+          
+          // Cache successful initialization
+          localStorage.setItem(cacheKey, 'true');
+          
+          // Update UI with success message
+          setSnackbar({
+            open: true,
+            message: 'Module progress initialized successfully',
+            severity: 'success'
+          });
+          
+        } catch (error) {
+          console.error('[LessonContent] Error initializing module progress:', error);
+          
+          // Show user-friendly error message
+          if (error.response?.status === 400) {
+            // 400 usually means it's already initialized
+            localStorage.setItem(cacheKey, 'true'); // Cache it as initialized
+          } else {
+            // Other errors - show to user but don't block
+            setSnackbar({
+              open: true,
+              message: 'There was an issue with module initialization. You can still view the lesson.',
+              severity: 'warning'
+            });
+          }
+        }
+      };
+      
+      // Call the initialization function
+      initializeModuleProgress();
+    }
+  }, [lessonId, courseId, moduleId]);
+  
+  // Show loading state while fetching lesson data, but only if we don't have 
+  // lesson data yet - this prevents flickering for completed lessons
+  if (loading && !lesson) {
     return (
       <Box 
         sx={{ 
@@ -294,9 +457,9 @@ const LessonContent = ({ courseId, lessonId }) => {
       </Box>
     );
   }
-  
-  // Show error state if lesson fetch failed
-  if (error) {
+
+  // Show error state if lesson fetch failed and we have an error message
+  if (error && !lesson) {
     return (
       <Container sx={{ py: 4 }}>
         <Alert severity="error" sx={{ my: 2 }}>
@@ -305,8 +468,19 @@ const LessonContent = ({ courseId, lessonId }) => {
       </Container>
     );
   }
-  
-  // Show placeholder if no lesson is selected
+
+  // Show error if course details are missing (API failure or not found)
+  if (!courseDetails) {
+    return (
+      <Container sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ my: 2 }}>
+          {'Failed to load course details. Please try again or contact support.'}
+        </Alert>
+      </Container>
+    );
+  }
+
+  // Show placeholder if no lesson is selected or lesson data is missing
   if (!lessonId || !lesson) {
     return (
       <Container sx={{ py: 8 }}>
@@ -321,10 +495,10 @@ const LessonContent = ({ courseId, lessonId }) => {
           }}
         >
           <Typography variant="h5" color="text.secondary" gutterBottom>
-            Select a lesson from the sidebar
+            {lessonId ? 'Lesson data not found or failed to load.' : 'Select a lesson from the sidebar'}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Choose a lesson to start learning
+            {lessonId ? 'Please try refreshing the page or contact support.' : 'Choose a lesson to start learning'}
           </Typography>
         </Box>
       </Container>
@@ -369,32 +543,36 @@ const LessonContent = ({ courseId, lessonId }) => {
               </IconButton>
             </Tooltip>
             
-            <Tooltip title={isBookmarked ? "View all bookmarks" : "View all bookmarks"}>
-              <IconButton
+            <Tooltip title="View all bookmarks">
+              <Button
                 onClick={() => window.location.href = '/bookmarks'}
                 color="primary"
+                variant="text"
+                size="small"
+                sx={{ ml: 1 }}
                 aria-label="View all bookmarks"
               >
-                <Button
-                  variant="text"
-                  size="small"
-                  sx={{ ml: -1 }}
-                >
-                  My Bookmarks
-                </Button>
-              </IconButton>
+                My Bookmarks
+              </Button>
             </Tooltip>
             
-            <Tooltip title={isCompleted ? "Mark as incomplete" : "Mark as complete"}>
-              <IconButton 
-                onClick={handleCompletion}
-                disabled={completionLoading}
-                color={isCompleted ? "success" : "default"}
-                aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
-                sx={{ opacity: completionLoading ? 0.5 : 1 }}
-              >
-                {isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlineIcon />}
-              </IconButton>
+            <Tooltip title={isCompleted 
+              ? "Lesson completed" 
+              : "Mark lesson as complete"}>
+              <span>
+                <IconButton 
+                  onClick={handleCompletion}
+                  disabled={isCompleted || completionLoading}
+                  color={isCompleted ? "success" : "default"}
+                  aria-label={isCompleted ? "Lesson completed" : "Mark lesson as complete"}
+                  sx={{ 
+                    opacity: (completionLoading || isCompleted) ? 0.7 : 1,
+                    cursor: isCompleted ? 'default' : 'pointer'
+                  }}
+                >
+                  {isCompleted ? <CheckCircleIcon /> : <CheckCircleOutlineIcon />}
+                </IconButton>
+              </span>
             </Tooltip>
           </Stack>
         </Box>

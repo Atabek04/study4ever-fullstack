@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api, { adminApi } from '../api/axios';
+import { deduplicateRequest, generateModuleProgressKey } from '../utils/requestDeduplication';
 
 /**
  * Custom hook to fetch course details including modules and lessons structure
@@ -247,7 +248,13 @@ export const useModuleProgress = (moduleId, courseId) => {
  * @returns {Object} Object containing completion status and functions to update it
  */
 export const useLessonCompletion = (lessonId, courseId, moduleId) => {
-  const [isCompleted, setIsCompleted] = useState(false);
+  // Initialize with localStorage value if available to avoid flicker
+  const [isCompleted, setIsCompleted] = useState(() => {
+    if (lessonId) {
+      return localStorage.getItem(`lesson-${lessonId}-completed`) === 'true';
+    }
+    return false;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -265,28 +272,35 @@ export const useLessonCompletion = (lessonId, courseId, moduleId) => {
       const fetchStatus = async () => {
         try {
           // First, check if the lesson is in the list of completed lessons
-          const completedLessonsResponse = await api.get(`/api/v1/courses/${courseId}/completed`);
+          // Using the endpoint from LessonProgressController.getCompletedLessons
+          const completedLessonsResponse = await api.get(`/api/v1/courses/${courseId}/modules/${moduleId}/lessons/completed`);
           const completedLessons = completedLessonsResponse.data || [];
           
           // Set completion status based on whether lesson ID is in the completed list
           // Use type-safe comparison by converting both to strings
           const completed = completedLessons.some(id => String(id) === String(lessonId));
-          console.log(`[LessonCompletion] Lesson ${lessonId} completion status: ${completed}`, {
-            lessonId,
-            completedLessons: completedLessons.slice(0, 5) // Log first 5 for debugging
-          });
+          
+          // Reduce logging to avoid console spam
+          if (completed) {
+            console.log(`[LessonCompletion] Lesson ${lessonId} is completed`);
+          }
           
           setIsCompleted(completed);
           
-          // Handle initialization if needed
-          if (!completed) {
-            // Initialize progress for this lesson if not already completed
+          // Only check module initialization when we have the required IDs
+          // This optimizes the system to only check for the current lesson's module
+          const cacheKey = `module-${moduleId}-initialized`;
+          if (!localStorage.getItem(cacheKey)) {
             try {
-              await initializeModuleIfNeeded(moduleId, courseId);
-              await api.post(`/api/v1/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/progress`);
-            } catch (initErr) {
-              console.error('[LessonCompletion] Error initializing lesson progress:', initErr);
-              // Continue even if initialization fails
+              // Quietly check if module is initialized to prepare for later completion
+              const progressResponse = await api.get(`/api/v1/courses/${courseId}/modules/${moduleId}/progress`);
+              if (progressResponse.status >= 200 && progressResponse.status < 300) {
+                console.log(`[LessonCompletion] Module ${moduleId} is already initialized`);
+                localStorage.setItem(cacheKey, 'true');
+              }
+            } catch (checkError) {
+              // If we get a 404, module isn't initialized but that's fine - we'll do it when needed
+              // We don't log or do anything here to avoid unnecessary console noise
             }
           }
         } catch (err) {
@@ -309,92 +323,208 @@ export const useLessonCompletion = (lessonId, courseId, moduleId) => {
   const initializeModuleIfNeeded = async (moduleId, courseId) => {
     if (!moduleId || !courseId) {
       console.error('[LessonCompletion] Missing required IDs for initialization:', { moduleId, courseId });
-      return;
+      return { success: false, error: 'Missing required IDs for initialization' };
     }
     
+    // Check localStorage first to see if we've already initialized this module
+    const cacheKey = `module-${moduleId}-initialized`;
+    if (localStorage.getItem(cacheKey) === 'true') {
+      console.log(`[LessonCompletion] Module ${moduleId} was previously initialized (cached)`);
+      return { success: true, cached: true };
+    }
+    
+    // Generate a unique key for this initialization request to deduplicate it
+    const requestKey = generateModuleProgressKey(courseId, moduleId);
+    
     try {
-      // Get module details to know the total lesson count
-      const moduleResponse = await api.get(`/api/v1/modules/${moduleId}`);
-      const { lessonCount } = moduleResponse.data;
-      
-      // Initialize module progress
-      await api.post(`/api/v1/courses/${courseId}/modules/${moduleId}/progress?totalLessonsCount=${lessonCount}`);
+      // Use deduplication to prevent multiple concurrent initialization attempts
+      return await deduplicateRequest(requestKey, async () => {
+        // Double check if it's already initialized after getting the lock
+        if (localStorage.getItem(cacheKey) === 'true') {
+          console.log(`[LessonCompletion] Module ${moduleId} was initialized by another request`);
+          return { success: true, cached: true };
+        }
+        
+        // First check if module progress already exists on the server
+        try {
+          const progressResponse = await api.get(`/api/v1/courses/${courseId}/modules/${moduleId}/progress`);
+          if (progressResponse.status >= 200 && progressResponse.status < 300) {
+            console.log(`[LessonCompletion] Module progress already exists for module ${moduleId}`);
+            localStorage.setItem(cacheKey, 'true'); // Cache that this module is initialized
+            return { success: true, exists: true, data: progressResponse.data }; 
+          }
+        } catch (checkError) {
+          // If we get a 404, it means module progress doesn't exist and we should create it
+          // Otherwise, log the error but continue trying to initialize
+          if (checkError.response?.status !== 404) {
+            console.warn(`[LessonCompletion] Error checking module progress:`, checkError);
+          } else {
+            console.log(`[LessonCompletion] Module progress doesn't exist yet for module ${moduleId}, will create it`);
+          }
+        }
+        
+        try {
+          // Get module details to know the total lesson count
+          console.log(`[LessonCompletion] Getting module details for module ${moduleId}`);
+          const moduleResponse = await api.get(`/api/v1/modules/${moduleId}`);
+          const { lessonCount } = moduleResponse.data || { lessonCount: 0 };
+          
+          // Use a reasonable default if lessonCount is missing or zero
+          const totalLessons = lessonCount || 1;
+          
+          // Initialize module progress
+          console.log(`[LessonCompletion] Initializing module progress for module ${moduleId} with ${totalLessons} lessons`);
+          const response = await api.post(`/api/v1/courses/${courseId}/modules/${moduleId}/progress?totalLessonsCount=${totalLessons}`);
+          console.log(`[LessonCompletion] Successfully initialized module progress for module ${moduleId}`);
+          
+          // Cache successful initialization
+          localStorage.setItem(cacheKey, 'true');
+          
+          return { success: true, created: true, data: response.data };
+        } catch (initError) {
+          console.error('[LessonCompletion] Error during module initialization:', initError);
+          throw initError; // Let the outer catch handle it
+        }
+      }, { retry: true, retryCount: 2, retryDelayMs: 800 });
     } catch (err) {
-      console.error('Error initializing module progress:', err);
-      // We don't want to block the UI flow if this fails
+      // Handle different error cases
+      if (err.response?.status === 400) {
+        // 400 likely means the module was already initialized by another request
+        console.log(`[LessonCompletion] Module ${moduleId} was likely initialized by a concurrent request`);
+        localStorage.setItem(cacheKey, 'true'); // Cache it as initialized since it likely exists now
+        return { success: true, alreadyInitialized: true };
+      } else if (err.response?.status === 404) {
+        // Resource not found - could mean the module doesn't exist
+        console.error('[LessonCompletion] Module not found during initialization:', err);
+        return { success: false, error: 'Module not found', status: 404 };
+      } else {
+        // Other errors
+        console.error('[LessonCompletion] Error initializing module progress:', err);
+        return { 
+          success: false, 
+          error: err.response?.data?.message || 'Unknown error during module initialization',
+          status: err.response?.status
+        };
+      }
     }
   };
   
   // Function to mark lesson as complete
   const markAsComplete = async () => {
-    if (!lessonId || !courseId) {
-      console.error('[LessonCompletion] Missing required IDs:', { lessonId, courseId });
-      setError('Missing required lesson information');
+    if (!lessonId || !courseId || !moduleId) {
+      console.error('[LessonCompletion] Missing required IDs:', { lessonId, courseId, moduleId });
+      setError(`Missing required information: ${!moduleId ? 'moduleId' : !courseId ? 'courseId' : 'lessonId'}`);
+      
+      // If we have lessonId and courseId but no moduleId, try to find moduleId from API
+      if (lessonId && courseId && !moduleId) {
+        try {
+          // Try to fetch lesson details to get moduleId
+          const lessonResponse = await api.get(`/api/v1/lessons/${lessonId}`);
+          if (lessonResponse.data?.moduleId) {
+            console.log(`[LessonCompletion] Found moduleId ${lessonResponse.data.moduleId} for lesson ${lessonId}`);
+            // Use the moduleId from the API response
+            const apiModuleId = lessonResponse.data.moduleId;
+            
+            // Continue with the completion process using the found moduleId
+            return await completeLesson(lessonId, courseId, apiModuleId);
+          }
+        } catch (err) {
+          console.error('[LessonCompletion] Error fetching lesson details:', err);
+        }
+      }
+      
       return false;
     }
     
-    // If moduleId is missing, try to retrieve it from the course structure
-    let actualModuleId = moduleId;
-    if (!actualModuleId) {
-      console.log('[LessonCompletion] Module ID missing, attempting to retrieve from course structure');
-      try {
-        const courseResponse = await api.get(`/api/v1/courses/${courseId}/details`);
-        const courseData = courseResponse.data;
-        
-        console.log(`[LessonCompletion] Looking for lesson ID: ${lessonId} in course structure`);
-        
-        // Find the module containing this lesson
-        for (const module of courseData.modules || []) {
-          // Log module being checked for debugging
-          console.log(`[LessonCompletion] Checking module: ${module.id} - ${module.title}`);
-          
-          // Type-safe comparison - convert both to strings
-          const lessonExists = module.lessons?.some(lesson => 
-            String(lesson.id) === String(lessonId)
-          );
-          
-          if (lessonExists) {
-            actualModuleId = module.id;
-            console.log(`[LessonCompletion] Found module ID: ${actualModuleId} for lesson: ${lessonId}`);
-            break;
-          }
-        }
-        
-        if (!actualModuleId) {
-          // Log more diagnostic information
-          console.error('[LessonCompletion] Could not find module ID for lesson in course structure', {
-            lessonId,
-            courseId,
-            availableModules: courseData.modules?.map(m => ({
-              id: m.id,
-              title: m.title,
-              lessonIds: m.lessons?.map(l => l.id)
-            }))
-          });
-          setError('Could not determine which module this lesson belongs to');
-          return false;
-        }
-      } catch (err) {
-        console.error('[LessonCompletion] Error retrieving course structure:', err);
-        setError('Failed to retrieve course structure');
+    return await completeLesson(lessonId, courseId, moduleId);
+  };
+  
+  // Helper function to complete a lesson with known IDs
+  const completeLesson = async (lessonId, courseId, moduleId) => {
+    try {
+      // First, make sure module progress is initialized before trying to initialize lesson progress
+      // This fixes the 404 errors when trying to mark lessons as complete
+      console.log(`[LessonCompletion] Initializing module progress if needed for module ${moduleId}`);
+      const moduleInitResult = await initializeModuleIfNeeded(moduleId, courseId);
+      
+      // If module initialization failed, handle the error
+      if (!moduleInitResult.success) {
+        console.error(`[LessonCompletion] Failed to initialize module progress:`, moduleInitResult.error);
+        setError(`Failed to initialize module progress: ${moduleInitResult.error}`);
         return false;
       }
-    }
-    
-    try {
-      // Log request details
-      console.log('[LessonCompletion] PUT', `/api/v1/courses/${courseId}/modules/${actualModuleId}/lessons/${lessonId}/progress/complete`);
-      // Send PUT request to mark lesson as complete
-      const response = await api.put(`/api/v1/courses/${courseId}/modules/${actualModuleId}/lessons/${lessonId}/progress/complete`);
-      console.log('[LessonCompletion] Response:', response);
+      
+      console.log(`[LessonCompletion] Module progress initialized successfully:`, moduleInitResult);
+      
+      try {
+        // Then, initialize progress for this specific lesson
+        console.log(`[LessonCompletion] Initializing lesson progress`);
+        await api.post(`/api/v1/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/progress`);
+      } catch (lessonInitError) {
+        // If we get a 400, it might mean the lesson progress already exists, which is fine
+        if (lessonInitError.response?.status === 400) {
+          console.log(`[LessonCompletion] Lesson progress already initialized for lesson ${lessonId}`);
+        } else {
+          // For other errors, we'll still try to mark as complete, but log the error
+          console.warn('[LessonCompletion] Error initializing lesson progress (continuing anyway):', lessonInitError);
+        }
+      }
+      
+      // Finally mark it as complete using the correct endpoint
+      console.log(`[LessonCompletion] Marking lesson ${lessonId} as complete`);
+      const response = await api.put(`/api/v1/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/progress/complete`);
+      
+      // Update the completion status
       setIsCompleted(true);
+      
+      // Also update localStorage for immediate effect
+      localStorage.setItem(`lesson-${lessonId}-completed`, 'true');
+      
+      // Dispatch an event to notify other components
+      window.dispatchEvent(new CustomEvent('lessonCompleted', {
+        detail: {
+          lessonId,
+          courseId,
+          moduleId
+        }
+      }));
+      
+      // Notify the progress tracking system for the Continue Learning feature
+      try {
+        const { notifyCourseProgressUpdated } = require('../utils/progressUtils');
+        notifyCourseProgressUpdated({
+          courseId,
+          lessonId,
+          moduleId,
+          completed: true
+        });
+      } catch (e) {
+        console.warn('[LessonCompletion] Could not notify progress system:', e);
+      }
+      
+      console.log('[LessonCompletion] Successfully marked lesson as complete:', response);
       return true;
     } catch (err) {
-      console.error('[LessonCompletion] Error marking lesson as complete:', err, err?.response);
-      setError('Failed to mark lesson as complete');
+      console.error('[LessonCompletion] Error marking lesson as complete:', err);
+      
+      // Provide more specific error message for different types of failures
+      if (err.response?.status === 404) {
+        setError('Module or lesson progress needs to be initialized. Please try again.');
+        // Try one more initialization attempt and refresh the page
+        setTimeout(() => {
+          localStorage.removeItem(`module-${moduleId}-initialized`); // Clear cache to force reinitialization
+          window.location.reload(); // Refresh the page to retry from scratch
+        }, 2000);
+      } else if (err.response?.status === 409) {
+        setError('Another request is in progress. Please try again in a moment.');
+      } else {
+        setError('Failed to mark lesson as complete: ' + (err.response?.data?.message || err.message));
+      }
       return false;
     }
   };
+  
+  // Use async method to properly handle the completion
   
   // Function to toggle completion status
   const toggleCompletion = async () => {
