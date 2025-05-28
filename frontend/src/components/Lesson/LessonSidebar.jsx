@@ -31,7 +31,8 @@ import HomeIcon from '@mui/icons-material/Home';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { useLessonBookmark, useLessonCompletion } from '../../hooks/lessonHooks';
+import { useLessonCompletion } from '../../hooks/lessonHooks';
+import { useBookmarkStatus } from '../../hooks/bookmarkHooks';
 
 // Helper component for lesson duration display
 const LessonDuration = ({ duration }) => {
@@ -65,8 +66,14 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
   // Add local state to manage completion status in component
   const [localCompleted, setLocalCompleted] = React.useState(isCompleted);
   
-  // Track bookmark status
-  const { isBookmarked, toggleBookmark } = useLessonBookmark(lesson.id);
+  // Track bookmark status (read-only in sidebar) with local state for immediate updates
+  const { isBookmarked } = useBookmarkStatus(lesson.id);
+  const [localBookmarked, setLocalBookmarked] = React.useState(isBookmarked);
+
+  // Update local bookmark state when hook state changes
+  React.useEffect(() => {
+    setLocalBookmarked(isBookmarked);
+  }, [isBookmarked]);
 
   // Update local state when the hook's state changes
   React.useEffect(() => {
@@ -80,10 +87,7 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
 
   // Handle bookmark toggle without triggering lesson selection
-  const handleBookmarkClick = (e) => {
-    e.stopPropagation();
-    toggleBookmark();
-  };
+  // Note: Bookmark toggling is disabled in sidebar - bookmarks are managed from lesson content page
 
   // Update localStorage when completion status changes
   React.useEffect(() => {
@@ -115,6 +119,25 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
     };
   }, [lesson.id]);
 
+  // Listen for custom bookmarkChanged events to update UI immediately
+  React.useEffect(() => {
+    const handleBookmarkChanged = (e) => {
+      // If this is our lesson, update the bookmark status
+      if (e.detail.lessonId === lesson.id) {
+        console.log(`LessonItem: Received bookmark event for lesson: ${lesson.id}, isBookmarked: ${e.detail.isBookmarked}`);
+        setLocalBookmarked(e.detail.isBookmarked);
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('bookmarkChanged', handleBookmarkChanged);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('bookmarkChanged', handleBookmarkChanged);
+    };
+  }, [lesson.id]);
+
   const handleSnackbarClose = () => setSnackbar({ ...snackbar, open: false });
 
   return (
@@ -124,17 +147,18 @@ const LessonItem = ({ lesson, isSelected, courseId, moduleId, onSelect }) => {
         selected={isSelected}
         secondaryAction={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {/* Bookmark action button */}
-            <Tooltip title={isBookmarked ? "Remove bookmark" : "Add bookmark"}>
-              <IconButton 
-                edge="end" 
-                size="small" 
-                onClick={handleBookmarkClick}
-                sx={{ color: isBookmarked ? 'secondary.main' : 'text.secondary' }}
-              >
-                {isBookmarked ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
+            {/* Bookmark indicator (display only) */}
+            {localBookmarked && (
+              <Tooltip title="Bookmarked lesson">
+                <BookmarkIcon 
+                  fontSize="small" 
+                  sx={{ 
+                    color: 'secondary.main',
+                    opacity: 0.8
+                  }} 
+                />
+              </Tooltip>
+            )}
           </Box>
         }
         sx={{ 

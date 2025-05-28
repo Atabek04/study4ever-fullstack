@@ -26,6 +26,37 @@ public class GatewayRoutesConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                // Bookmark routes - MUST BE FIRST to avoid conflicts with other routes
+                .route("progress-service-bookmark-add", r -> r
+                        .path("/api/v1/courses/*/modules/*/lessons/*/bookmark")
+                        .and().method(HttpMethod.POST)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
+                .route("progress-service-bookmark-remove", r -> r
+                        .path("/api/v1/lessons/*/bookmark")
+                        .and().method(HttpMethod.DELETE)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
+                .route("progress-service-bookmark-status", r -> r
+                        .path("/api/v1/lessons/*/bookmark/status")
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
+                .route("progress-service-bookmarks-list", r -> r
+                        .path("/api/v1/bookmarks")
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
+                .route("progress-service-bookmarks-by-course", r -> r
+                        .path("/api/v1/courses/*/bookmarks")
+                        .and().method(HttpMethod.GET, HttpMethod.DELETE)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
+                        .uri("lb://PROGRESS-SERVICE"))
+
                 .route("progress-service-modules-progress", r -> r
                         .predicate(p -> p.getRequest().getURI().getPath().matches("/api/v1/courses/\\d+/modules/progress"))
                         .and()

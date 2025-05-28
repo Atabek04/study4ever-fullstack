@@ -4,9 +4,13 @@ import com.study4ever.progressservice.client.CourseServiceClient;
 import com.study4ever.progressservice.dto.CourseEnrollmentRequest;
 import com.study4ever.progressservice.dto.CourseProgressDto;
 import com.study4ever.progressservice.dto.NextLessonDto;
+import com.study4ever.progressservice.dto.client.CourseDetailsDto;
+import com.study4ever.progressservice.dto.client.LessonDto;
+import com.study4ever.progressservice.dto.client.ModuleDto;
 import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.CourseProgress;
+import com.study4ever.progressservice.model.LessonProgress;
 import com.study4ever.progressservice.model.ProgressStatus;
 import com.study4ever.progressservice.repository.CourseProgressRepository;
 import com.study4ever.progressservice.repository.LessonProgressRepository;
@@ -20,8 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -175,96 +180,157 @@ public class CourseProgressServiceImpl implements CourseProgressService {
     public NextLessonDto getNextLesson(String userId, String courseId) {
         log.info("Finding next lesson for user {} in course {}", userId, courseId);
         
-        // First, get the course progress to check if the user is enrolled
-        var courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
-                .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
+        var courseProgress = validateUserEnrollment(userId, courseId);
         
-        // Get all completed lesson IDs for this user in this course
-        List<String> completedLessonIds = lessonProgressRepository.findByUserIdAndCourseIdAndStatus(userId, courseId, ProgressStatus.COMPLETED)
-                .stream()
-                .map(lessonProgress -> lessonProgress.getLessonId())
-                .toList();
+        CourseDetailsDto courseDetails = getCourseStructure(courseId);
+        
+        List<String> completedLessonIds = getCompletedLessonIds(userId, courseId);
         log.debug("User has completed {} lessons in course {}", completedLessonIds.size(), courseId);
         
-        // Get course details from Course Service to find all lessons and modules
-        Map<String, Object> courseDetails = courseServiceClient.getCourseDetails(courseId);
+        List<ModuleDto> sortedModules = sortModulesByOrder(courseDetails.getModules());
+        
+        NextLessonDto nextLesson = findNextLessonInModules(sortedModules, completedLessonIds, courseProgress);
+        
+        updateCourseProgressTracking(courseProgress, nextLesson);
+        
+        return nextLesson;
+    }
+    
+    /**
+     * Validates that the user is enrolled in the course
+     */
+    private CourseProgress validateUserEnrollment(String userId, String courseId) {
+        return courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new NotFoundException("Course progress not found for user " + userId + " and course " + courseId));
+    }
+    
+    /**
+     * Gets course structure from Course Service
+     */
+    private CourseDetailsDto getCourseStructure(String courseId) {
+        CourseDetailsDto courseDetails = courseServiceClient.getCourseDetails(courseId);
         if (courseDetails == null) {
             throw new NotFoundException("Course details not found for course " + courseId);
         }
-        
-        // Extract modules from the course details
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> modules = (List<Map<String, Object>>) courseDetails.get("modules");
-        if (modules == null || modules.isEmpty()) {
+        if (courseDetails.getModules() == null || courseDetails.getModules().isEmpty()) {
             throw new NotFoundException("No modules found for course " + courseId);
         }
-        
-        // Find the next incomplete lesson
-        for (Map<String, Object> module : modules) {
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> lessons = (List<Map<String, Object>>) module.get("lessons");
+        return courseDetails;
+    }
+    
+    /**
+     * Gets list of completed lesson IDs for the user in the course
+     */
+    private List<String> getCompletedLessonIds(String userId, String courseId) {
+        return lessonProgressRepository.findByUserIdAndCourseIdAndStatus(userId, courseId, ProgressStatus.COMPLETED)
+                .stream()
+                .map(LessonProgress::getLessonId)
+                .toList();
+    }
+    
+    /**
+     * Converts module set to sorted list based on sortOrder
+     */
+    private List<ModuleDto> sortModulesByOrder(Set<ModuleDto> modules) {
+        return modules.stream()
+                .sorted(Comparator.comparing(ModuleDto::getSortOrder))
+                .toList();
+    }
+    
+    /**
+     * Finds the next lesson using proper module-by-module progression
+     */
+    private NextLessonDto findNextLessonInModules(List<ModuleDto> modules, List<String> completedLessonIds, CourseProgress courseProgress) {
+        for (ModuleDto module : modules) {
+            List<LessonDto> sortedLessons = sortLessonsByOrder(module.getLessons());
             
-            if (lessons != null && !lessons.isEmpty()) {
-                for (Map<String, Object> lesson : lessons) {
-                    String lessonId = String.valueOf(lesson.get("id"));
+            // Check if module is incomplete (has uncompleted lessons)
+            boolean moduleComplete = isModuleComplete(sortedLessons, completedLessonIds);
+            
+            if (!moduleComplete) {
+                // Find first uncompleted lesson in this module
+                for (LessonDto lesson : sortedLessons) {
+                    String lessonId = String.valueOf(lesson.getId());
                     
-                    // If this lesson is not completed, this is our next lesson
                     if (!completedLessonIds.contains(lessonId)) {
-                        // Update course progress to track current lesson and module
-                        courseProgress.setCurrentLessonId(lessonId);
-                        courseProgress.setCurrentModuleId(String.valueOf(module.get("id")));
-                        courseProgress.setLastAccessDate(LocalDateTime.now());
-                        courseProgressRepository.save(courseProgress);
-                        
-                        // Calculate course completion percentage
-                        double completionPercentage = calculateCompletionPercentage(completedLessonIds.size(), 
-                            courseProgress.getTotalLessonsCount());
-                            
-                        // Build and return the DTO
-                        return NextLessonDto.builder()
-                            .lessonId(lessonId)
-                            .lessonTitle((String) lesson.get("title"))
-                            .moduleId(String.valueOf(module.get("id")))
-                            .moduleTitle((String) module.get("title"))
-                            .courseCompletionPercentage(completionPercentage)
-                            .lastUpdated(LocalDateTime.now().toString())
-                            .build();
+                        return buildNextLessonDto(lesson, module, courseProgress, completedLessonIds);
                     }
                 }
             }
         }
         
-        // If all lessons are completed, return the last lesson as the next lesson
-        // This happens when the user has completed the entire course
-        String lastModuleId = null;
-        String lastModuleTitle = null;
-        String lastLessonId = null;
-        String lastLessonTitle = null;
+        // All lessons completed - return last lesson
+        return buildCompletedCourseResponse(modules);
+    }
+    
+    /**
+     * Converts lesson set to sorted list based on sortOrder
+     */
+    private List<LessonDto> sortLessonsByOrder(Set<LessonDto> lessons) {
+        return lessons.stream()
+                .sorted(Comparator.comparing(LessonDto::getSortOrder))
+                .toList();
+    }
+    
+    /**
+     * Checks if all lessons in a module are completed
+     */
+    private boolean isModuleComplete(List<LessonDto> lessons, List<String> completedLessonIds) {
+        return lessons.stream()
+                .allMatch(lesson -> completedLessonIds.contains(String.valueOf(lesson.getId())));
+    }
+    
+    /**
+     * Builds NextLessonDto for the next lesson to study
+     */
+    private NextLessonDto buildNextLessonDto(LessonDto lesson, ModuleDto module, CourseProgress courseProgress, List<String> completedLessonIds) {
+        double completionPercentage = calculateCompletionPercentage(completedLessonIds.size(), courseProgress.getTotalLessonsCount());
         
-        // Get the last module and lesson
-        if (!modules.isEmpty()) {
-            Map<String, Object> lastModule = modules.get(modules.size() - 1);
-            lastModuleId = String.valueOf(lastModule.get("id"));
-            lastModuleTitle = (String) lastModule.get("title");
-            
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> lessons = (List<Map<String, Object>>) lastModule.get("lessons");
-            if (lessons != null && !lessons.isEmpty()) {
-                Map<String, Object> lastLesson = lessons.get(lessons.size() - 1);
-                lastLessonId = String.valueOf(lastLesson.get("id"));
-                lastLessonTitle = (String) lastLesson.get("title");
-            }
+        return NextLessonDto.builder()
+                .lessonId(String.valueOf(lesson.getId()))
+                .lessonTitle(lesson.getTitle())
+                .moduleId(String.valueOf(module.getId()))
+                .moduleTitle(module.getTitle())
+                .courseCompletionPercentage(completionPercentage)
+                .lastUpdated(LocalDateTime.now().toString())
+                .build();
+    }
+    
+    /**
+     * Builds response when all lessons are completed
+     */
+    private NextLessonDto buildCompletedCourseResponse(List<ModuleDto> modules) {
+        if (modules.isEmpty()) {
+            throw new NotFoundException("No modules found in course");
         }
         
-        // Return the last lesson with 100% completion
+        ModuleDto lastModule = modules.get(modules.size() - 1);
+        List<LessonDto> lastModuleLessons = sortLessonsByOrder(lastModule.getLessons());
+        
+        if (lastModuleLessons.isEmpty()) {
+            throw new NotFoundException("No lessons found in last module");
+        }
+        
+        LessonDto lastLesson = lastModuleLessons.get(lastModuleLessons.size() - 1);
+        
         return NextLessonDto.builder()
-            .lessonId(lastLessonId)
-            .lessonTitle(lastLessonTitle)
-            .moduleId(lastModuleId)
-            .moduleTitle(lastModuleTitle)
-            .courseCompletionPercentage(100.0)
-            .lastUpdated(LocalDateTime.now().toString())
-            .build();
+                .lessonId(String.valueOf(lastLesson.getId()))
+                .lessonTitle(lastLesson.getTitle())
+                .moduleId(String.valueOf(lastModule.getId()))
+                .moduleTitle(lastModule.getTitle())
+                .courseCompletionPercentage(100.0)
+                .lastUpdated(LocalDateTime.now().toString())
+                .build();
+    }
+    
+    /**
+     * Updates course progress tracking with current lesson/module
+     */
+    private void updateCourseProgressTracking(CourseProgress courseProgress, NextLessonDto nextLesson) {
+        courseProgress.setCurrentLessonId(nextLesson.getLessonId());
+        courseProgress.setCurrentModuleId(nextLesson.getModuleId());
+        courseProgress.setLastAccessDate(LocalDateTime.now());
+        courseProgressRepository.save(courseProgress);
     }
     
     /**

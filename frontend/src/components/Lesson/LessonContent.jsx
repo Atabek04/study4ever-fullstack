@@ -28,8 +28,9 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { 
   useLesson, 
   useLessonCompletion, 
-  useLessonBookmark,
   useCourseDetails} from '../../hooks/lessonHooks';
+import { useBookmarkToggle } from '../../hooks/bookmarkHooks';
+import api from '../../api/axios';
 
 /**
  * Helper function to get YouTube embed URL
@@ -266,7 +267,11 @@ const LessonContent = ({ courseId, lessonId }) => {
   }, [lessonId, isCompleted]);
   
   // Track bookmark status
-  const { isBookmarked, toggleBookmark } = useLessonBookmark(lessonId);
+  const { 
+    isBookmarked, 
+    loading: bookmarkLoading, 
+    toggleBookmark 
+  } = useBookmarkToggle(lessonId, courseId, moduleId);
   
   // State for storing previous and next lesson IDs
   const [navLessons, setNavLessons] = useState({
@@ -327,6 +332,43 @@ const LessonContent = ({ courseId, lessonId }) => {
       setSnackbar({ 
         open: true, 
         message: errorMessage, 
+        severity: 'error' 
+      });
+    }
+  };
+
+  // Custom handler for bookmark toggle with feedback
+  const handleBookmarkToggle = async () => {
+    if (!moduleId) {
+      console.warn('Missing moduleId - waiting for course data to load');
+      setSnackbar({ 
+        open: true, 
+        message: 'Loading course structure... Please try again in a moment.', 
+        severity: 'warning' 
+      });
+      return;
+    }
+
+    try {
+      const result = await toggleBookmark();
+      if (result) {
+        setSnackbar({ 
+          open: true, 
+          message: isBookmarked ? 'Bookmark removed!' : 'Bookmark added!', 
+          severity: 'success' 
+        });
+      } else {
+        setSnackbar({ 
+          open: true, 
+          message: 'Failed to update bookmark. Please try again.', 
+          severity: 'error' 
+        });
+      }
+    } catch (error) {
+      console.error('Error handling bookmark toggle:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to update bookmark. Please try again.', 
         severity: 'error' 
       });
     }
@@ -535,7 +577,8 @@ const LessonContent = ({ courseId, lessonId }) => {
           <Stack direction="row" spacing={1}>
             <Tooltip title={isBookmarked ? "Remove bookmark" : "Add bookmark"}>
               <IconButton 
-                onClick={toggleBookmark}
+                onClick={handleBookmarkToggle}
+                disabled={bookmarkLoading}
                 color={isBookmarked ? "secondary" : "default"}
                 aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
               >
@@ -549,7 +592,12 @@ const LessonContent = ({ courseId, lessonId }) => {
                 color="primary"
                 variant="text"
                 size="small"
-                sx={{ ml: 1 }}
+                sx={{ 
+                  ml: 1,
+                  '&:hover': {
+                    color: theme.palette.primary.light
+                  }
+                }}
                 aria-label="View all bookmarks"
               >
                 My Bookmarks

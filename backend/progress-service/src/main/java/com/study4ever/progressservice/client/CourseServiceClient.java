@@ -1,9 +1,8 @@
 package com.study4ever.progressservice.client;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.study4ever.progressservice.dto.client.CourseDetailsDto;
+import com.study4ever.progressservice.dto.client.LessonDto;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -31,18 +30,18 @@ public class CourseServiceClient {
      * Retrieves course details including modules and lessons structure.
      * 
      * @param courseId The ID of the course to retrieve
-     * @return Course details as a Map, or null if not found
+     * @return Course details as CourseDetailsDto, or null if not found
      */
-    public Map<String, Object> getCourseDetails(String courseId) {
+    public CourseDetailsDto getCourseDetails(String courseId) {
         try {
             String url = courseServiceBaseUrl + "/api/v1/courses/" + courseId + "/details";
             log.debug("Fetching course details from: {}", url);
             
-            ResponseEntity<HashMap<String, Object>> response = restTemplate.exchange(
+            ResponseEntity<CourseDetailsDto> response = restTemplate.exchange(
                 url, 
                 HttpMethod.GET, 
                 null, 
-                new ParameterizedTypeReference<HashMap<String, Object>>() {}
+                CourseDetailsDto.class
             );
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -62,18 +61,18 @@ public class CourseServiceClient {
      * Retrieves lesson details by lesson ID.
      * 
      * @param lessonId The ID of the lesson
-     * @return Lesson details as a Map, or null if not found
+     * @return Lesson details as LessonDto, or null if not found
      */
-    public Map<String, Object> getLessonDetails(String lessonId) {
+    public LessonDto getLessonDetails(String lessonId) {
         try {
             String url = courseServiceBaseUrl + "/api/v1/lessons/" + lessonId;
             log.debug("Fetching lesson details from: {}", url);
             
-            ResponseEntity<HashMap<String, Object>> response = restTemplate.exchange(
+            ResponseEntity<LessonDto> response = restTemplate.exchange(
                 url, 
                 HttpMethod.GET, 
                 null, 
-                new ParameterizedTypeReference<HashMap<String, Object>>() {}
+                LessonDto.class
             );
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {

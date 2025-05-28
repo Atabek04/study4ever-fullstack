@@ -15,7 +15,9 @@ export const useCourseDetails = (courseId) => {
   
   useEffect(() => {
     if (!courseId) {
-      setError('Course ID is required');
+      // Don't treat null courseId as an error - it means user is not enrolled
+      setCourseDetails(null);
+      setError('');
       setLoading(false);
       return;
     }

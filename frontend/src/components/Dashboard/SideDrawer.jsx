@@ -56,7 +56,7 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
     { text: 'My Courses', icon: <SchoolIcon />, path: '/courses' },
     { text: 'Assignments', icon: <AssignmentIcon />, path: '/assignments' },
     { text: 'Schedule', icon: <CalendarTodayIcon />, path: '/schedule' },
-    { text: 'Saved', icon: <BookmarkIcon />, path: '/saved' },
+    { text: 'Saved', icon: <BookmarkIcon />, path: '/bookmarks' },
   ];
 
   // Show admin link only for users with appropriate roles
