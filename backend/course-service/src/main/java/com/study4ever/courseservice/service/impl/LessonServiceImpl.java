@@ -3,6 +3,7 @@ package com.study4ever.courseservice.service.impl;
 import com.study4ever.courseservice.client.ProgressServiceClient;
 import com.study4ever.courseservice.dto.HeartbeatRequest;
 import com.study4ever.courseservice.dto.LessonRequestDto;
+import com.study4ever.courseservice.dto.StartStudySessionRequest;
 import com.study4ever.courseservice.dto.StudySessionDto;
 import com.study4ever.courseservice.exception.NotFoundException;
 import com.study4ever.courseservice.exception.SortOrderConflictException;
@@ -102,22 +103,30 @@ public class LessonServiceImpl implements LessonService {
         String moduleId = lesson.getModule().getId().toString();
         String lessonId = lesson.getId().toString();
         
-        // Check if user has an active session
         StudySessionDto activeSession = progressServiceClient.getActiveSession(userId);
         
         if (activeSession == null) {
-            log.info("No active session found for user {}, session will be created by frontend for course {}, module {}, lesson {}",
+            log.info("No active session found for user {}, creating new session for course {}, module {}, lesson {}",
                     userId, courseId, moduleId, lessonId);
-            // Note: Session creation will be handled by the frontend or another service call
+            
+            var sessionRequest = StartStudySessionRequest.builder()
+                    .userId(userId)
+                    .courseId(courseId)
+                    .moduleId(moduleId)
+                    .lessonId(lessonId)
+                    .build();
+            
+            activeSession = progressServiceClient.createSession(sessionRequest);
+            log.info("New study session created with ID: {}", activeSession.getSessionId());
         } else {
             log.info("Recording heartbeat for active session for user {}, course {}, module {}, lesson {}", 
                     userId, courseId, moduleId, lessonId);
-            
-            // Record heartbeat to update session location
-            HeartbeatRequest heartbeatRequest = new HeartbeatRequest();
-            heartbeatRequest.setSessionId(activeSession.getSessionId());
-            heartbeatRequest.setModuleId(moduleId);
-            heartbeatRequest.setLessonId(lessonId);
+
+            var heartbeatRequest = HeartbeatRequest.builder()
+                    .sessionId(activeSession.getSessionId())
+                    .moduleId(moduleId)
+                    .lessonId(lessonId)
+                    .build();
             
             progressServiceClient.recordHeartbeat(heartbeatRequest);
         }

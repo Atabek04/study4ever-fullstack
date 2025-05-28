@@ -27,28 +27,17 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
 
     // Topic exchange name
     public static final String USER_EXCHANGE = "user.exchange";
-    public static final String EVENTS_EXCHANGE = "study4ever.events.exchange";
 
     // Queue names
     public static final String USER_CREATED_QUEUE = "user.created.queue";
     public static final String USER_UPDATED_QUEUE = "user.updated.queue";
     public static final String USER_DELETED_QUEUE = "user.deleted.queue";
-    
-    // Progress Completion Queues
-    public static final String LESSON_COMPLETION_QUEUE = "lesson.completion.queue";
-    public static final String MODULE_COMPLETION_QUEUE = "module.completion.queue";
-    public static final String COURSE_COMPLETION_QUEUE = "course.completion.queue";
 
     // Routing keys
     public static final String USER_CREATED_ROUTING_KEY = "user.created";
     public static final String USER_UPDATED_ROUTING_KEY = "user.updated";
     public static final String USER_DELETED_ROUTING_KEY = "user.deleted";
     
-    // Progress Completion Routing Keys
-    public static final String LESSON_COMPLETION_ROUTING_KEY = "study4ever.events.lesson.completion";
-    public static final String MODULE_COMPLETION_ROUTING_KEY = "study4ever.events.module.completion";
-    public static final String COURSE_COMPLETION_ROUTING_KEY = "study4ever.events.course.completion";
-
     // Dead letter configuration
     public static final String USER_DLX = "user.dlx";
     public static final String USER_CREATED_DLQ = "user.created.dlq";

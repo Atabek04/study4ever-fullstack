@@ -1,19 +1,16 @@
-package com.study4ever.progressservice.event.message;
+package com.study4ever.courseservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ModuleCompletionEvent {
-    private String userId;
+@Builder
+public class ProgressStartSessionRequest {
     private String courseId;
     private String moduleId;
-    private LocalDateTime timestamp;
+    private String lessonId;
 }
