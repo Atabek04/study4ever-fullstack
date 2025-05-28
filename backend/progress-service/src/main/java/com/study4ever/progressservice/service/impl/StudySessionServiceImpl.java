@@ -15,6 +15,7 @@ import com.study4ever.progressservice.service.UserProgressService;
 import com.study4ever.progressservice.util.ProgressMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,9 @@ public class StudySessionServiceImpl implements StudySessionService {
     private final StudyStreakService studyStreakService;
     private final UserProgressService userProgressService;
 
+    @Value("${study.session.timeout.minutes:30}")
+    private int sessionTimeoutMinutes;
+
     @Override
     @Transactional
     public StudySessionDto startStudySession(String userId, StartStudySessionRequest request) {
@@ -50,6 +54,7 @@ public class StudySessionServiceImpl implements StudySessionService {
                 .moduleId(request.getModuleId())
                 .lessonId(request.getLessonId())
                 .startTime(LocalDateTime.now())
+                .lastHeartbeat(LocalDateTime.now())
                 .active(true)
                 .build();
 
@@ -150,11 +155,19 @@ public class StudySessionServiceImpl implements StudySessionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<StudySessionDto> getActiveUserStudySessions(String userId) {
-        log.debug("Getting active study sessions for user: {}", userId);
-        return studySessionRepository.findByUserIdAndActive(userId, true).stream()
+    public List<StudySessionDto> getAllActiveSessions() {
+        log.debug("Getting all active study sessions for admin");
+        return studySessionRepository.findByActive(true).stream()
                 .map(ProgressMapper::mapToSessionDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StudySessionDto getActiveUserSession(String userId) {
+        log.debug("Getting active session for user: {}", userId);
+        List<StudySession> activeSessions = studySessionRepository.findByUserIdAndActive(userId, true);
+        return activeSessions.isEmpty() ? null : ProgressMapper.mapToSessionDto(activeSessions.get(0));
     }
 
     @Override
@@ -169,6 +182,9 @@ public class StudySessionServiceImpl implements StudySessionService {
             throw new BadRequestException("Cannot update location for inactive session: " + request.getSessionId());
         }
 
+        // Update heartbeat timestamp
+        session.setLastHeartbeat(LocalDateTime.now());
+
         // Update module and lesson if they changed
         boolean updated = false;
         if (request.getModuleId() != null && !request.getModuleId().equals(session.getModuleId())) {
@@ -181,10 +197,54 @@ public class StudySessionServiceImpl implements StudySessionService {
             updated = true;
         }
 
+        studySessionRepository.save(session);
+        
         if (updated) {
-            studySessionRepository.save(session);
             log.info("Updated session {} location - module: {}, lesson: {}",
                     request.getSessionId(), request.getModuleId(), request.getLessonId());
         }
+        
+        log.debug("Updated heartbeat for session: {}", request.getSessionId());
+    }
+
+    @Override
+    @Transactional
+    public void cleanupExpiredSessions() {
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(sessionTimeoutMinutes);
+        List<StudySession> expiredSessions = studySessionRepository.findExpiredActiveSessions(expirationTime);
+        
+        log.info("Found {} expired sessions to cleanup", expiredSessions.size());
+        
+        for (StudySession session : expiredSessions) {
+            try {
+                session.setActive(false);
+                session.setEndTime(LocalDateTime.now());
+                int durationMinutes = (int) ChronoUnit.MINUTES.between(session.getStartTime(), session.getEndTime());
+                session.setDurationMinutes(durationMinutes);
+                
+                studySessionRepository.save(session);
+                
+                // Only update streak and log session if it was at least 1 minute
+                if (durationMinutes >= 1) {
+                    studyStreakService.updateStreak(session.getUserId());
+                    userProgressService.logStudySession(session.getUserId(), durationMinutes);
+                }
+                
+                log.info("Automatically ended expired session {} for user {} (duration: {} minutes)",
+                        session.getId(), session.getUserId(), durationMinutes);
+                        
+            } catch (Exception e) {
+                log.error("Failed to cleanup expired session {}: {}", session.getId(), e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudySessionDto> findExpiredActiveSessions() {
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(sessionTimeoutMinutes);
+        return studySessionRepository.findExpiredActiveSessions(expirationTime).stream()
+                .map(ProgressMapper::mapToSessionDto)
+                .toList();
     }
 }

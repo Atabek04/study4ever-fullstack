@@ -22,9 +22,15 @@ public interface StudySessionService {
 
     List<StudySessionDto> getUserStudySessionsByDateRange(String userId, LocalDate startDate, LocalDate endDate);
 
-    List<StudySessionDto> getActiveUserStudySessions(String userId);
+    List<StudySessionDto> getAllActiveSessions();
+
+    StudySessionDto getActiveUserSession(String userId);
 
     void deleteStudySession(String userId, UUID sessionId);
 
     void updateSessionLocation(HeartbeatRequest request);
+
+    void cleanupExpiredSessions();
+
+    List<StudySessionDto> findExpiredActiveSessions();
 }

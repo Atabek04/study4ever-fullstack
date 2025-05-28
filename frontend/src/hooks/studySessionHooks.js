@@ -1,0 +1,346 @@
+import { useState, useEffect, useRef } from 'react';
+import api from '../api/axios';
+
+/**
+ * Simple heartbeat hook that sends periodic updates to track study session progress
+ * Uses KISS principle - simple, reliable, and focused on core functionality
+ * 
+ * @param {string} courseId - Current course ID
+ * @param {string} moduleId - Current module ID  
+ * @param {string} lessonId - Current lesson ID
+ * @param {boolean} isActive - Whether to send heartbeats (lesson is actively being viewed)
+ * @returns {Object} - Hook state and controls
+ */
+export const useStudySessionHeartbeat = (courseId, moduleId, lessonId, isActive = true) => {
+  const [sessionId, setSessionId] = useState(null);
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [error, setError] = useState(null);
+  const [sessionWarning, setSessionWarning] = useState(false);
+  const intervalRef = useRef(null);
+  const warningTimeoutRef = useRef(null);
+  const lastLocationRef = useRef(null);
+  const lastHeartbeatRef = useRef(null);
+
+  // Configuration
+  const HEARTBEAT_INTERVAL = 30000; // 30 seconds - reasonable for study tracking
+  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes - match backend timeout
+  const SESSION_WARNING_TIME = 5 * 60 * 1000; // 5 minutes before timeout
+  
+  /**
+   * Start a new study session or get existing active session
+   */
+  const startSession = async () => {
+    if (!courseId || !moduleId || !lessonId) {
+      console.log('[StudySession] Cannot start session - missing required IDs');
+      return;
+    }
+
+    try {
+      console.log('[StudySession] Starting study session', { courseId, moduleId, lessonId });
+      
+      // First, check if there's already an active session
+      const activeSessionResponse = await api.get('/api/v1/sessions/active/single');
+      
+      if (activeSessionResponse.data && activeSessionResponse.data.id) {
+        console.log('[StudySession] Found existing active session:', activeSessionResponse.data.id);
+        setSessionId(activeSessionResponse.data.id);
+        setIsSessionActive(true);
+        setError(null);
+        setSessionWarning(false);
+        lastHeartbeatRef.current = new Date();
+        scheduleSessionWarning();
+        return activeSessionResponse.data.id;
+      }
+
+      // No active session, create a new one
+      const response = await api.post('/api/v1/sessions/start', {
+        courseId,
+        moduleId, 
+        lessonId
+      });
+
+      if (response.data && response.data.id) {
+        console.log('[StudySession] Started new session:', response.data.id);
+        setSessionId(response.data.id);
+        setIsSessionActive(true);
+        setError(null);
+        setSessionWarning(false);
+        lastHeartbeatRef.current = new Date();
+        scheduleSessionWarning();
+        return response.data.id;
+      }
+    } catch (err) {
+      console.error('[StudySession] Error starting session:', err);
+      setError('Failed to start study session');
+      setIsSessionActive(false);
+    }
+  };
+
+  /**
+   * Send heartbeat to update session location
+   */
+  const sendHeartbeat = async (currentSessionId, currentModuleId, currentLessonId) => {
+    if (!currentSessionId || !currentModuleId || !currentLessonId) {
+      return;
+    }
+
+    try {
+      await api.post('/api/v1/sessions/heartbeat', {
+        sessionId: currentSessionId,
+        moduleId: currentModuleId,
+        lessonId: currentLessonId
+      });
+
+      console.log('[StudySession] Heartbeat sent successfully');
+      lastHeartbeatRef.current = new Date();
+      setError(null);
+      setSessionWarning(false);
+      
+      // Reset session warning timer
+      scheduleSessionWarning();
+    } catch (err) {
+      console.error('[StudySession] Heartbeat failed:', err);
+      
+      // If session not found (404) or gone (410), session was ended/expired
+      if (err.response?.status === 404 || err.response?.status === 410) {
+        console.log('[StudySession] Session ended/expired, starting new session');
+        handleSessionExpired();
+      } else {
+        setError('Heartbeat failed');
+      }
+    }
+  };
+
+  /**
+   * End the current study session
+   */
+  const endSession = async () => {
+    if (!sessionId) {
+      return;
+    }
+
+    try {
+      console.log('[StudySession] Ending session:', sessionId);
+      await api.put(`/api/v1/sessions/${sessionId}/end`);
+      
+      cleanup();
+      console.log('[StudySession] Session ended successfully');
+    } catch (err) {
+      console.error('[StudySession] Error ending session:', err);
+      // Don't set error for end session failures, just log them
+      cleanup(); // Still cleanup local state
+    }
+  };
+
+  /**
+   * Handle session expiration
+   */
+  const handleSessionExpired = () => {
+    console.log('[StudySession] Session expired, cleaning up');
+    cleanup();
+    setError('Session expired. A new session will be started automatically.');
+  };
+
+  /**
+   * Clean up session state and timers
+   */
+  const cleanup = () => {
+    setSessionId(null);
+    setIsSessionActive(false);
+    setSessionWarning(false);
+    clearWarningTimeout();
+    stopHeartbeat();
+  };
+
+  /**
+   * Schedule session warning
+   */
+  const scheduleSessionWarning = () => {
+    clearWarningTimeout();
+    
+    const timeUntilWarning = SESSION_TIMEOUT - SESSION_WARNING_TIME;
+    warningTimeoutRef.current = setTimeout(() => {
+      if (sessionId && isSessionActive) {
+        console.log('[StudySession] Session approaching timeout, showing warning');
+        setSessionWarning(true);
+        setError('Your study session will expire in 5 minutes due to inactivity. Continue studying to maintain your session.');
+      }
+    }, timeUntilWarning);
+  };
+
+  /**
+   * Clear warning timeout
+   */
+  const clearWarningTimeout = () => {
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+  };
+
+  /**
+   * Check if location has changed and needs heartbeat
+   */
+  const hasLocationChanged = (newModuleId, newLessonId) => {
+    const lastLocation = lastLocationRef.current;
+    if (!lastLocation) return true;
+    
+    return lastLocation.moduleId !== newModuleId || lastLocation.lessonId !== newLessonId;
+  };
+
+  /**
+   * Setup heartbeat interval
+   */
+  const startHeartbeat = (currentSessionId) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    intervalRef.current = setInterval(() => {
+      if (isActive && currentSessionId && moduleId && lessonId) {
+        sendHeartbeat(currentSessionId, moduleId, lessonId);
+        
+        // Update last location
+        lastLocationRef.current = { moduleId, lessonId };
+      }
+    }, HEARTBEAT_INTERVAL);
+
+    console.log('[StudySession] Heartbeat interval started');
+  };
+
+  /**
+   * Stop heartbeat interval
+   */
+  const stopHeartbeat = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      console.log('[StudySession] Heartbeat interval stopped');
+    }
+  };
+
+  // Effect to manage session lifecycle
+  useEffect(() => {
+    if (!isActive || !courseId || !moduleId || !lessonId) {
+      return;
+    }
+
+    // Start session when component mounts or location changes
+    const initializeSession = async () => {
+      if (!sessionId || hasLocationChanged(moduleId, lessonId)) {
+        const newSessionId = await startSession();
+        if (newSessionId) {
+          startHeartbeat(newSessionId);
+          
+          // Send immediate heartbeat for location update
+          lastLocationRef.current = { moduleId, lessonId };
+          await sendHeartbeat(newSessionId, moduleId, lessonId);
+        }
+      } else if (sessionId) {
+        // Session exists, just ensure heartbeat is running
+        startHeartbeat(sessionId);
+      }
+    };
+
+    initializeSession();
+
+    // Cleanup on unmount or when isActive becomes false
+    return () => {
+      stopHeartbeat();
+      clearWarningTimeout();
+      if (!isActive) {
+        // Only end session if explicitly deactivated, not on unmount
+        // This allows users to navigate between lessons without ending session
+      }
+    };
+  }, [courseId, moduleId, lessonId, isActive, sessionId]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      stopHeartbeat();
+      clearWarningTimeout();
+    };
+  }, []);
+
+  // Handle page visibility changes - pause/resume heartbeat
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('[StudySession] Page hidden, stopping heartbeat');
+        stopHeartbeat();
+      } else if (isActive && sessionId) {
+        console.log('[StudySession] Page visible, resuming heartbeat');
+        startHeartbeat(sessionId);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isActive, sessionId]);
+
+  // Handle page unload - end session
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (sessionId) {
+        // Use sendBeacon for reliable delivery on page unload
+        navigator.sendBeacon('/api/v1/sessions/' + sessionId + '/end', '');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [sessionId]);
+
+  return {
+    sessionId,
+    isSessionActive,
+    sessionWarning,
+    error,
+    startSession,
+    endSession,
+    // Manual controls (optional usage)
+    sendHeartbeat: () => sendHeartbeat(sessionId, moduleId, lessonId)
+  };
+};
+
+/**
+ * Hook to get active study session info
+ */
+export const useActiveStudySession = () => {
+  const [activeSession, setActiveSession] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchActiveSession = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/api/v1/sessions/active/single');
+      setActiveSession(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching active session:', err);
+      setActiveSession(null);
+      if (err.response?.status !== 404) {
+        setError('Failed to fetch active session');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveSession();
+  }, []);
+
+  return {
+    activeSession,
+    loading,
+    error,
+    refetch: fetchActiveSession
+  };
+};

@@ -65,18 +65,16 @@ public class StudySessionController {
         return studySessionService.getUserStudySessions(userId);
     }
 
-    @GetMapping("/active")
-    public List<StudySessionDto> getActiveUserStudySessions(
-            @RequestHeader("X-User-Id") String userId) {
-        log.debug("Getting active study sessions for user {}", userId);
-        return studySessionService.getActiveUserStudySessions(userId);
+    @GetMapping("/admin/active")
+    public List<StudySessionDto> getAllActiveSessions() {
+        log.debug("Getting all active study sessions for admin");
+        return studySessionService.getAllActiveSessions();
     }
 
     @GetMapping("/active/single")
     public StudySessionDto getActiveSession(@RequestHeader("X-User-Id") String userId) {
         log.debug("Getting active session for user {}", userId);
-        List<StudySessionDto> activeSessions = studySessionService.getActiveUserStudySessions(userId);
-        return activeSessions.isEmpty() ? null : activeSessions.get(0);
+        return studySessionService.getActiveUserSession(userId);
     }
 
     @GetMapping("/by-date")
@@ -110,5 +108,18 @@ public class StudySessionController {
         log.debug("Recording heartbeat for session {} - module: {}, lesson: {}", 
                 request.getSessionId(), request.getModuleId(), request.getLessonId());
         studySessionService.updateSessionLocation(request);
+    }
+
+    @PostMapping("/cleanup")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cleanupExpiredSessions() {
+        log.info("Manual cleanup of expired sessions requested");
+        studySessionService.cleanupExpiredSessions();
+    }
+
+    @GetMapping("/expired")
+    public List<StudySessionDto> getExpiredActiveSessions() {
+        log.debug("Getting expired active sessions");
+        return studySessionService.findExpiredActiveSessions();
     }
 }

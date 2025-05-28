@@ -51,4 +51,7 @@ public class StudySession extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean active;
+
+    @Column
+    private LocalDateTime lastHeartbeat;
 }

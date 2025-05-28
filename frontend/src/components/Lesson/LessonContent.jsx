@@ -25,11 +25,14 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { 
   useLesson, 
   useLessonCompletion, 
   useCourseDetails} from '../../hooks/lessonHooks';
 import { useBookmarkToggle } from '../../hooks/bookmarkHooks';
+import { useStudySessionHeartbeat } from '../../hooks/studySessionHooks';
 import api from '../../api/axios';
 
 /**
@@ -238,6 +241,19 @@ const LessonContent = ({ courseId, lessonId }) => {
     courseId, 
     moduleId // Use our tracked moduleId instead of lesson?.moduleId
   );
+
+  // Study session heartbeat - track user's current lesson activity
+  const { 
+    sessionId, 
+    isSessionActive, 
+    sessionWarning,
+    error: sessionError 
+  } = useStudySessionHeartbeat(
+    courseId, 
+    moduleId, 
+    lessonId, 
+    !!lessonId && !!moduleId && !!courseId // Only active when we have all required IDs
+  );
   
   // Debug log to track completion status changes and update localStorage
   React.useEffect(() => {
@@ -248,6 +264,16 @@ const LessonContent = ({ courseId, lessonId }) => {
       localStorage.setItem(`lesson-${lessonId}-completed`, 'true');
     }
   }, [lessonId, isCompleted, completionLoading]);
+
+  // Log session activity for debugging
+  React.useEffect(() => {
+    if (sessionId && isSessionActive) {
+      console.log(`[LessonContent] Active study session: ${sessionId} for lesson ${lessonId}`);
+    }
+    if (sessionError) {
+      console.warn(`[LessonContent] Session error: ${sessionError}`);
+    }
+  }, [sessionId, isSessionActive, sessionError, lessonId]);
   
   // Double-check completion status from localStorage on mount and whenever lessonId changes
   React.useEffect(() => {
@@ -622,6 +648,49 @@ const LessonContent = ({ courseId, lessonId }) => {
                 </IconButton>
               </span>
             </Tooltip>
+
+            {/* Session status indicator */}
+            <Tooltip title={
+              sessionWarning
+                ? "Session expiring soon! Continue studying to maintain your session."
+                : isSessionActive 
+                  ? `Study session active (ID: ${sessionId?.slice(-8) || 'unknown'})` 
+                  : "No active study session"
+            }>
+              <IconButton 
+                disabled
+                size="small"
+                sx={{ 
+                  color: sessionWarning 
+                    ? 'warning.main' 
+                    : isSessionActive 
+                      ? 'success.main' 
+                      : 'text.disabled',
+                  '&.Mui-disabled': {
+                    color: sessionWarning 
+                      ? 'warning.main' 
+                      : isSessionActive 
+                        ? 'success.main' 
+                        : 'text.disabled'
+                  },
+                  animation: sessionWarning ? 'pulse 2s infinite' : 'none',
+                  '@keyframes pulse': {
+                    '0%': { opacity: 1 },
+                    '50%': { opacity: 0.5 },
+                    '100%': { opacity: 1 }
+                  }
+                }}
+                aria-label={
+                  sessionWarning 
+                    ? "Session expiring soon" 
+                    : isSessionActive 
+                      ? "Session active" 
+                      : "No active session"
+                }
+              >
+                {isSessionActive ? <RadioButtonCheckedIcon /> : <RadioButtonUncheckedIcon />}
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Box>
         
@@ -633,6 +702,21 @@ const LessonContent = ({ courseId, lessonId }) => {
               {lesson.duration}
             </Typography>
           </Box>
+        )}
+
+        {/* Session error notification (subtle, non-intrusive) */}
+        {sessionError && (
+          <Alert 
+            severity="warning" 
+            variant="outlined"
+            sx={{ mb: 2, fontSize: '0.875rem' }}
+            onClose={() => {
+              // Note: We can't directly clear the session error from here
+              // but we can add a manual retry mechanism if needed
+            }}
+          >
+            Study session tracking: {sessionError}
+          </Alert>
         )}
         
         {/* Video player */}

@@ -15,6 +15,13 @@ app:
   course-service:
     url: ${COURSE_SERVICE_URL:http://localhost:8082}
 
+study:
+  session:
+    timeout:
+      minutes: ${STUDY_SESSION_TIMEOUT_MINUTES:30}
+    cleanup:
+      enabled: ${STUDY_SESSION_CLEANUP_ENABLED:true}
+
 #logging:
 #  level:
 #    root: debug

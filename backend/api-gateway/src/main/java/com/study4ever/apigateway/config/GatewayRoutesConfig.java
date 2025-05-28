@@ -172,7 +172,8 @@ public class GatewayRoutesConfig {
                 .route("progress-service-admin", r -> r
                         .path("/api/v1/admin/progress/**",
                                 "/api/v1/admin/sessions/**",
-                                "/api/v1/admin/streaks/**")
+                                "/api/v1/admin/streaks/**",
+                                "/api/v1/sessions/admin/**")
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 

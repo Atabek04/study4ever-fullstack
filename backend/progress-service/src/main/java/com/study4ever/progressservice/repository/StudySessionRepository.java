@@ -4,6 +4,8 @@ import com.study4ever.progressservice.model.StudySession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -20,4 +22,9 @@ public interface StudySessionRepository extends JpaRepository<StudySession, UUID
     Page<StudySession> findByUserIdOrderByStartTimeDesc(String userId, Pageable pageable);
 
     List<StudySession> findByUserIdAndStartTimeBetween(String userId, LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT s FROM StudySession s WHERE s.active = true AND s.lastHeartbeat < :expirationTime")
+    List<StudySession> findExpiredActiveSessions(@Param("expirationTime") LocalDateTime expirationTime);
+
+    List<StudySession> findByActive(boolean active);
 }
