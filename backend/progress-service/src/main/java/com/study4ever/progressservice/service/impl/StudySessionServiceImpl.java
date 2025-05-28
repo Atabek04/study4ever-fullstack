@@ -2,6 +2,7 @@ package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.StartStudySessionRequest;
 import com.study4ever.progressservice.dto.StudySessionDto;
+import com.study4ever.progressservice.dto.HeartbeatRequest;
 import com.study4ever.progressservice.exception.BadRequestException;
 import com.study4ever.progressservice.exception.ConflictOperationException;
 import com.study4ever.progressservice.exception.ForbiddenOperationException;
@@ -154,5 +155,36 @@ public class StudySessionServiceImpl implements StudySessionService {
         return studySessionRepository.findByUserIdAndActive(userId, true).stream()
                 .map(ProgressMapper::mapToSessionDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void updateSessionLocation(HeartbeatRequest request) {
+        log.debug("Updating session location for session: {}", request.getSessionId());
+
+        StudySession session = studySessionRepository.findById(request.getSessionId())
+                .orElseThrow(() -> new NotFoundException("Study session not found with ID: " + request.getSessionId()));
+
+        if (!Boolean.TRUE.equals(session.getActive())) {
+            throw new BadRequestException("Cannot update location for inactive session: " + request.getSessionId());
+        }
+
+        // Update module and lesson if they changed
+        boolean updated = false;
+        if (request.getModuleId() != null && !request.getModuleId().equals(session.getModuleId())) {
+            session.setModuleId(request.getModuleId());
+            updated = true;
+        }
+
+        if (request.getLessonId() != null && !request.getLessonId().equals(session.getLessonId())) {
+            session.setLessonId(request.getLessonId());
+            updated = true;
+        }
+
+        if (updated) {
+            studySessionRepository.save(session);
+            log.info("Updated session {} location - module: {}, lesson: {}",
+                    request.getSessionId(), request.getModuleId(), request.getLessonId());
+        }
     }
 }

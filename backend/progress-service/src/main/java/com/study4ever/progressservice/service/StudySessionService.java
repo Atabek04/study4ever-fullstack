@@ -1,5 +1,6 @@
 package com.study4ever.progressservice.service;
 
+import com.study4ever.progressservice.dto.HeartbeatRequest;
 import com.study4ever.progressservice.dto.StartStudySessionRequest;
 import com.study4ever.progressservice.dto.StudySessionDto;
 
@@ -24,4 +25,6 @@ public interface StudySessionService {
     List<StudySessionDto> getActiveUserStudySessions(String userId);
 
     void deleteStudySession(String userId, UUID sessionId);
+
+    void updateSessionLocation(HeartbeatRequest request);
 }

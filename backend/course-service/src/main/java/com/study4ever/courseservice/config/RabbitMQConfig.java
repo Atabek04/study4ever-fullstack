@@ -27,19 +27,12 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
 
     // Topic exchange name
     public static final String USER_EXCHANGE = "user.exchange";
-    public static final String STUDY_SESSION_EXCHANGE = "study.session.exchange";
     public static final String EVENTS_EXCHANGE = "study4ever.events.exchange";
 
     // Queue names
     public static final String USER_CREATED_QUEUE = "user.created.queue";
     public static final String USER_UPDATED_QUEUE = "user.updated.queue";
     public static final String USER_DELETED_QUEUE = "user.deleted.queue";
-    
-    // Study Session Queues
-    public static final String STUDY_SESSION_STARTED_QUEUE = "study.session.started.queue";
-    public static final String STUDY_SESSION_ENDED_QUEUE = "study.session.ended.queue";
-    public static final String STUDY_SESSION_HEARTBEAT_QUEUE = "study.session.heartbeat.queue";
-    public static final String STUDY_SESSION_CONFIRMATION_QUEUE = "study.session.confirmation.queue";
     
     // Progress Completion Queues
     public static final String LESSON_COMPLETION_QUEUE = "lesson.completion.queue";
@@ -50,12 +43,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
     public static final String USER_CREATED_ROUTING_KEY = "user.created";
     public static final String USER_UPDATED_ROUTING_KEY = "user.updated";
     public static final String USER_DELETED_ROUTING_KEY = "user.deleted";
-    
-    // Study Session Routing Keys
-    public static final String STUDY_SESSION_STARTED_ROUTING_KEY = "study.session.started";
-    public static final String STUDY_SESSION_ENDED_ROUTING_KEY = "study.session.ended";
-    public static final String STUDY_SESSION_HEARTBEAT_ROUTING_KEY = "study.session.heartbeat";
-    public static final String STUDY_SESSION_CONFIRMATION_ROUTING_KEY = "study4ever.study-sessions.confirmation";
     
     // Progress Completion Routing Keys
     public static final String LESSON_COMPLETION_ROUTING_KEY = "study4ever.events.lesson.completion";
@@ -97,13 +84,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
         return new TopicExchange(USER_EXCHANGE);
     }
 
-    // Study Session Exchange
-    @Bean
-    public TopicExchange studySessionExchange() {
-        log.info("Creating study session exchange: {}", STUDY_SESSION_EXCHANGE);
-        return new TopicExchange(STUDY_SESSION_EXCHANGE);
-    }
-
     // User Created Queue
     @Bean
     public Queue userCreatedQueue() {
@@ -134,35 +114,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
                 .build();
     }
 
-    // Study Session Queues
-    @Bean
-    public Queue studySessionStartedQueue() {
-        log.info("Creating study session started queue: {}", STUDY_SESSION_STARTED_QUEUE);
-        return QueueBuilder.durable(STUDY_SESSION_STARTED_QUEUE)
-                .build();
-    }
-
-    @Bean
-    public Queue studySessionEndedQueue() {
-        log.info("Creating study session ended queue: {}", STUDY_SESSION_ENDED_QUEUE);
-        return QueueBuilder.durable(STUDY_SESSION_ENDED_QUEUE)
-                .build();
-    }
-
-    @Bean
-    public Queue studySessionHeartbeatQueue() {
-        log.info("Creating study session heartbeat queue: {}", STUDY_SESSION_HEARTBEAT_QUEUE);
-        return QueueBuilder.durable(STUDY_SESSION_HEARTBEAT_QUEUE)
-                .build();
-    }
-
-    @Bean
-    public Queue studySessionConfirmationQueue() {
-        log.info("Creating study session confirmation queue: {}", STUDY_SESSION_CONFIRMATION_QUEUE);
-        return QueueBuilder.durable(STUDY_SESSION_CONFIRMATION_QUEUE)
-                .build();
-    }
-
     // Bindings for topic exchange
     @Bean
     public Binding userCreatedBinding(@Qualifier("userCreatedQueue") Queue queue, TopicExchange userExchange) {
@@ -177,31 +128,6 @@ public class RabbitMQConfig implements RabbitListenerConfigurer {
     @Bean
     public Binding userDeletedBinding(@Qualifier("userDeletedQueue") Queue queue, TopicExchange userExchange) {
         return BindingBuilder.bind(queue).to(userExchange).with(USER_DELETED_ROUTING_KEY);
-    }
-
-    // Study Session Bindings
-    @Bean
-    public Binding studySessionStartedBinding(@Qualifier("studySessionStartedQueue") Queue queue, 
-                                           @Qualifier("studySessionExchange") TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(STUDY_SESSION_STARTED_ROUTING_KEY);
-    }
-
-    @Bean
-    public Binding studySessionEndedBinding(@Qualifier("studySessionEndedQueue") Queue queue, 
-                                         @Qualifier("studySessionExchange") TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(STUDY_SESSION_ENDED_ROUTING_KEY);
-    }
-
-    @Bean
-    public Binding studySessionHeartbeatBinding(@Qualifier("studySessionHeartbeatQueue") Queue queue, 
-                                             @Qualifier("studySessionExchange") TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(STUDY_SESSION_HEARTBEAT_ROUTING_KEY);
-    }
-
-    @Bean
-    public Binding studySessionConfirmationBinding(@Qualifier("studySessionConfirmationQueue") Queue queue, 
-                                             @Qualifier("studySessionExchange") TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(STUDY_SESSION_CONFIRMATION_ROUTING_KEY);
     }
 
     // Dead Letter Exchange

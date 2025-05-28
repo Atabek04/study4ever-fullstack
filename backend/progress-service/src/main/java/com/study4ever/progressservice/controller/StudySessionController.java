@@ -1,5 +1,6 @@
 package com.study4ever.progressservice.controller;
 
+import com.study4ever.progressservice.dto.HeartbeatRequest;
 import com.study4ever.progressservice.dto.StartStudySessionRequest;
 import com.study4ever.progressservice.dto.StudySessionDto;
 import com.study4ever.progressservice.service.StudySessionService;
@@ -71,6 +72,13 @@ public class StudySessionController {
         return studySessionService.getActiveUserStudySessions(userId);
     }
 
+    @GetMapping("/active/single")
+    public StudySessionDto getActiveSession(@RequestHeader("X-User-Id") String userId) {
+        log.debug("Getting active session for user {}", userId);
+        List<StudySessionDto> activeSessions = studySessionService.getActiveUserStudySessions(userId);
+        return activeSessions.isEmpty() ? null : activeSessions.get(0);
+    }
+
     @GetMapping("/by-date")
     public List<StudySessionDto> getUserStudySessionsByDate(
             @RequestHeader("X-User-Id") String userId,
@@ -95,5 +103,12 @@ public class StudySessionController {
             @PathVariable("sessionId") UUID sessionId) {
         log.debug("Deleting study session {} for user {}", sessionId, userId);
         studySessionService.deleteStudySession(userId, sessionId);
+    }
+
+    @PostMapping("/heartbeat")
+    public void recordHeartbeat(@RequestBody HeartbeatRequest request) {
+        log.debug("Recording heartbeat for session {} - module: {}, lesson: {}", 
+                request.getSessionId(), request.getModuleId(), request.getLessonId());
+        studySessionService.updateSessionLocation(request);
     }
 }
