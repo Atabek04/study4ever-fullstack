@@ -23,6 +23,8 @@ public interface StudySessionRepository extends JpaRepository<StudySession, UUID
 
     List<StudySession> findByUserIdAndStartTimeBetween(String userId, LocalDateTime start, LocalDateTime end);
 
+    List<StudySession> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+
     @Query("SELECT s FROM StudySession s WHERE s.active = true AND s.lastHeartbeat < :expirationTime")
     List<StudySession> findExpiredActiveSessions(@Param("expirationTime") LocalDateTime expirationTime);
 

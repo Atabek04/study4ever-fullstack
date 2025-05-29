@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import CoursesPage from './pages/Courses';
 import LessonPage from './pages/Lesson';
 import BookmarksPage from './pages/Bookmarks';
+import { StudyStatsPage } from './pages/StudyStats';
 import AdminPage from './pages/Admin';
 import ForbiddenPage from './pages/Forbidden';
 import RoleBasedRoute from './components/Auth/RoleBasedRoute';
@@ -228,6 +229,11 @@ function AppWithRouting() {
       <Route path="/bookmarks" element={
         <ProtectedRoute>
           <BookmarksPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/study-stats" element={
+        <ProtectedRoute>
+          <StudyStatsPage />
         </ProtectedRoute>
       } />
       <Route path="/admin" element={

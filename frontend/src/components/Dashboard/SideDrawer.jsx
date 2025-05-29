@@ -21,6 +21,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
@@ -54,6 +55,7 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
   const mainNavItems = [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
     { text: 'My Courses', icon: <SchoolIcon />, path: '/courses' },
+    { text: 'Study Analytics', icon: <TrendingUpIcon />, path: '/study-stats' },
     { text: 'Assignments', icon: <AssignmentIcon />, path: '/assignments' },
     { text: 'Schedule', icon: <CalendarTodayIcon />, path: '/schedule' },
     { text: 'Saved', icon: <BookmarkIcon />, path: '/bookmarks' },
