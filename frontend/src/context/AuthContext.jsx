@@ -7,6 +7,7 @@ import { willTokenExpireSoon } from '../utils/tokenUtils';
 
 const AuthContext = createContext();
 
+export { AuthContext };
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {

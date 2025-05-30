@@ -13,15 +13,26 @@ export const useDailyStats = (userId, days = 30) => {
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    if (!userId) return;
+    console.log('useDailyStats: fetchStats called with userId:', userId, 'days:', days);
+    
+    if (!userId) {
+      console.log('useDailyStats: No userId provided, setting loading to false');
+      setLoading(false);
+      setData([]);
+      setError(null);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
+      console.log('useDailyStats: Fetching daily stats...');
       const stats = await getDailyStats(userId, days);
-      setData(stats);
+      console.log('useDailyStats: Received stats:', stats);
+      setData(stats || []);
     } catch (err) {
-      setError(err.message || 'Failed to fetch daily statistics');
+      const errorMessage = err.message || 'Failed to fetch daily statistics';
+      setError(errorMessage);
       console.error('Error in useDailyStats:', err);
     } finally {
       setLoading(false);
@@ -47,15 +58,26 @@ export const useWeeklyStats = (userId, weeks = 12) => {
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    if (!userId) return;
+    console.log('useWeeklyStats: fetchStats called with userId:', userId, 'weeks:', weeks);
+    
+    if (!userId) {
+      console.log('useWeeklyStats: No userId provided, setting loading to false');
+      setLoading(false);
+      setData([]);
+      setError(null);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
+      console.log('useWeeklyStats: Fetching weekly stats...');
       const stats = await getWeeklyStats(userId, weeks);
-      setData(stats);
+      console.log('useWeeklyStats: Received stats:', stats);
+      setData(stats || []);
     } catch (err) {
-      setError(err.message || 'Failed to fetch weekly statistics');
+      const errorMessage = err.message || 'Failed to fetch weekly statistics';
+      setError(errorMessage);
       console.error('Error in useWeeklyStats:', err);
     } finally {
       setLoading(false);
@@ -81,15 +103,26 @@ export const useMonthlyStats = (userId, months = 12) => {
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    if (!userId) return;
+    console.log('useMonthlyStats: fetchStats called with userId:', userId, 'months:', months);
+    
+    if (!userId) {
+      console.log('useMonthlyStats: No userId provided, setting loading to false');
+      setLoading(false);
+      setData([]);
+      setError(null);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
+      console.log('useMonthlyStats: Fetching monthly stats...');
       const stats = await getMonthlyStats(userId, months);
-      setData(stats);
+      console.log('useMonthlyStats: Received stats:', stats);
+      setData(stats || []);
     } catch (err) {
-      setError(err.message || 'Failed to fetch monthly statistics');
+      const errorMessage = err.message || 'Failed to fetch monthly statistics';
+      setError(errorMessage);
       console.error('Error in useMonthlyStats:', err);
     } finally {
       setLoading(false);
@@ -115,15 +148,26 @@ export const useYearlyStats = (userId, years = 5) => {
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    if (!userId) return;
+    console.log('useYearlyStats: fetchStats called with userId:', userId, 'years:', years);
+    
+    if (!userId) {
+      console.log('useYearlyStats: No userId provided, setting loading to false');
+      setLoading(false);
+      setData([]);
+      setError(null);
+      return;
+    }
     
     try {
       setLoading(true);
       setError(null);
+      console.log('useYearlyStats: Fetching yearly stats...');
       const stats = await getYearlyStats(userId, years);
-      setData(stats);
+      console.log('useYearlyStats: Received stats:', stats);
+      setData(stats || []);
     } catch (err) {
-      setError(err.message || 'Failed to fetch yearly statistics');
+      const errorMessage = err.message || 'Failed to fetch yearly statistics';
+      setError(errorMessage);
       console.error('Error in useYearlyStats:', err);
     } finally {
       setLoading(false);
@@ -143,6 +187,8 @@ export const useYearlyStats = (userId, years = 5) => {
  * @returns {Object} { dailyData, weeklyData, monthlyData, yearlyData, loading, error, refetchAll }
  */
 export const useAllStats = (userId) => {
+  console.log('useAllStats: Hook called with userId:', userId);
+  
   const daily = useDailyStats(userId, 30);
   const weekly = useWeeklyStats(userId, 12);
   const monthly = useMonthlyStats(userId, 12);
@@ -151,7 +197,20 @@ export const useAllStats = (userId) => {
   const loading = daily.loading || weekly.loading || monthly.loading || yearly.loading;
   const error = daily.error || weekly.error || monthly.error || yearly.error;
 
+  console.log('useAllStats: Current state:', {
+    userId,
+    loading,
+    error,
+    hasData: {
+      daily: daily.data?.length > 0,
+      weekly: weekly.data?.length > 0,
+      monthly: monthly.data?.length > 0,
+      yearly: yearly.data?.length > 0
+    }
+  });
+
   const refetchAll = useCallback(() => {
+    console.log('useAllStats: Refetching all stats');
     daily.refetch();
     weekly.refetch();
     monthly.refetch();

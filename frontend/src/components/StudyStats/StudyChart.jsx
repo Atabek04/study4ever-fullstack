@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { Box, Typography, Card, CardContent, Skeleton } from '@mui/material';
+import { TrendingUp } from '@mui/icons-material';
 
 // Register Chart.js components
 ChartJS.register(
@@ -78,7 +79,16 @@ const StudyChart = ({
     );
   }
 
-  const hasData = data?.labels?.length > 0 && data?.datasets?.[0]?.data?.length > 0;
+  const hasData = data && data.labels && data.labels.length > 0 && 
+                  data.datasets && data.datasets.length > 0 && 
+                  data.datasets[0].data && data.datasets[0].data.length > 0;
+
+  console.log('StudyChart: Checking data availability for', title, {
+    hasLabels: data?.labels?.length > 0,
+    hasDatasets: data?.datasets?.length > 0,
+    hasChartData: data?.datasets?.[0]?.data?.length > 0,
+    finalHasData: hasData
+  });
 
   if (!hasData) {
     return (
@@ -88,15 +98,16 @@ const StudyChart = ({
           flexDirection: 'column', 
           alignItems: 'center', 
           justifyContent: 'center',
-          height: '100%'
+          height: '100%',
+          textAlign: 'center'
         }}>
-          <Typography variant="h6" gutterBottom>
-            {title}
+          <TrendingUp sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" gutterBottom color="text.secondary">
+            No Data for This Period
           </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center">
-            No study data available for this time period.
-            <br />
-            Start studying to see your progress here!
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 300 }}>
+            No study sessions were recorded during this time frame. 
+            Start learning to see your progress here!
           </Typography>
         </CardContent>
       </Card>

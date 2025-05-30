@@ -12,12 +12,39 @@ const studyStatsApi = axios.create({
 
 // Add auth token to requests
 studyStatsApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('StudyStats API Request:', {
+    url: config.url,
+    method: config.method,
+    params: config.params,
+    headers: config.headers
+  });
   return config;
 });
+
+// Add response interceptor for logging
+studyStatsApi.interceptors.response.use(
+  (response) => {
+    console.log('StudyStats API Response:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    console.error('StudyStats API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+    return Promise.reject(error);
+  }
+);
 
 /**
  * Get daily study statistics for a user

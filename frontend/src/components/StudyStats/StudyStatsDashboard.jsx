@@ -1,7 +1,6 @@
 import React, { useState, useContext } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Tabs,
   Tab,
@@ -47,6 +46,8 @@ const TabPanel = ({ children, value, index, ...other }) => (
 const StudyStatsDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const { user } = useContext(AuthContext);
+  
+  console.log('StudyStatsDashboard: Rendering with user:', user);
   
   const {
     dailyData,
@@ -95,16 +96,34 @@ const StudyStatsDashboard = () => {
 
   if (!user) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="warning">
+      <Box sx={{ width: '100%', py: 4, display: 'flex', justifyContent: 'center' }}>
+        <Alert severity="warning" sx={{ maxWidth: 600 }}>
           Please log in to view your study statistics.
         </Alert>
-      </Container>
+      </Box>
     );
   }
 
+  // Check if we have any data at all
+  const hasAnyData = (dailyData && dailyData.length > 0) || 
+                     (weeklyData && weeklyData.length > 0) || 
+                     (monthlyData && monthlyData.length > 0) || 
+                     (yearlyData && yearlyData.length > 0);
+
+  console.log('StudyStatsDashboard: Data state:', {
+    loading,
+    error,
+    hasAnyData,
+    dataCounts: {
+      daily: dailyData?.length || 0,
+      weekly: weeklyData?.length || 0,
+      monthly: monthlyData?.length || 0,
+      yearly: yearlyData?.length || 0
+    }
+  });
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', py: 4 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
         <TrendingUp sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} />
@@ -128,114 +147,143 @@ const StudyStatsDashboard = () => {
         </Alert>
       )}
 
-      {/* Summary Statistics */}
-      <StudyStatsSummary
-        summaryStats={summaryStats}
-        loading={loading}
-        period={period}
-      />
+      {/* No Data State */}
+      {!loading && !error && !hasAnyData && (
+        <Paper sx={{ p: 6, textAlign: 'center', mb: 3 }}>
+          <TrendingUp sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h5" gutterBottom color="text.secondary">
+            No Study Data Available
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 2, maxWidth: 600, mx: 'auto' }}>
+            We couldn't find any study sessions in our records. Your learning analytics will appear here once you start studying.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+            To get started, navigate to your courses and begin a study session. Your progress, time spent, and achievements will be tracked automatically.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button variant="contained" color="primary">
+              Browse Courses
+            </Button>
+            <Button variant="outlined" onClick={handleRefresh}>
+              Refresh Data
+            </Button>
+          </Box>
+        </Paper>
+      )}
 
-      {/* Time Period Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs
-            value={currentTab}
-            onChange={handleTabChange}
-            aria-label="study statistics time periods"
-            variant="scrollable"
-            scrollButtons="auto"
-          >
-            <Tab label="Daily (30 days)" id="study-stats-tab-0" />
-            <Tab label="Weekly (12 weeks)" id="study-stats-tab-1" />
-            <Tab label="Monthly (12 months)" id="study-stats-tab-2" />
-            <Tab label="Yearly (5 years)" id="study-stats-tab-3" />
-          </Tabs>
-        </Box>
-
-        {/* Daily Stats Tab */}
-        <TabPanel value={currentTab} index={0}>
-          <StudyChart
-            data={dailyChartData}
-            options={chartOptions.daily}
+      {/* Content - only show if we have data or are loading */}
+      {(hasAnyData || loading) && (
+        <>
+          {/* Summary Statistics */}
+          <StudyStatsSummary
+            summaryStats={summaryStats}
             loading={loading}
-            error={error}
-            title="Daily Study Progress"
-            height={400}
+            period={period}
           />
-        </TabPanel>
 
-        {/* Weekly Stats Tab */}
-        <TabPanel value={currentTab} index={1}>
-          <StudyChart
-            data={weeklyChartData}
-            options={chartOptions.weekly}
-            loading={loading}
-            error={error}
-            title="Weekly Study Progress"
-            height={400}
-          />
-        </TabPanel>
+          {/* Time Period Tabs */}
+          <Paper sx={{ mb: 3 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs
+                value={currentTab}
+                onChange={handleTabChange}
+                aria-label="study statistics time periods"
+                variant="scrollable"
+                scrollButtons="auto"
+              >
+                <Tab label="Daily (30 days)" id="study-stats-tab-0" />
+                <Tab label="Weekly (12 weeks)" id="study-stats-tab-1" />
+                <Tab label="Monthly (12 months)" id="study-stats-tab-2" />
+                <Tab label="Yearly (5 years)" id="study-stats-tab-3" />
+              </Tabs>
+            </Box>
 
-        {/* Monthly Stats Tab */}
-        <TabPanel value={currentTab} index={2}>
-          <StudyChart
-            data={monthlyChartData}
-            options={chartOptions.monthly}
-            loading={loading}
-            error={error}
-            title="Monthly Study Progress"
-            height={400}
-          />
-        </TabPanel>
+            {/* Daily Stats Tab */}
+            <TabPanel value={currentTab} index={0}>
+              <StudyChart
+                data={dailyChartData}
+                options={chartOptions.daily}
+                loading={loading}
+                error={error}
+                title="Daily Study Progress"
+                height={400}
+              />
+            </TabPanel>
 
-        {/* Yearly Stats Tab */}
-        <TabPanel value={currentTab} index={3}>
-          <StudyChart
-            data={yearlyChartData}
-            options={chartOptions.yearly}
-            loading={loading}
-            error={error}
-            title="Yearly Study Progress"
-            height={400}
-          />
-        </TabPanel>
-      </Paper>
+            {/* Weekly Stats Tab */}
+            <TabPanel value={currentTab} index={1}>
+              <StudyChart
+                data={weeklyChartData}
+                options={chartOptions.weekly}
+                loading={loading}
+                error={error}
+                title="Weekly Study Progress"
+                height={400}
+              />
+            </TabPanel>
 
-      {/* Additional Information */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" gutterBottom fontWeight="bold">
-              Study Insights
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Track your learning progress with detailed analytics. Monitor your study time,
-              session patterns, and consistency across different time periods.
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              💡 <strong>Tip:</strong> Consistent daily study sessions, even for short periods,
-              often lead to better learning outcomes than occasional long sessions.
-            </Typography>
+            {/* Monthly Stats Tab */}
+            <TabPanel value={currentTab} index={2}>
+              <StudyChart
+                data={monthlyChartData}
+                options={chartOptions.monthly}
+                loading={loading}
+                error={error}
+                title="Monthly Study Progress"
+                height={400}
+              />
+            </TabPanel>
+
+            {/* Yearly Stats Tab */}
+            <TabPanel value={currentTab} index={3}>
+              <StudyChart
+                data={yearlyChartData}
+                options={chartOptions.yearly}
+                loading={loading}
+                error={error}
+                title="Yearly Study Progress"
+                height={400}
+              />
+            </TabPanel>
           </Paper>
-        </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" gutterBottom fontWeight="bold">
-              Goal Setting
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Use these analytics to set realistic study goals and track your progress
-              towards achieving them.
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              🎯 <strong>Suggestion:</strong> Aim for consistent daily study time rather
-              than maximizing total hours. Quality and consistency matter more than quantity.
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Container>
+
+          {/* Additional Information */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3, height: '100%' }}>
+                <Typography variant="h6" gutterBottom fontWeight="bold">
+                  Study Insights
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Track your learning progress with detailed analytics. Monitor your study time,
+                  session patterns, and consistency across different time periods.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  💡 <strong>Tip:</strong> Consistent daily study sessions, even for short periods,
+                  often lead to better learning outcomes than occasional long sessions.
+                </Typography>
+              </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 3, height: '100%' }}>
+                <Typography variant="h6" gutterBottom fontWeight="bold">
+                  Goal Setting
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  Use these analytics to set realistic study goals and track your progress
+                  towards achieving them.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  🎯 <strong>Suggestion:</strong> Aim for consistent daily study time rather
+                  than maximizing total hours. Quality and consistency matter more than quantity.
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </>
+      )}
+    </Box>
   );
 };
 

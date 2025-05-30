@@ -35,7 +35,10 @@ export const formatDurationToHours = (minutes) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatDailyStatsForChart = (dailyStats) => {
+  console.log('formatDailyStatsForChart: Input data:', dailyStats);
+  
   if (!dailyStats || dailyStats.length === 0) {
+    console.log('formatDailyStatsForChart: No data, returning empty chart structure');
     return {
       labels: [],
       datasets: [{
@@ -50,7 +53,7 @@ export const formatDailyStatsForChart = (dailyStats) => {
 
   const sortedStats = [...dailyStats].sort((a, b) => new Date(a.date) - new Date(b.date));
   
-  return {
+  const chartData = {
     labels: sortedStats.map(stat => format(parseISO(stat.date), 'MMM dd')),
     datasets: [{
       label: 'Study Time (hours)',
@@ -61,6 +64,9 @@ export const formatDailyStatsForChart = (dailyStats) => {
       borderRadius: 4,
     }]
   };
+  
+  console.log('formatDailyStatsForChart: Returning chart data:', chartData);
+  return chartData;
 };
 
 /**
