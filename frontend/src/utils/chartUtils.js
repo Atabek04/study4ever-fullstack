@@ -51,13 +51,34 @@ export const formatDailyStatsForChart = (dailyStats) => {
     };
   }
 
-  const sortedStats = [...dailyStats].sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Filter out any null/undefined stats and ensure they have required properties
+  const validStats = dailyStats.filter(stat => 
+    stat && 
+    typeof stat.date !== 'undefined' && 
+    typeof stat.durationMinutes !== 'undefined'
+  );
+
+  if (validStats.length === 0) {
+    console.log('formatDailyStatsForChart: No valid stats, returning empty chart structure');
+    return {
+      labels: [],
+      datasets: [{
+        label: 'Study Time (hours)',
+        data: [],
+        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }]
+    };
+  }
+
+  const sortedStats = [...validStats].sort((a, b) => new Date(a.date) - new Date(b.date));
   
   const chartData = {
     labels: sortedStats.map(stat => format(parseISO(stat.date), 'MMM dd')),
     datasets: [{
       label: 'Study Time (hours)',
-      data: sortedStats.map(stat => formatDurationToHours(stat.totalStudyMinutes)),
+      data: sortedStats.map(stat => formatDurationToHours(stat.durationMinutes)),
       backgroundColor: 'rgba(54, 162, 235, 0.8)',
       borderColor: 'rgba(54, 162, 235, 1)',
       borderWidth: 1,
@@ -75,7 +96,10 @@ export const formatDailyStatsForChart = (dailyStats) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatWeeklyStatsForChart = (weeklyStats) => {
+  console.log('formatWeeklyStatsForChart: Input data:', weeklyStats);
+  
   if (!weeklyStats || weeklyStats.length === 0) {
+    console.log('formatWeeklyStatsForChart: No data, returning empty chart structure');
     return {
       labels: [],
       datasets: [{
@@ -88,19 +112,43 @@ export const formatWeeklyStatsForChart = (weeklyStats) => {
     };
   }
 
-  const sortedStats = [...weeklyStats].sort((a, b) => a.year - b.year || a.week - b.week);
+  // Filter out any null/undefined stats and ensure they have required properties
+  const validStats = weeklyStats.filter(stat => 
+    stat && 
+    typeof stat.weekLabel !== 'undefined' && 
+    typeof stat.totalDurationMinutes !== 'undefined'
+  );
+
+  if (validStats.length === 0) {
+    console.log('formatWeeklyStatsForChart: No valid stats, returning empty chart structure');
+    return {
+      labels: [],
+      datasets: [{
+        label: 'Study Time (hours)',
+        data: [],
+        backgroundColor: 'rgba(75, 192, 192, 0.8)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+      }]
+    };
+  }
+
+  const sortedStats = [...validStats].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
   
-  return {
-    labels: sortedStats.map(stat => `Week ${stat.week}, ${stat.year}`),
+  const chartData = {
+    labels: sortedStats.map(stat => stat.weekLabel),
     datasets: [{
       label: 'Study Time (hours)',
-      data: sortedStats.map(stat => formatDurationToHours(stat.totalStudyMinutes)),
+      data: sortedStats.map(stat => formatDurationToHours(stat.totalDurationMinutes)),
       backgroundColor: 'rgba(75, 192, 192, 0.8)',
       borderColor: 'rgba(75, 192, 192, 1)',
       borderWidth: 1,
       borderRadius: 4,
     }]
   };
+  
+  console.log('formatWeeklyStatsForChart: Returning chart data:', chartData);
+  return chartData;
 };
 
 /**
@@ -109,7 +157,10 @@ export const formatWeeklyStatsForChart = (weeklyStats) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatMonthlyStatsForChart = (monthlyStats) => {
+  console.log('formatMonthlyStatsForChart: Input data:', monthlyStats);
+  
   if (!monthlyStats || monthlyStats.length === 0) {
+    console.log('formatMonthlyStatsForChart: No data, returning empty chart structure');
     return {
       labels: [],
       datasets: [{
@@ -122,24 +173,49 @@ export const formatMonthlyStatsForChart = (monthlyStats) => {
     };
   }
 
-  const sortedStats = [...monthlyStats].sort((a, b) => a.year - b.year || a.month - b.month);
+  // Filter out any null/undefined stats and ensure they have required properties
+  const validStats = monthlyStats.filter(stat => 
+    stat && 
+    typeof stat.year !== 'undefined' && 
+    typeof stat.monthNumber !== 'undefined' && 
+    typeof stat.durationMinutes !== 'undefined'
+  );
+
+  if (validStats.length === 0) {
+    console.log('formatMonthlyStatsForChart: No valid stats, returning empty chart structure');
+    return {
+      labels: [],
+      datasets: [{
+        label: 'Study Time (hours)',
+        data: [],
+        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1,
+      }]
+    };
+  }
+
+  const sortedStats = [...validStats].sort((a, b) => a.year - b.year || a.monthNumber - b.monthNumber);
   
   const monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ];
   
-  return {
-    labels: sortedStats.map(stat => `${monthNames[stat.month - 1]} ${stat.year}`),
+  const chartData = {
+    labels: sortedStats.map(stat => `${monthNames[stat.monthNumber - 1]} ${stat.year}`),
     datasets: [{
       label: 'Study Time (hours)',
-      data: sortedStats.map(stat => formatDurationToHours(stat.totalStudyMinutes)),
+      data: sortedStats.map(stat => formatDurationToHours(stat.durationMinutes)),
       backgroundColor: 'rgba(255, 99, 132, 0.8)',
       borderColor: 'rgba(255, 99, 132, 1)',
       borderWidth: 1,
       borderRadius: 4,
     }]
   };
+  
+  console.log('formatMonthlyStatsForChart: Returning chart data:', chartData);
+  return chartData;
 };
 
 /**
@@ -148,7 +224,10 @@ export const formatMonthlyStatsForChart = (monthlyStats) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatYearlyStatsForChart = (yearlyStats) => {
+  console.log('formatYearlyStatsForChart: Input data:', yearlyStats);
+  
   if (!yearlyStats || yearlyStats.length === 0) {
+    console.log('formatYearlyStatsForChart: No data, returning empty chart structure');
     return {
       labels: [],
       datasets: [{
@@ -161,19 +240,43 @@ export const formatYearlyStatsForChart = (yearlyStats) => {
     };
   }
 
-  const sortedStats = [...yearlyStats].sort((a, b) => a.year - b.year);
+  // Filter out any null/undefined stats and ensure they have required properties
+  const validStats = yearlyStats.filter(stat => 
+    stat && 
+    typeof stat.year !== 'undefined' && 
+    typeof stat.totalDurationMinutes !== 'undefined'
+  );
+
+  if (validStats.length === 0) {
+    console.log('formatYearlyStatsForChart: No valid stats, returning empty chart structure');
+    return {
+      labels: [],
+      datasets: [{
+        label: 'Study Time (hours)',
+        data: [],
+        backgroundColor: 'rgba(153, 102, 255, 0.8)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        borderWidth: 1,
+      }]
+    };
+  }
+
+  const sortedStats = [...validStats].sort((a, b) => a.year - b.year);
   
-  return {
+  const chartData = {
     labels: sortedStats.map(stat => stat.year.toString()),
     datasets: [{
       label: 'Study Time (hours)',
-      data: sortedStats.map(stat => formatDurationToHours(stat.totalStudyMinutes)),
+      data: sortedStats.map(stat => formatDurationToHours(stat.totalDurationMinutes)),
       backgroundColor: 'rgba(153, 102, 255, 0.8)',
       borderColor: 'rgba(153, 102, 255, 1)',
       borderWidth: 1,
       borderRadius: 4,
     }]
   };
+  
+  console.log('formatYearlyStatsForChart: Returning chart data:', chartData);
+  return chartData;
 };
 
 /**
@@ -254,22 +357,73 @@ export const getDefaultChartOptions = (title) => ({
  * @returns {Object} Summary statistics
  */
 export const calculateSummaryStats = (statsData) => {
+  console.log('calculateSummaryStats: Input data:', statsData);
+  
   if (!statsData || statsData.length === 0) {
     return {
       totalHours: 0,
       totalSessions: 0,
       averageSessionLength: 0,
       averageDaily: 0,
+      percentageChange: 0,
     };
   }
 
-  const totalMinutes = statsData.reduce((sum, stat) => sum + (stat.totalStudyMinutes || 0), 0);
-  const totalSessions = statsData.reduce((sum, stat) => sum + (stat.sessionCount || 0), 0);
+  // Handle different data structures based on the type of stats
+  const totalMinutes = statsData.reduce((sum, stat) => {
+    // For daily stats: use durationMinutes
+    // For weekly/yearly stats: use totalDurationMinutes  
+    // For monthly stats (when fixed): use durationMinutes
+    const minutes = stat.durationMinutes || stat.totalDurationMinutes || 0;
+    return sum + minutes;
+  }, 0);
+  
+  const totalSessions = statsData.reduce((sum, stat) => {
+    // Handle different session count field names
+    const sessions = stat.sessionCount || stat.totalSessionCount || 0;
+    return sum + sessions;
+  }, 0);
+  
+  // Calculate average percentage change from the latest available data
+  const latestData = statsData[statsData.length - 1];
+  const percentageChange = latestData?.percentageChange || 0;
+  
+  console.log('calculateSummaryStats: totalMinutes =', totalMinutes, ', totalSessions =', totalSessions, ', percentageChange =', percentageChange);
   
   return {
     totalHours: formatDurationToHours(totalMinutes),
     totalSessions,
     averageSessionLength: totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0,
     averageDaily: statsData.length > 0 ? Math.round(totalMinutes / statsData.length) : 0,
+    percentageChange: Math.round((percentageChange || 0) * 100) / 100, // Round to 2 decimal places
+  };
+};
+
+/**
+ * Format percentage change for display
+ * @param {number} percentage - Percentage change value
+ * @returns {Object} Formatted percentage with styling info
+ */
+export const formatPercentageChange = (percentage) => {
+  if (percentage === null || percentage === undefined) {
+    return {
+      display: '0%',
+      color: 'text.secondary',
+      icon: null,
+      isPositive: false,
+      isNegative: false,
+    };
+  }
+  
+  const rounded = Math.round(percentage * 100) / 100;
+  const isPositive = rounded > 0;
+  const isNegative = rounded < 0;
+  
+  return {
+    display: `${isPositive ? '+' : ''}${rounded}%`,
+    color: isPositive ? 'success.main' : isNegative ? 'error.main' : 'text.secondary',
+    icon: isPositive ? 'trending_up' : isNegative ? 'trending_down' : 'trending_flat',
+    isPositive,
+    isNegative,
   };
 };

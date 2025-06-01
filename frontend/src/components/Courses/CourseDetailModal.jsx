@@ -240,15 +240,31 @@ const CourseDetailModal = ({ course, open, onClose }) => {
                       borderRadius: 2, 
                       boxShadow: 'none', 
                       border: '1px solid #f3f6f9',
-                      '&:hover': {
-                        bgcolor: '#FFF8ED', // much lighter cream on hover for best contrast
-                      },
+                      transition: 'all 0.2s ease-in-out',
                       '&.Mui-expanded': {
                         bgcolor: '#F9EFD6',
                       }
                     }}
                   >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 56 }}>
+                    <AccordionSummary 
+                      expandIcon={<ExpandMoreIcon />} 
+                      sx={{ 
+                        minHeight: 56,
+                        borderRadius: 2,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          bgcolor: 'rgba(199, 0, 57, 0.85) !important',
+                          transform: 'translateY(-1px)',
+                          boxShadow: '0 4px 12px rgba(199, 0, 57, 0.2)',
+                          '& .MuiTypography-root': {
+                            color: 'white !important',
+                          },
+                          '& .MuiSvgIcon-root': {
+                            color: 'white !important',
+                          }
+                        }
+                      }}
+                    >
                       <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <MenuBookIcon sx={{ color: 'primary.main', mr: 1 }} />
                         <Typography fontWeight={600} sx={{ flex: 1, fontSize: '1.08rem', color: 'text.primary' }}>
@@ -262,34 +278,81 @@ const CourseDetailModal = ({ course, open, onClose }) => {
                         </Typography>
                       </Box>
                     </AccordionSummary>
-                    <AccordionDetails sx={{ bgcolor: '#FCF5E8', borderRadius: 2, p: 0 }}>
+                    <AccordionDetails sx={{ bgcolor: '#F9EFD6', borderRadius: 2, p: 1 }}>
                       {Array.isArray(module.lessons) && module.lessons.length > 0 ? (
                         <List disablePadding>
                           {module.lessons
                             .slice()
                             .sort((a, b) => (a.sortOrder ?? a.order ?? 0) - (b.sortOrder ?? b.order ?? 0))
                             .map((lesson, lidx) => (
-                              <ListItem key={lesson.id || lidx} divider sx={{ py: 1.2, px: 2, alignItems: 'flex-start', bgcolor: '#FCF5E8' }}>
-                                <ListItemIcon sx={{ minWidth: 36, color: 'primary.main', mt: 0.2 }}>
-                                  <Typography fontWeight={600} sx={{ fontSize: '1.1rem' }}>{lesson.sortOrder ?? lesson.order ?? lidx + 1}</Typography>
+                              <ListItem 
+                                key={lesson.id || lidx} 
+                                divider={lidx < module.lessons.length - 1} 
+                                sx={{ 
+                                  py: 1, 
+                                  px: 2, 
+                                  mx: 1,
+                                  mb: lidx < module.lessons.length - 1 ? 0.5 : 0,
+                                  alignItems: 'center', // Center align for inline layout
+                                  bgcolor: '#F5E9D3',
+                                  borderRadius: 1.5,
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                                  border: '1px solid #e8d5b7',
+                                  minHeight: 48, // Consistent compact height
+                                  '&:hover': {
+                                    bgcolor: '#F0E4C7',
+                                    transform: 'translateX(4px)',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                                  },
+                                  transition: 'all 0.2s ease-in-out',
+                                }}
+                              >
+                                <ListItemIcon sx={{ minWidth: 32, color: 'primary.main' }}>
+                                  <Typography fontWeight={600} sx={{ fontSize: '0.95rem' }}>
+                                    {lesson.sortOrder ?? lesson.order ?? lidx + 1}
+                                  </Typography>
                                 </ListItemIcon>
                                 <ListItemText
                                   primary={
-                                    <Typography fontWeight={500} sx={{ fontSize: '1.05rem', color: 'text.primary' }}>
+                                    <Typography 
+                                      fontWeight={500} 
+                                      sx={{ 
+                                        fontSize: '0.95rem', 
+                                        color: 'text.primary',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }}
+                                    >
                                       {lesson.title}
                                     </Typography>
                                   }
-                                  secondary={
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                      <AccessTimeIcon sx={{ fontSize: 18, color: 'secondary.main' }} />
-                                      <Typography variant="caption" color="text.secondary">
-                                        {typeof lesson.durationMinutes === 'number' && lesson.durationMinutes > 0
-                                          ? `${lesson.durationMinutes} min`
-                                          : 'No duration'}
-                                      </Typography>
-                                    </Box>
-                                  }
+                                  sx={{ flex: 1, mr: 2 }}
                                 />
+                                <Box sx={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: 0.5,
+                                  flexShrink: 0,
+                                  bgcolor: 'rgba(199, 0, 57, 0.08)',
+                                  px: 1.5,
+                                  py: 0.5,
+                                  borderRadius: 2,
+                                }}>
+                                  <AccessTimeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                      color: 'primary.main',
+                                      fontWeight: 500,
+                                      fontSize: '0.75rem'
+                                    }}
+                                  >
+                                    {typeof lesson.durationMinutes === 'number' && lesson.durationMinutes > 0
+                                      ? `${lesson.durationMinutes}m`
+                                      : 'TBD'}
+                                  </Typography>
+                                </Box>
                               </ListItem>
                             ))}
                         </List>

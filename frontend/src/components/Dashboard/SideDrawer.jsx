@@ -18,12 +18,10 @@ import { useAuth } from '../../context/AuthContext';
 // Icons
 import HomeIcon from '@mui/icons-material/Home';
 import SchoolIcon from '@mui/icons-material/School';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const drawerWidth = 240;
@@ -55,11 +53,9 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
   // Navigation items
   const mainNavItems = [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-    { text: 'My Courses', icon: <SchoolIcon />, path: '/courses' },
+    { text: 'Course Catalog', icon: <SchoolIcon />, path: '/courses' },
     { text: 'Study Analytics', icon: <TrendingUpIcon />, path: '/study-stats' },
     { text: 'Leaderboard', icon: <EmojiEventsIcon />, path: '/leaderboard' },
-    { text: 'Assignments', icon: <AssignmentIcon />, path: '/assignments' },
-    { text: 'Schedule', icon: <CalendarTodayIcon />, path: '/schedule' },
     { text: 'Saved', icon: <BookmarkIcon />, path: '/bookmarks' },
   ];
 
@@ -68,9 +64,7 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
     { text: 'Admin Panel', icon: <AdminPanelSettingsIcon />, path: '/admin' },
   ] : [];
 
-  const secondaryNavItems = [
-    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-  ];
+  const secondaryNavItems = [];
 
   const drawerContent = (
     <>
@@ -177,34 +171,38 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
         </>
       )}
       
-      <Divider sx={{ my: 2 }} />
-      <List>
-        {secondaryNavItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              sx={{ 
-                borderRadius: '0 20px 20px 0',
-                mx: 1
-              }}
-              onClick={() => navigate(item.path)}
-              selected={location.pathname === item.path}
-            >
-              <ListItemIcon sx={{ 
-                color: location.pathname === item.path ? 'primary.main' : 'text.secondary' 
-              }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText 
-                primary={item.text}
-                primaryTypographyProps={{ 
-                  fontWeight: location.pathname === item.path ? 600 : 500,
-                  color: location.pathname === item.path ? 'primary.main' : 'text.primary'
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      {secondaryNavItems.length > 0 && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <List>
+            {secondaryNavItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton
+                  sx={{ 
+                    borderRadius: '0 20px 20px 0',
+                    mx: 1
+                  }}
+                  onClick={() => navigate(item.path)}
+                  selected={location.pathname === item.path}
+                >
+                  <ListItemIcon sx={{ 
+                    color: location.pathname === item.path ? 'primary.main' : 'text.secondary' 
+                  }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={item.text}
+                    primaryTypographyProps={{ 
+                      fontWeight: location.pathname === item.path ? 600 : 500,
+                      color: location.pathname === item.path ? 'primary.main' : 'text.primary'
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </>
+      )}
     </>
   );
 

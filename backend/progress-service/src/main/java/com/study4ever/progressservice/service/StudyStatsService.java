@@ -2,6 +2,7 @@ package com.study4ever.progressservice.service;
 
 import com.study4ever.progressservice.dto.DailyStatsDto;
 import com.study4ever.progressservice.dto.WeeklyStatsDto;
+import com.study4ever.progressservice.dto.MonthlyStatsDto;
 import com.study4ever.progressservice.dto.YearlyStatsDto;
 
 import java.time.LocalDate;
@@ -25,11 +26,6 @@ public interface StudyStatsService {
     YearlyStatsDto getMonthlyStats(String userId, int year);
 
     /**
-     * Get a summary of all statistics for a user
-     */
-    YearlyStatsDto getStatsSummary(String userId, int year);
-
-    /**
      * Get daily statistics for a range of days
      */
     List<DailyStatsDto> getDailyStatsRange(String userId, int days);
@@ -40,14 +36,14 @@ public interface StudyStatsService {
     List<WeeklyStatsDto> getWeeklyStatsRange(String userId, int weeks);
 
     /**
-     * Get monthly statistics as daily stats for a range of months
+     * Get monthly statistics for a range of months
      */
-    List<DailyStatsDto> getMonthlyStatsRange(String userId, int months);
+    List<MonthlyStatsDto> getMonthlyStatsRange(String userId, int months);
 
     /**
-     * Get yearly statistics as daily stats for a range of years
+     * Get yearly statistics for a range of years
      */
-    List<DailyStatsDto> getYearlyStatsRange(String userId, int years);
+    List<YearlyStatsDto> getYearlyStatsRange(String userId, int years);
 
     /**
      * Calculate and store daily statistics for a specific date

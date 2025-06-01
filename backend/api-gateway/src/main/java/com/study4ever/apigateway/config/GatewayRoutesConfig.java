@@ -177,13 +177,6 @@ public class GatewayRoutesConfig {
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
-                // Study Stats service routes
-                .route("progress-service-study-stats-read", r -> r
-                        .path("/api/study-stats/**")
-                        .and().method(HttpMethod.GET)
-                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ALL_ROLES))))
-                        .uri("lb://PROGRESS-SERVICE"))
-
                 // Leaderboard service routes
                 .route("progress-service-leaderboard-read", r -> r
                         .path("/api/leaderboard/**")

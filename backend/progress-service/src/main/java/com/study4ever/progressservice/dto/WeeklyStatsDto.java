@@ -19,4 +19,5 @@ public class WeeklyStatsDto {
     private List<DailyStatsDto> dailyStats;
     private Long totalDurationMinutes;
     private Integer totalSessionCount;
+    private Double percentageChange;
 }

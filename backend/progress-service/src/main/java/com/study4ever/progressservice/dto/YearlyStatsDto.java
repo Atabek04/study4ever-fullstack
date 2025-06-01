@@ -16,4 +16,5 @@ public class YearlyStatsDto {
     private List<MonthlyStatsDto> monthlyStats;
     private Long totalDurationMinutes;
     private Integer totalSessionCount;
+    private Double percentageChange;
 }

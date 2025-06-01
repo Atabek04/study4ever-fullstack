@@ -43,16 +43,32 @@ const StudyChart = ({
 }) => {
   if (loading) {
     return (
-      <Card sx={{ height: height + 100 }}>
+      <Card>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {title}
-          </Typography>
-          <Skeleton 
-            variant="rectangular" 
-            height={height - 50} 
-            sx={{ borderRadius: 1 }}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Skeleton variant="text" width="40%" height={28} />
+            <Skeleton variant="rounded" width={80} height={24} />
+          </Box>
+          <Box sx={{ height: height, display: 'flex', flexDirection: 'column' }}>
+            {/* Simulate chart bars */}
+            <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-around', height: '80%', mb: 2 }}>
+              {[...Array(7)].map((_, index) => (
+                <Skeleton 
+                  key={index}
+                  variant="rounded" 
+                  width={30} 
+                  height={Math.random() * 100 + 50} 
+                  sx={{ mx: 0.5 }}
+                />
+              ))}
+            </Box>
+            {/* Simulate x-axis labels */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
+              {[...Array(7)].map((_, index) => (
+                <Skeleton key={index} variant="text" width={30} height={16} />
+              ))}
+            </Box>
+          </Box>
         </CardContent>
       </Card>
     );

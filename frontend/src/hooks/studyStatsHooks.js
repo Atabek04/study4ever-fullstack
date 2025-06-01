@@ -3,41 +3,33 @@ import { getDailyStats, getWeeklyStats, getMonthlyStats, getYearlyStats } from '
 
 /**
  * Custom hook for fetching and managing daily study statistics
- * @param {string} userId - User ID
  * @param {number} days - Number of days to fetch (default: 30)
  * @returns {Object} { data, loading, error, refetch }
  */
-export const useDailyStats = (userId, days = 30) => {
+export const useDailyStats = (days = 30) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    console.log('useDailyStats: fetchStats called with userId:', userId, 'days:', days);
-    
-    if (!userId) {
-      console.log('useDailyStats: No userId provided, setting loading to false');
-      setLoading(false);
-      setData([]);
-      setError(null);
-      return;
-    }
+    console.log('useDailyStats: fetchStats called with days:', days);
     
     try {
       setLoading(true);
       setError(null);
       console.log('useDailyStats: Fetching daily stats...');
-      const stats = await getDailyStats(userId, days);
+      const stats = await getDailyStats(days);
       console.log('useDailyStats: Received stats:', stats);
       setData(stats || []);
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch daily statistics';
       setError(errorMessage);
       console.error('Error in useDailyStats:', err);
+      setData([]);
     } finally {
       setLoading(false);
     }
-  }, [userId, days]);
+  }, [days]);
 
   useEffect(() => {
     fetchStats();
@@ -48,41 +40,33 @@ export const useDailyStats = (userId, days = 30) => {
 
 /**
  * Custom hook for fetching and managing weekly study statistics
- * @param {string} userId - User ID
  * @param {number} weeks - Number of weeks to fetch (default: 12)
  * @returns {Object} { data, loading, error, refetch }
  */
-export const useWeeklyStats = (userId, weeks = 12) => {
+export const useWeeklyStats = (weeks = 12) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    console.log('useWeeklyStats: fetchStats called with userId:', userId, 'weeks:', weeks);
-    
-    if (!userId) {
-      console.log('useWeeklyStats: No userId provided, setting loading to false');
-      setLoading(false);
-      setData([]);
-      setError(null);
-      return;
-    }
+    console.log('useWeeklyStats: fetchStats called with weeks:', weeks);
     
     try {
       setLoading(true);
       setError(null);
       console.log('useWeeklyStats: Fetching weekly stats...');
-      const stats = await getWeeklyStats(userId, weeks);
+      const stats = await getWeeklyStats(weeks);
       console.log('useWeeklyStats: Received stats:', stats);
       setData(stats || []);
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch weekly statistics';
       setError(errorMessage);
       console.error('Error in useWeeklyStats:', err);
+      setData([]);
     } finally {
       setLoading(false);
     }
-  }, [userId, weeks]);
+  }, [weeks]);
 
   useEffect(() => {
     fetchStats();
@@ -93,41 +77,33 @@ export const useWeeklyStats = (userId, weeks = 12) => {
 
 /**
  * Custom hook for fetching and managing monthly study statistics
- * @param {string} userId - User ID
  * @param {number} months - Number of months to fetch (default: 12)
  * @returns {Object} { data, loading, error, refetch }
  */
-export const useMonthlyStats = (userId, months = 12) => {
+export const useMonthlyStats = (months = 12) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    console.log('useMonthlyStats: fetchStats called with userId:', userId, 'months:', months);
-    
-    if (!userId) {
-      console.log('useMonthlyStats: No userId provided, setting loading to false');
-      setLoading(false);
-      setData([]);
-      setError(null);
-      return;
-    }
+    console.log('useMonthlyStats: fetchStats called with months:', months);
     
     try {
       setLoading(true);
       setError(null);
       console.log('useMonthlyStats: Fetching monthly stats...');
-      const stats = await getMonthlyStats(userId, months);
+      const stats = await getMonthlyStats(months);
       console.log('useMonthlyStats: Received stats:', stats);
       setData(stats || []);
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch monthly statistics';
       setError(errorMessage);
       console.error('Error in useMonthlyStats:', err);
+      setData([]);
     } finally {
       setLoading(false);
     }
-  }, [userId, months]);
+  }, [months]);
 
   useEffect(() => {
     fetchStats();
@@ -138,41 +114,33 @@ export const useMonthlyStats = (userId, months = 12) => {
 
 /**
  * Custom hook for fetching and managing yearly study statistics
- * @param {string} userId - User ID
  * @param {number} years - Number of years to fetch (default: 5)
  * @returns {Object} { data, loading, error, refetch }
  */
-export const useYearlyStats = (userId, years = 5) => {
+export const useYearlyStats = (years = 5) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchStats = useCallback(async () => {
-    console.log('useYearlyStats: fetchStats called with userId:', userId, 'years:', years);
-    
-    if (!userId) {
-      console.log('useYearlyStats: No userId provided, setting loading to false');
-      setLoading(false);
-      setData([]);
-      setError(null);
-      return;
-    }
+    console.log('useYearlyStats: fetchStats called with years:', years);
     
     try {
       setLoading(true);
       setError(null);
       console.log('useYearlyStats: Fetching yearly stats...');
-      const stats = await getYearlyStats(userId, years);
+      const stats = await getYearlyStats(years);
       console.log('useYearlyStats: Received stats:', stats);
       setData(stats || []);
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch yearly statistics';
       setError(errorMessage);
       console.error('Error in useYearlyStats:', err);
+      setData([]);
     } finally {
       setLoading(false);
     }
-  }, [userId, years]);
+  }, [years]);
 
   useEffect(() => {
     fetchStats();
@@ -183,22 +151,20 @@ export const useYearlyStats = (userId, years = 5) => {
 
 /**
  * Custom hook for fetching all study statistics types
- * @param {string} userId - User ID
  * @returns {Object} { dailyData, weeklyData, monthlyData, yearlyData, loading, error, refetchAll }
  */
-export const useAllStats = (userId) => {
-  console.log('useAllStats: Hook called with userId:', userId);
+export const useAllStats = () => {
+  console.log('useAllStats: Hook called');
   
-  const daily = useDailyStats(userId, 30);
-  const weekly = useWeeklyStats(userId, 12);
-  const monthly = useMonthlyStats(userId, 12);
-  const yearly = useYearlyStats(userId, 5);
+  const daily = useDailyStats(30);
+  const weekly = useWeeklyStats(12);
+  const monthly = useMonthlyStats(12);
+  const yearly = useYearlyStats(5);
 
   const loading = daily.loading || weekly.loading || monthly.loading || yearly.loading;
   const error = daily.error || weekly.error || monthly.error || yearly.error;
 
   console.log('useAllStats: Current state:', {
-    userId,
     loading,
     error,
     hasData: {

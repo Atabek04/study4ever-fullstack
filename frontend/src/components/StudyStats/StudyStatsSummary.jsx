@@ -13,8 +13,10 @@ import {
   PlayCircleOutline,
   TrendingUp,
   CalendarToday,
+  TrendingDown,
+  TrendingFlat,
 } from '@mui/icons-material';
-import { formatDuration } from '../../utils/chartUtils';
+import { formatDuration, formatPercentageChange } from '../../utils/chartUtils';
 
 /**
  * StatCard component for displaying individual statistics
@@ -24,33 +26,46 @@ import { formatDuration } from '../../utils/chartUtils';
  * @param {JSX.Element} props.icon - Icon component
  * @param {string} props.color - Color theme
  * @param {boolean} props.loading - Loading state
+ * @param {number} props.percentageChange - Percentage change value
  * @returns {JSX.Element} StatCard component
  */
-const StatCard = ({ title, value, icon, color = 'primary', loading = false }) => {
+const StatCard = ({ title, value, icon, color = 'primary', loading = false, percentageChange }) => {
   if (loading) {
     return (
-      <Card sx={{ height: '100%' }}>
-        <CardContent>
+      <Card sx={{ height: 140, minHeight: 140 }}>
+        <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
-            <Skeleton variant="text" width="60%" height={24} />
+            <Skeleton variant="text" width="60%" height={20} />
           </Box>
-          <Skeleton variant="text" width="80%" height={32} />
+          <Skeleton variant="text" width="80%" height={32} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width="40%" height={16} sx={{ mt: 'auto' }} />
         </CardContent>
       </Card>
     );
   }
 
+  const percentageData = formatPercentageChange(percentageChange);
+  
+  const getPercentageIcon = () => {
+    switch (percentageData.icon) {
+      case 'trending_up': return <TrendingUp sx={{ fontSize: 16 }} />;
+      case 'trending_down': return <TrendingDown sx={{ fontSize: 16 }} />;
+      default: return <TrendingFlat sx={{ fontSize: 16 }} />;
+    }
+  };
+
   return (
     <Card sx={{ 
-      height: '100%',
+      height: 140,
+      minHeight: 140,
       transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
       '&:hover': {
         transform: 'translateY(-2px)',
         boxShadow: 3,
       }
     }}>
-      <CardContent>
+      <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Box
             sx={{
@@ -71,9 +86,25 @@ const StatCard = ({ title, value, icon, color = 'primary', loading = false }) =>
             {title}
           </Typography>
         </Box>
-        <Typography variant="h5" fontWeight="bold" color="text.primary">
+        <Typography variant="h5" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
           {value}
         </Typography>
+        {percentageChange !== undefined && percentageChange !== null && (
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto' }}>
+            <Box sx={{ color: percentageData.color, display: 'flex', alignItems: 'center' }}>
+              {getPercentageIcon()}
+              <Typography 
+                variant="body2" 
+                sx={{ ml: 0.5, fontWeight: 'medium', color: percentageData.color }}
+              >
+                {percentageData.display}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              vs previous period
+            </Typography>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
@@ -97,6 +128,7 @@ const StudyStatsSummary = ({
     totalSessions = 0,
     averageSessionLength = 0,
     averageDaily = 0,
+    percentageChange = 0,
   } = summaryStats;
 
   return (
@@ -107,54 +139,67 @@ const StudyStatsSummary = ({
             Study Summary
           </Typography>
           <Chip 
-            label={period} 
+            label={loading ? 'Loading...' : period} 
             color="primary" 
             variant="outlined"
             size="small"
           />
         </Box>
         
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Total Study Time"
-              value={loading ? '...' : `${totalHours}h`}
-              icon={<AccessTime />}
-              color="primary"
-              loading={loading}
-            />
-          </Grid>
+        {/* Use flexbox instead of Grid for consistent sizing */}
+        <Box 
+          sx={{ 
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 3,
+            minHeight: 140,
+            '& > *': {
+              flex: {
+                xs: '1 1 100%',
+                sm: '1 1 calc(50% - 12px)',
+                md: '1 1 calc(25% - 18px)'
+              },
+              minWidth: {
+                xs: '100%',
+                sm: 'calc(50% - 12px)',
+                md: 'calc(25% - 18px)'
+              }
+            }
+          }}
+        >
+          <StatCard
+            title="Total Study Time"
+            value={loading ? '...' : `${totalHours}h`}
+            icon={<AccessTime />}
+            color="primary"
+            loading={loading}
+            percentageChange={percentageChange}
+          />
           
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Study Sessions"
-              value={loading ? '...' : totalSessions}
-              icon={<PlayCircleOutline />}
-              color="secondary"
-              loading={loading}
-            />
-          </Grid>
+          <StatCard
+            title="Study Sessions"
+            value={loading ? '...' : totalSessions}
+            icon={<PlayCircleOutline />}
+            color="secondary"
+            loading={loading}
+          />
           
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Avg. Session Length"
-              value={loading ? '...' : formatDuration(averageSessionLength)}
-              icon={<TrendingUp />}
-              color="success"
-              loading={loading}
-            />
-          </Grid>
+          <StatCard
+            title="Avg. Session Length"
+            value={loading ? '...' : formatDuration(averageSessionLength)}
+            icon={<TrendingUp />}
+            color="success"
+            loading={loading}
+          />
           
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Daily Average"
-              value={loading ? '...' : formatDuration(averageDaily)}
-              icon={<CalendarToday />}
-              color="warning"
-              loading={loading}
-            />
-          </Grid>
-        </Grid>
+          <StatCard
+            title="Daily Average"
+            value={loading ? '...' : formatDuration(averageDaily)}
+            icon={<CalendarToday />}
+            color="warning"
+            loading={loading}
+          />
+        </Box>
       </CardContent>
     </Card>
   );

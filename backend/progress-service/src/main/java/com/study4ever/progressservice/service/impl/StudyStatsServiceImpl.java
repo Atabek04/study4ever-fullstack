@@ -35,7 +35,13 @@ public class StudyStatsServiceImpl implements StudyStatsService {
     @Transactional(readOnly = true)
     public DailyStatsDto getDailyStats(String userId, LocalDate date) {
         log.debug("Getting daily stats for user {} on date {}", userId, date);
+        return getDailyStatsInternal(userId, date);
+    }
 
+    /**
+     * Internal method to get daily stats without transaction boundary issues
+     */
+    private DailyStatsDto getDailyStatsInternal(String userId, LocalDate date) {
         // Try to get pre-calculated stats first
         Optional<StudySessionStats> cachedStats = studySessionStatsRepository
                 .findByUserIdAndTypeAndStatsDate(userId, StudySessionStats.StatsType.DAILY, date);
@@ -58,7 +64,13 @@ public class StudyStatsServiceImpl implements StudyStatsService {
     @Transactional(readOnly = true)
     public WeeklyStatsDto getWeeklyStats(String userId, LocalDate startDate) {
         log.debug("Getting weekly stats for user {} starting from {}", userId, startDate);
+        return getWeeklyStatsInternal(userId, startDate);
+    }
 
+    /**
+     * Internal method to get weekly stats without transaction boundary issues
+     */
+    private WeeklyStatsDto getWeeklyStatsInternal(String userId, LocalDate startDate) {
         // Ensure startDate is a Monday
         LocalDate monday = startDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate sunday = monday.plusDays(6);
@@ -69,7 +81,7 @@ public class StudyStatsServiceImpl implements StudyStatsService {
 
         // Get stats for each day of the week
         for (LocalDate date = monday; !date.isAfter(sunday); date = date.plusDays(1)) {
-            DailyStatsDto dayStats = getDailyStats(userId, date);
+            DailyStatsDto dayStats = getDailyStatsInternal(userId, date);
             dailyStats.add(dayStats);
             totalDuration += dayStats.getDurationMinutes();
             totalSessions += dayStats.getSessionCount();
@@ -145,16 +157,16 @@ public class StudyStatsServiceImpl implements StudyStatsService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public YearlyStatsDto getStatsSummary(String userId, int year) {
-        return getMonthlyStats(userId, year);
-    }
-
-    @Override
     @Transactional
     public void calculateAndStoreDailyStats(String userId, LocalDate date) {
         log.debug("Calculating and storing daily stats for user {} on date {}", userId, date);
+        calculateAndStoreDailyStatsInternal(userId, date);
+    }
 
+    /**
+     * Internal method to calculate and store daily stats without transaction boundary issues
+     */
+    private void calculateAndStoreDailyStatsInternal(String userId, LocalDate date) {
         DailyStatsDto dailyStats = calculateDailyStatsOnTheFly(userId, date);
 
         // Save or update the daily stats
@@ -197,7 +209,7 @@ public class StudyStatsServiceImpl implements StudyStatsService {
         // Calculate stats for each user
         for (String userId : userIds) {
             try {
-                calculateAndStoreDailyStats(userId, date);
+                calculateAndStoreDailyStatsInternal(userId, date);
             } catch (Exception e) {
                 log.error("Failed to calculate daily stats for user {} on date {}", userId, date, e);
             }
@@ -212,7 +224,7 @@ public class StudyStatsServiceImpl implements StudyStatsService {
         log.info("Recalculating stats for user {} from {} to {}", userId, startDate, endDate);
 
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            calculateAndStoreDailyStats(userId, date);
+            calculateAndStoreDailyStatsInternal(userId, date);
         }
 
         log.info("Completed recalculating stats for user {} from {} to {}", userId, startDate, endDate);
@@ -267,12 +279,34 @@ public class StudyStatsServiceImpl implements StudyStatsService {
         log.debug("Getting daily stats range for user {} for {} days", userId, days);
         
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(days - 1);
+        LocalDate startDate = endDate.minusDays((long) days - 1);
         
         List<DailyStatsDto> statsList = new ArrayList<>();
+        DailyStatsDto previousDayStats = null;
+        
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            DailyStatsDto stats = getDailyStats(userId, date);
+            DailyStatsDto stats = getDailyStatsInternal(userId, date);
+            
+            // Calculate percentage change from previous day
+            if (previousDayStats != null) {
+                Double percentageChange = calculatePercentageChange(
+                    stats.getDurationMinutes(), 
+                    previousDayStats.getDurationMinutes()
+                );
+                stats.setPercentageChange(percentageChange);
+            } else {
+                // For the first day, get yesterday's stats to calculate percentage
+                LocalDate yesterday = date.minusDays(1);
+                DailyStatsDto yesterdayStats = getDailyStatsInternal(userId, yesterday);
+                Double percentageChange = calculatePercentageChange(
+                    stats.getDurationMinutes(), 
+                    yesterdayStats.getDurationMinutes()
+                );
+                stats.setPercentageChange(percentageChange);
+            }
+            
             statsList.add(stats);
+            previousDayStats = stats;
         }
         
         return statsList;
@@ -284,12 +318,34 @@ public class StudyStatsServiceImpl implements StudyStatsService {
         log.debug("Getting weekly stats range for user {} for {} weeks", userId, weeks);
         
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusWeeks(weeks - 1);
+        LocalDate startDate = endDate.minusWeeks((long) weeks - 1);
         
         List<WeeklyStatsDto> statsList = new ArrayList<>();
+        WeeklyStatsDto previousWeekStats = null;
+        
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusWeeks(1)) {
-            WeeklyStatsDto stats = getWeeklyStats(userId, date);
+            WeeklyStatsDto stats = getWeeklyStatsInternal(userId, date);
+            
+            // Calculate percentage change from previous week
+            if (previousWeekStats != null) {
+                Double percentageChange = calculatePercentageChange(
+                    stats.getTotalDurationMinutes(), 
+                    previousWeekStats.getTotalDurationMinutes()
+                );
+                stats.setPercentageChange(percentageChange);
+            } else {
+                // For the first week, get previous week's stats to calculate percentage
+                LocalDate previousWeekDate = date.minusWeeks(1);
+                WeeklyStatsDto previousWeek = getWeeklyStatsInternal(userId, previousWeekDate);
+                Double percentageChange = calculatePercentageChange(
+                    stats.getTotalDurationMinutes(), 
+                    previousWeek.getTotalDurationMinutes()
+                );
+                stats.setPercentageChange(percentageChange);
+            }
+            
             statsList.add(stats);
+            previousWeekStats = stats;
         }
         
         return statsList;
@@ -297,15 +353,15 @@ public class StudyStatsServiceImpl implements StudyStatsService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DailyStatsDto> getMonthlyStatsRange(String userId, int months) {
+    public List<MonthlyStatsDto> getMonthlyStatsRange(String userId, int months) {
         log.debug("Getting monthly stats range for user {} for {} months", userId, months);
         
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusMonths(months - 1);
+        LocalDate startDate = endDate.minusMonths((long) months - 1);
         
-        // Group by month and return as daily stats with aggregated data
-        List<DailyStatsDto> statsList = new ArrayList<>();
+        List<MonthlyStatsDto> statsList = new ArrayList<>();
         LocalDate currentMonth = startDate.withDayOfMonth(1);
+        MonthlyStatsDto previousMonthStats = null;
         
         while (!currentMonth.isAfter(endDate.withDayOfMonth(1))) {
             LocalDate monthStart = currentMonth;
@@ -316,20 +372,46 @@ public class StudyStatsServiceImpl implements StudyStatsService {
             int totalSessions = 0;
             
             for (LocalDate date = monthStart; !date.isAfter(monthEnd) && !date.isAfter(LocalDate.now()); date = date.plusDays(1)) {
-                DailyStatsDto dayStats = getDailyStats(userId, date);
+                DailyStatsDto dayStats = getDailyStatsInternal(userId, date);
                 totalDuration += dayStats.getDurationMinutes();
                 totalSessions += dayStats.getSessionCount();
             }
             
-            // Create a monthly summary as a daily stat
-            DailyStatsDto monthSummary = DailyStatsDto.builder()
-                    .date(monthStart)
-                    .dayOfWeek(monthStart.getMonth().name())
+            // Create a proper monthly stats DTO
+            MonthlyStatsDto monthStats = MonthlyStatsDto.builder()
+                    .month(monthStart.getMonth().name())
+                    .monthNumber(monthStart.getMonthValue())
+                    .year(monthStart.getYear())
                     .durationMinutes(totalDuration)
                     .sessionCount(totalSessions)
                     .build();
             
-            statsList.add(monthSummary);
+            // Calculate percentage change from previous month
+            if (previousMonthStats != null) {
+                Double percentageChange = calculatePercentageChange(
+                    monthStats.getDurationMinutes(), 
+                    previousMonthStats.getDurationMinutes()
+                );
+                monthStats.setPercentageChange(percentageChange);
+            } else {
+                // For the first month, get previous month's stats to calculate percentage
+                LocalDate previousMonthDate = currentMonth.minusMonths(1);
+                long prevTotalDuration = 0;
+                
+                LocalDate prevMonthStart = previousMonthDate.withDayOfMonth(1);
+                LocalDate prevMonthEnd = previousMonthDate.withDayOfMonth(previousMonthDate.lengthOfMonth());
+                
+                for (LocalDate date = prevMonthStart; !date.isAfter(prevMonthEnd); date = date.plusDays(1)) {
+                    DailyStatsDto dayStats = getDailyStatsInternal(userId, date);
+                    prevTotalDuration += dayStats.getDurationMinutes();
+                }
+                
+                Double percentageChange = calculatePercentageChange(totalDuration, prevTotalDuration);
+                monthStats.setPercentageChange(percentageChange);
+            }
+            
+            statsList.add(monthStats);
+            previousMonthStats = monthStats;
             currentMonth = currentMonth.plusMonths(1);
         }
         
@@ -338,40 +420,103 @@ public class StudyStatsServiceImpl implements StudyStatsService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DailyStatsDto> getYearlyStatsRange(String userId, int years) {
+    public List<YearlyStatsDto> getYearlyStatsRange(String userId, int years) {
         log.debug("Getting yearly stats range for user {} for {} years", userId, years);
         
         int endYear = LocalDate.now().getYear();
         int startYear = endYear - years + 1;
         
-        List<DailyStatsDto> statsList = new ArrayList<>();
+        List<YearlyStatsDto> statsList = new ArrayList<>();
+        YearlyStatsDto previousYearStats = null;
         
         for (int year = startYear; year <= endYear; year++) {
             LocalDate yearStart = LocalDate.of(year, 1, 1);
             LocalDate yearEnd = LocalDate.of(year, 12, 31);
             LocalDate actualEnd = yearEnd.isAfter(LocalDate.now()) ? LocalDate.now() : yearEnd;
             
-            // Get all daily stats for this year
+            // Get all daily stats for this year and group by month
+            Map<Integer, Long> monthlyDurations = new HashMap<>();
+            Map<Integer, Integer> monthlySessions = new HashMap<>();
+            
+            for (LocalDate date = yearStart; !date.isAfter(actualEnd); date = date.plusDays(1)) {
+                DailyStatsDto dayStats = getDailyStatsInternal(userId, date);
+                int month = date.getMonthValue();
+                
+                monthlyDurations.merge(month, dayStats.getDurationMinutes(), Long::sum);
+                monthlySessions.merge(month, dayStats.getSessionCount(), Integer::sum);
+            }
+            
+            // Create monthly stats for this year
+            List<MonthlyStatsDto> monthlyStats = new ArrayList<>();
             long totalDuration = 0;
             int totalSessions = 0;
             
-            for (LocalDate date = yearStart; !date.isAfter(actualEnd); date = date.plusDays(1)) {
-                DailyStatsDto dayStats = getDailyStats(userId, date);
-                totalDuration += dayStats.getDurationMinutes();
-                totalSessions += dayStats.getSessionCount();
+            for (int month = 1; month <= 12; month++) {
+                long duration = monthlyDurations.getOrDefault(month, 0L);
+                int sessions = monthlySessions.getOrDefault(month, 0);
+                
+                MonthlyStatsDto monthDto = MonthlyStatsDto.builder()
+                        .month(Month.of(month).name())
+                        .monthNumber(month)
+                        .year(year)
+                        .durationMinutes(duration)
+                        .sessionCount(sessions)
+                        .build();
+                
+                monthlyStats.add(monthDto);
+                totalDuration += duration;
+                totalSessions += sessions;
             }
             
-            // Create a yearly summary as a daily stat
-            DailyStatsDto yearSummary = DailyStatsDto.builder()
-                    .date(yearStart)
-                    .dayOfWeek(String.valueOf(year))
-                    .durationMinutes(totalDuration)
-                    .sessionCount(totalSessions)
+            // Create a yearly stats DTO
+            YearlyStatsDto yearlyStats = YearlyStatsDto.builder()
+                    .year(year)
+                    .monthlyStats(monthlyStats)
+                    .totalDurationMinutes(totalDuration)
+                    .totalSessionCount(totalSessions)
                     .build();
             
-            statsList.add(yearSummary);
+            // Calculate percentage change from previous year
+            if (previousYearStats != null) {
+                Double percentageChange = calculatePercentageChange(
+                    yearlyStats.getTotalDurationMinutes(), 
+                    previousYearStats.getTotalDurationMinutes()
+                );
+                yearlyStats.setPercentageChange(percentageChange);
+            } else {
+                // For the first year, get previous year's stats to calculate percentage
+                int previousYear = year - 1;
+                long prevYearTotalDuration = 0;
+                
+                LocalDate prevYearStart = LocalDate.of(previousYear, 1, 1);
+                LocalDate prevYearEnd = LocalDate.of(previousYear, 12, 31);
+                
+                for (LocalDate date = prevYearStart; !date.isAfter(prevYearEnd); date = date.plusDays(1)) {
+                    DailyStatsDto dayStats = getDailyStatsInternal(userId, date);
+                    prevYearTotalDuration += dayStats.getDurationMinutes();
+                }
+                
+                Double percentageChange = calculatePercentageChange(totalDuration, prevYearTotalDuration);
+                yearlyStats.setPercentageChange(percentageChange);
+            }
+            
+            statsList.add(yearlyStats);
+            previousYearStats = yearlyStats;
         }
         
         return statsList;
+    }
+
+    /**
+     * Calculate percentage change between two values
+     */
+    private Double calculatePercentageChange(Long currentValue, Long previousValue) {
+        if (previousValue == null || previousValue == 0) {
+            return currentValue != null && currentValue > 0 ? 100.0 : 0.0;
+        }
+        if (currentValue == null) {
+            return -100.0;
+        }
+        return ((double) (currentValue - previousValue) / previousValue) * 100.0;
     }
 }

@@ -247,40 +247,74 @@ const StudyStatsDashboard = () => {
             </TabPanel>
           </Paper>
 
-          {/* Additional Information */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h6" gutterBottom fontWeight="bold">
-                  Study Insights
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Track your learning progress with detailed analytics. Monitor your study time,
-                  session patterns, and consistency across different time periods.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  💡 <strong>Tip:</strong> Consistent daily study sessions, even for short periods,
+          {/* Study Insights and Goal Setting - Aligned with Chart Width */}
+          <Box sx={{ display: 'flex', gap: 3, width: '100%' }}>
+            <Paper 
+              sx={{ 
+                p: 3, 
+                flex: 1,
+                minHeight: 200,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <Typography variant="h6" gutterBottom fontWeight="bold" color="primary.main">
+                📊 Study Insights
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph sx={{ flexGrow: 1 }}>
+                Track your learning progress with detailed analytics. Monitor your study time,
+                session patterns, and consistency across different time periods.
+              </Typography>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  bgcolor: 'primary.50', 
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'primary.200',
+                  mt: 'auto'
+                }}
+              >
+                <Typography variant="body2" color="primary.dark" fontWeight="medium">
+                  💡 <strong>Pro Tip:</strong> Consistent daily study sessions, even for short periods,
                   often lead to better learning outcomes than occasional long sessions.
                 </Typography>
-              </Paper>
-            </Grid>
+              </Box>
+            </Paper>
             
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h6" gutterBottom fontWeight="bold">
-                  Goal Setting
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Use these analytics to set realistic study goals and track your progress
-                  towards achieving them.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  🎯 <strong>Suggestion:</strong> Aim for consistent daily study time rather
+            <Paper 
+              sx={{ 
+                p: 3, 
+                flex: 1,
+                minHeight: 200,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <Typography variant="h6" gutterBottom fontWeight="bold" color="success.main">
+                🎯 Goal Setting
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph sx={{ flexGrow: 1 }}>
+                Use these analytics to set realistic study goals and track your progress
+                towards achieving them.
+              </Typography>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  bgcolor: 'success.50', 
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'success.200',
+                  mt: 'auto'
+                }}
+              >
+                <Typography variant="body2" color="success.dark" fontWeight="medium">
+                  🚀 <strong>Suggestion:</strong> Aim for consistent daily study time rather
                   than maximizing total hours. Quality and consistency matter more than quantity.
                 </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
+              </Box>
+            </Paper>
+          </Box>
         </>
       )}
     </Box>

@@ -118,28 +118,39 @@ const CoursesPage = () => {
   const renderSkeletonLoaders = () => (
     <Grid container spacing={3}>
       {[...Array(8)].map((_, index) => (
-        <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-          <Paper
-            sx={{
-              borderRadius: 3,
-              overflow: 'hidden',
-              height: '350px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-            }}
-          >
-            <Skeleton variant="rectangular" height={160} animation="wave" />
-            <Box sx={{ p: 2 }}>
-              <Skeleton variant="text" height={32} width="80%" animation="wave" />
-              <Skeleton variant="text" height={20} width="60%" animation="wave" sx={{ mt: 1 }} />
-              <Skeleton variant="text" height={60} animation="wave" sx={{ mt: 1 }} />
-              <Skeleton 
-                variant="rectangular" 
-                height={40} 
-                animation="wave" 
-                sx={{ mt: 2, borderRadius: 2 }} 
-              />
-            </Box>
-          </Paper>
+        <Grid item xs={12} sm={6} md={4} lg={3} xl={2} sx={{ display: 'flex', justifyContent: 'center' }} key={index}>
+          <Box sx={{ width: { xs: '100%', sm: 340, md: 300, lg: 270, xl: 250 }, maxWidth: '100%' }}>
+            <Paper
+              sx={{
+                borderRadius: 3,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                width: '100%',
+                maxWidth: 380,
+                minWidth: 260,
+                margin: '0 auto',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+                backgroundColor: '#F9EFD6', // Match CourseItem background
+              }}
+            >
+              <Skeleton variant="rectangular" height={120} animation="wave" />
+              <Box sx={{ flexGrow: 1, pt: 2.5, pb: 1, px: 3 }}>
+                <Skeleton variant="text" height={28} width="85%" animation="wave" sx={{ mb: 1.5 }} />
+                <Skeleton variant="text" height={20} width="60%" animation="wave" sx={{ mb: 2 }} />
+                <Skeleton variant="text" height={50} animation="wave" sx={{ mb: 0 }} />
+              </Box>
+              <Box sx={{ p: 3, pt: 1, pb: 2.5 }}>
+                <Skeleton 
+                  variant="rectangular" 
+                  height={48} 
+                  animation="wave" 
+                  sx={{ borderRadius: 2 }} 
+                />
+              </Box>
+            </Paper>
+          </Box>
         </Grid>
       ))}
     </Grid>

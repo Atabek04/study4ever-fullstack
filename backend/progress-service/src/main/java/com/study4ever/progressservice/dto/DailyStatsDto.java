@@ -16,4 +16,5 @@ public class DailyStatsDto {
     private String dayOfWeek;
     private Long durationMinutes;
     private Integer sessionCount;
+    private Double percentageChange;
 }

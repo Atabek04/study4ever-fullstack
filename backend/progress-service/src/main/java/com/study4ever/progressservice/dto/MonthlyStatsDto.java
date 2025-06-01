@@ -15,4 +15,5 @@ public class MonthlyStatsDto {
     private Integer year;
     private Long durationMinutes;
     private Integer sessionCount;
+    private Double percentageChange;
 }
