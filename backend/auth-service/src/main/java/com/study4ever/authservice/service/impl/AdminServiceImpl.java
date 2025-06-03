@@ -4,6 +4,7 @@ import com.study4ever.authservice.dto.CreateInstructorRequest;
 import com.study4ever.authservice.dto.UserCreatedEvent;
 import com.study4ever.authservice.dto.UserDeletedEvent;
 import com.study4ever.authservice.dto.UserResponse;
+import com.study4ever.authservice.dto.UserSummaryDto;
 import com.study4ever.authservice.exception.EmailAlreadyExistsException;
 import com.study4ever.authservice.exception.NotFoundException;
 import com.study4ever.authservice.exception.UsernameAlreadyExistsException;
@@ -128,6 +129,139 @@ public class AdminServiceImpl implements AdminService {
         sendUserDeletedEvent(instructor);
 
         log.info("Instructor deleted successfully: {}", id);
+    }
+
+    @Override
+    public List<UserResponse> getAllStudents() {
+        log.info("Fetching all students");
+
+        Role studentRole = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
+                .orElseThrow(() -> new NotFoundException("Student role not found"));
+        Role instructorRole = roleRepository.findByName(Role.RoleName.ROLE_INSTRUCTOR)
+                .orElseThrow(() -> new NotFoundException("Instructor role not found"));
+
+        List<UserCredentials> students = userRepository.findAll().stream()
+                .filter(user -> user.getRoles().contains(studentRole) && !user.getRoles().contains(instructorRole))
+                .toList();
+
+        return students.stream()
+                .map(Mapper::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+        log.info("Fetching all users");
+
+        List<UserCredentials> users = userRepository.findAll();
+
+        return users.stream()
+                .map(Mapper::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserResponse getUserById(UUID id) {
+        log.info("Fetching user with id: {}", id);
+
+        UserCredentials user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        return Mapper.mapToUserResponse(user);
+    }
+
+    @Override
+    public UserSummaryDto getUserSummary() {
+        log.info("Fetching user summary");
+
+        Role studentRole = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
+                .orElseThrow(() -> new NotFoundException("Student role not found"));
+        Role instructorRole = roleRepository.findByName(Role.RoleName.ROLE_INSTRUCTOR)
+                .orElseThrow(() -> new NotFoundException("Instructor role not found"));
+
+        List<UserCredentials> allUsers = userRepository.findAll();
+
+        long totalUsers = allUsers.size();
+        long totalStudents = allUsers.stream()
+                .filter(user -> user.getRoles().contains(studentRole) && !user.getRoles().contains(instructorRole))
+                .count();
+        long totalInstructors = allUsers.stream()
+                .filter(user -> user.getRoles().contains(instructorRole))
+                .count();
+        long activeUsers = allUsers.stream()
+                .filter(UserCredentials::isEnabled)
+                .count();
+        long inactiveUsers = totalUsers - activeUsers;
+
+        return UserSummaryDto.builder()
+                .totalUsers(totalUsers)
+                .totalStudents(totalStudents)
+                .totalInstructors(totalInstructors)
+                .activeUsers(activeUsers)
+                .inactiveUsers(inactiveUsers)
+                .build();
+    }
+
+    @Override
+    public List<UserResponse> searchUsers(String searchTerm) {
+        log.info("Searching users with term: {}", searchTerm);
+
+        List<UserCredentials> users = userRepository.findAll().stream()
+                .filter(user -> matchesSearchTerm(user, searchTerm))
+                .toList();
+
+        return users.stream()
+                .map(Mapper::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> searchStudents(String searchTerm) {
+        log.info("Searching students with term: {}", searchTerm);
+
+        Role studentRole = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
+                .orElseThrow(() -> new NotFoundException("Student role not found"));
+        Role instructorRole = roleRepository.findByName(Role.RoleName.ROLE_INSTRUCTOR)
+                .orElseThrow(() -> new NotFoundException("Instructor role not found"));
+
+        List<UserCredentials> students = userRepository.findAll().stream()
+                .filter(user -> user.getRoles().contains(studentRole) && !user.getRoles().contains(instructorRole))
+                .filter(user -> matchesSearchTerm(user, searchTerm))
+                .toList();
+
+        return students.stream()
+                .map(Mapper::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> searchInstructors(String searchTerm) {
+        log.info("Searching instructors with term: {}", searchTerm);
+
+        Role instructorRole = roleRepository.findByName(Role.RoleName.ROLE_INSTRUCTOR)
+                .orElseThrow(() -> new NotFoundException("Instructor role not found"));
+
+        List<UserCredentials> instructors = userRepository.findAll().stream()
+                .filter(user -> user.getRoles().contains(instructorRole))
+                .filter(user -> matchesSearchTerm(user, searchTerm))
+                .toList();
+
+        return instructors.stream()
+                .map(Mapper::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    private boolean matchesSearchTerm(UserCredentials user, String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return true;
+        }
+        
+        String lowerSearchTerm = searchTerm.toLowerCase().trim();
+        return user.getUsername().toLowerCase().contains(lowerSearchTerm) ||
+               user.getEmail().toLowerCase().contains(lowerSearchTerm) ||
+               user.getFirstName().toLowerCase().contains(lowerSearchTerm) ||
+               user.getLastName().toLowerCase().contains(lowerSearchTerm) ||
+               (user.getFirstName() + " " + user.getLastName()).toLowerCase().contains(lowerSearchTerm);
     }
 
     private void sendUserCreatedEvent(UserCredentials user) {
