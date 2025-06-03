@@ -13,6 +13,7 @@ import {
 import { Refresh, TrendingUp } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
 import { useAllStats } from '../../hooks/studyStatsHooks';
+import { useStreakHistory } from '../../hooks/streakHooks';
 import {
   formatDailyStatsForChart,
   formatWeeklyStatsForChart,
@@ -23,6 +24,7 @@ import {
 } from '../../utils/chartUtils';
 import StudyChart from './StudyChart';
 import StudyStatsSummary from './StudyStatsSummary';
+import StreakCalendar from './StreakCalendar';
 
 /**
  * TabPanel component for displaying tab content
@@ -59,12 +61,21 @@ const StudyStatsDashboard = () => {
     refetchAll
   } = useAllStats(user?.id);
 
+  // Fetch streak history data with default date range (last 3 months)
+  const {
+    data: streakHistory,
+    loading: streakLoading,
+    error: streakError,
+    refetch: refetchStreaks
+  } = useStreakHistory();
+
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
   };
 
   const handleRefresh = () => {
     refetchAll();
+    refetchStreaks();
   };
 
   // Prepare chart data and options
@@ -86,7 +97,7 @@ const StudyStatsDashboard = () => {
       case 0: return { data: dailyData, period: 'Last 30 Days' };
       case 1: return { data: weeklyData, period: 'Last 12 Weeks' };
       case 2: return { data: monthlyData, period: 'Last 12 Months' };
-      case 3: return { data: yearlyData, period: 'Last 5 Years' };
+      case 3: return { data: [], period: 'Streak History' }; // Streak tab doesn't use regular summary stats
       default: return { data: dailyData, period: 'Last 30 Days' };
     }
   };
@@ -174,12 +185,14 @@ const StudyStatsDashboard = () => {
       {/* Content - only show if we have data or are loading */}
       {(hasAnyData || loading) && (
         <>
-          {/* Summary Statistics */}
-          <StudyStatsSummary
-            summaryStats={summaryStats}
-            loading={loading}
-            period={period}
-          />
+          {/* Summary Statistics - only show for non-streak tabs */}
+          {currentTab !== 3 && (
+            <StudyStatsSummary
+              summaryStats={summaryStats}
+              loading={loading}
+              period={period}
+            />
+          )}
 
           {/* Time Period Tabs */}
           <Paper sx={{ mb: 3 }}>
@@ -194,7 +207,7 @@ const StudyStatsDashboard = () => {
                 <Tab label="Daily (30 days)" id="study-stats-tab-0" />
                 <Tab label="Weekly (12 weeks)" id="study-stats-tab-1" />
                 <Tab label="Monthly (12 months)" id="study-stats-tab-2" />
-                <Tab label="Yearly (5 years)" id="study-stats-tab-3" />
+                <Tab label="Streak History" id="study-stats-tab-3" />
               </Tabs>
             </Box>
 
@@ -234,15 +247,12 @@ const StudyStatsDashboard = () => {
               />
             </TabPanel>
 
-            {/* Yearly Stats Tab */}
+            {/* Streak History Tab */}
             <TabPanel value={currentTab} index={3}>
-              <StudyChart
-                data={yearlyChartData}
-                options={chartOptions.yearly}
-                loading={loading}
-                error={error}
-                title="Yearly Study Progress"
-                height={400}
+              <StreakCalendar 
+                streakHistory={streakHistory || []}
+                loading={streakLoading}
+                error={streakError}
               />
             </TabPanel>
           </Paper>

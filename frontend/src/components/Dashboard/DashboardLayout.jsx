@@ -17,6 +17,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../../context/AuthContext';
 import SideDrawer from './SideDrawer';
+import StreakIndicator from './StreakIndicator';
 
 // Icons
 import MenuIcon from '@mui/icons-material/Menu';
@@ -130,6 +131,10 @@ const DashboardLayout = ({ children }) => {
                   <NotificationsIcon />
                 </IconButton>
               </Tooltip>
+              
+              {/* Study Streak Indicator */}
+              <StreakIndicator />
+              
               <Menu
                 id="menu-notifications"
                 anchorEl={anchorElNotifications}
