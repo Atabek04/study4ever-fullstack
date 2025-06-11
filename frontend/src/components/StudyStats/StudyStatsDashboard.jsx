@@ -5,7 +5,6 @@ import {
   Tabs,
   Tab,
   Paper,
-  Grid,
   Alert,
   Button,
   CircularProgress,
@@ -13,7 +12,7 @@ import {
 import { Refresh, TrendingUp } from '@mui/icons-material';
 import { AuthContext } from '../../context/AuthContext';
 import { useAllStats } from '../../hooks/studyStatsHooks';
-import { useStreakHistory } from '../../hooks/streakHooks';
+import { useUserStreak, useStreakHistory } from '../../hooks/streakHooks';
 import {
   formatDailyStatsForChart,
   formatWeeklyStatsForChart,
@@ -48,9 +47,14 @@ const TabPanel = ({ children, value, index, ...other }) => (
 const StudyStatsDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const { user } = useContext(AuthContext);
-  
-  console.log('StudyStatsDashboard: Rendering with user:', user);
-  
+
+  const {
+    streak,
+    loading: streakDataLoading,
+    error: streakDataError,
+    refetch: refetchStreakData
+  } = useUserStreak();
+
   const {
     dailyData,
     weeklyData,
@@ -76,6 +80,7 @@ const StudyStatsDashboard = () => {
   const handleRefresh = () => {
     refetchAll();
     refetchStreaks();
+    refetchStreakData();
   };
 
   // Prepare chart data and options
@@ -120,18 +125,6 @@ const StudyStatsDashboard = () => {
                      (weeklyData && weeklyData.length > 0) || 
                      (monthlyData && monthlyData.length > 0) || 
                      (yearlyData && yearlyData.length > 0);
-
-  console.log('StudyStatsDashboard: Data state:', {
-    loading,
-    error,
-    hasAnyData,
-    dataCounts: {
-      daily: dailyData?.length || 0,
-      weekly: weeklyData?.length || 0,
-      monthly: monthlyData?.length || 0,
-      yearly: yearlyData?.length || 0
-    }
-  });
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', py: 4 }}>
@@ -251,6 +244,7 @@ const StudyStatsDashboard = () => {
             <TabPanel value={currentTab} index={3}>
               <StreakCalendar 
                 streakHistory={streakHistory || []}
+                currentStreak={streak}
                 loading={streakLoading}
                 error={streakError}
               />

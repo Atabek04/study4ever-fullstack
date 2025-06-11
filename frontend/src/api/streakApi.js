@@ -53,9 +53,11 @@ export const getUserStreak = async () => {
  */
 export const getStreakHistory = async (startDate, endDate) => {
   try {
-    console.log('getStreakHistory: Fetching streak history from', startDate, 'to', endDate);
+    console.log('getStreakHistory:: Fetching streak history from', startDate, 'to', endDate);
     
     const userId = getUserIdFromToken();
+    console.log('getStreakHistory:: Using userId:', userId);
+
     if (!userId) {
       throw new Error('No user ID found in token');
     }
@@ -66,8 +68,9 @@ export const getStreakHistory = async (startDate, endDate) => {
         'X-User-Id': userId
       }
     });
-    
-    console.log('getStreakHistory: Response received:', response.data);
+
+    console.log('getStreakHistory:: Response status:', response.status);
+    console.log('getStreakHistory:: Response received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching streak history:', error);

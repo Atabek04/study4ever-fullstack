@@ -1,4 +1,4 @@
-import { format, parseISO, startOfWeek, endOfWeek } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 /**
  * Format duration from minutes to human readable string
@@ -35,8 +35,6 @@ export const formatDurationToHours = (minutes) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatDailyStatsForChart = (dailyStats) => {
-  console.log('formatDailyStatsForChart: Input data:', dailyStats);
-  
   if (!dailyStats || dailyStats.length === 0) {
     console.log('formatDailyStatsForChart: No data, returning empty chart structure');
     return {
@@ -86,7 +84,6 @@ export const formatDailyStatsForChart = (dailyStats) => {
     }]
   };
   
-  console.log('formatDailyStatsForChart: Returning chart data:', chartData);
   return chartData;
 };
 
@@ -96,8 +93,6 @@ export const formatDailyStatsForChart = (dailyStats) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatWeeklyStatsForChart = (weeklyStats) => {
-  console.log('formatWeeklyStatsForChart: Input data:', weeklyStats);
-  
   if (!weeklyStats || weeklyStats.length === 0) {
     console.log('formatWeeklyStatsForChart: No data, returning empty chart structure');
     return {
@@ -147,7 +142,6 @@ export const formatWeeklyStatsForChart = (weeklyStats) => {
     }]
   };
   
-  console.log('formatWeeklyStatsForChart: Returning chart data:', chartData);
   return chartData;
 };
 
@@ -157,10 +151,7 @@ export const formatWeeklyStatsForChart = (weeklyStats) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatMonthlyStatsForChart = (monthlyStats) => {
-  console.log('formatMonthlyStatsForChart: Input data:', monthlyStats);
-  
   if (!monthlyStats || monthlyStats.length === 0) {
-    console.log('formatMonthlyStatsForChart: No data, returning empty chart structure');
     return {
       labels: [],
       datasets: [{
@@ -214,7 +205,6 @@ export const formatMonthlyStatsForChart = (monthlyStats) => {
     }]
   };
   
-  console.log('formatMonthlyStatsForChart: Returning chart data:', chartData);
   return chartData;
 };
 
@@ -224,10 +214,7 @@ export const formatMonthlyStatsForChart = (monthlyStats) => {
  * @returns {Object} Chart.js compatible data object
  */
 export const formatYearlyStatsForChart = (yearlyStats) => {
-  console.log('formatYearlyStatsForChart: Input data:', yearlyStats);
-  
   if (!yearlyStats || yearlyStats.length === 0) {
-    console.log('formatYearlyStatsForChart: No data, returning empty chart structure');
     return {
       labels: [],
       datasets: [{
@@ -275,7 +262,6 @@ export const formatYearlyStatsForChart = (yearlyStats) => {
     }]
   };
   
-  console.log('formatYearlyStatsForChart: Returning chart data:', chartData);
   return chartData;
 };
 
@@ -357,8 +343,6 @@ export const getDefaultChartOptions = (title) => ({
  * @returns {Object} Summary statistics
  */
 export const calculateSummaryStats = (statsData) => {
-  console.log('calculateSummaryStats: Input data:', statsData);
-  
   if (!statsData || statsData.length === 0) {
     return {
       totalHours: 0,
@@ -387,9 +371,7 @@ export const calculateSummaryStats = (statsData) => {
   // Calculate average percentage change from the latest available data
   const latestData = statsData[statsData.length - 1];
   const percentageChange = latestData?.percentageChange || 0;
-  
-  console.log('calculateSummaryStats: totalMinutes =', totalMinutes, ', totalSessions =', totalSessions, ', percentageChange =', percentageChange);
-  
+
   return {
     totalHours: formatDurationToHours(totalMinutes),
     totalSessions,

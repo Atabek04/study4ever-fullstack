@@ -26,12 +26,9 @@ export const useContinueLearning = (courseId) => {
     setError('');
     
     try {
-      console.log(`Fetching next lesson for courseId: ${courseId}`);
-      
       // Call the new endpoint to get the next lesson to continue with
       const response = await api.get(`/api/v1/courses/${courseId}/continue-learning`);
-      console.log('Continue learning response:', response.data);
-      
+
       if (response.status >= 200 && response.status < 300 && response.data) {
         const nextLessonData = response.data;
         
@@ -48,7 +45,6 @@ export const useContinueLearning = (courseId) => {
         // Update last updated timestamp
         setLastUpdated(new Date());
         
-        console.log(`Found next lesson ID: ${nextLessonData.lessonId} in module: ${nextLessonData.moduleId}`);
         return nextLessonData;
       } else {
         throw new Error(`Failed to fetch next lesson. Status: ${response.status}`);

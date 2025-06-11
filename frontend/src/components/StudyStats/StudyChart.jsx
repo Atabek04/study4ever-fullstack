@@ -99,13 +99,6 @@ const StudyChart = ({
                   data.datasets && data.datasets.length > 0 && 
                   data.datasets[0].data && data.datasets[0].data.length > 0;
 
-  console.log('StudyChart: Checking data availability for', title, {
-    hasLabels: data?.labels?.length > 0,
-    hasDatasets: data?.datasets?.length > 0,
-    hasChartData: data?.datasets?.[0]?.data?.length > 0,
-    finalHasData: hasData
-  });
-
   if (!hasData) {
     return (
       <Card sx={{ height: height + 100 }}>

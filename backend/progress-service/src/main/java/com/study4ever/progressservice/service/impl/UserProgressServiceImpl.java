@@ -6,7 +6,6 @@ import com.study4ever.progressservice.model.StudyStreak;
 import com.study4ever.progressservice.model.UserProgress;
 import com.study4ever.progressservice.repository.StudyStreakRepository;
 import com.study4ever.progressservice.repository.UserProgressRepository;
-import com.study4ever.progressservice.service.StudyStreakService;
 import com.study4ever.progressservice.service.UserProgressService;
 import com.study4ever.progressservice.util.ProgressMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +22,14 @@ public class UserProgressServiceImpl implements UserProgressService {
 
     private final UserProgressRepository userProgressRepository;
     private final StudyStreakRepository studyStreakRepository;
-    private final StudyStreakService studyStreakService;
 
     @Override
     @Transactional(readOnly = true)
     public UserProgressDto getUserProgress(String userId) {
         UserProgress userProgress = userProgressRepository.findById(userId)
                 .orElse(initUserProgress(userId));
-        StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElse(studyStreakService.createInitialStreak(userId));
+        StudyStreak streak = studyStreakRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("StudyStreak with id: " + userId + " not found"));
 
         return ProgressMapper.mapToUserDto(userProgress, streak);
     }

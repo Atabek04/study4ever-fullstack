@@ -23,12 +23,8 @@ export const useFirstLesson = (courseId) => {
       setError('');
       
       try {
-        console.log(`Fetching course details for courseId: ${courseId} to find first lesson`);
-        
         // Fetch the full course details
         const response = await api.get(`/api/v1/courses/${courseId}/details`);
-        console.log('Course details response:', response.data);
-        
         if (response.status >= 200 && response.status < 300) {
           const courseData = response.data;
           
@@ -52,7 +48,6 @@ export const useFirstLesson = (courseId) => {
               const firstLesson = sortedLessons[0];
               
               if (firstLesson && firstLesson.id) {
-                console.log(`Found first lesson ID: ${firstLesson.id}`);
                 setFirstLessonId(firstLesson.id);
               } else {
                 console.warn('First lesson found but no ID available');

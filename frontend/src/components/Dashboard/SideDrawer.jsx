@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { 
+import {
   Box, 
   Typography, 
   Drawer, 
@@ -41,15 +40,7 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
            normalizedRole === 'ROLE_INSTRUCTOR' || 
            normalizedRole === 'INSTRUCTOR';
   });
-  
-  // Log user information for debugging
-  console.log('SideDrawer - Current user:', {
-    username: user?.username,
-    roles: user?.roles,
-    isAdminOrInstructor,
-    originalRoles: JSON.stringify(user?.roles)
-  });
-  
+
   // Navigation items
   const mainNavItems = [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },

@@ -190,8 +190,31 @@ public class GatewayRoutesConfig {
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(INSTRUCTOR_ADMIN_ROLES))))
                         .uri("lb://PROGRESS-SERVICE"))
 
-                // Auth service routes
-                .route("auth-service-admin", r -> r
+                // Auth service routes - Admin routes
+                .route("auth-service-admin-students", r -> r
+                        .path("/api/v1/admin/students/**", "/api/v1/admin/students")
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
+                        .uri("lb://AUTH-SERVICE"))
+
+                .route("auth-service-admin-instructors", r -> r
+                        .path("/api/v1/admin/instructors/**", "/api/v1/admin/instructors")
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
+                        .uri("lb://AUTH-SERVICE"))
+
+                .route("auth-service-admin-users", r -> r
+                        .path("/api/v1/admin/users/**", "/api/v1/admin/users")
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
+                        .uri("lb://AUTH-SERVICE"))
+
+                .route("auth-service-admin-summary", r -> r
+                        .path("/api/v1/admin/summary")
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
+                        .uri("lb://AUTH-SERVICE"))
+
+                .route("auth-service-admin-general", r -> r
                         .path("/api/v1/admin/**")
                         .filters(f -> f.filter(jwtFilterFactory.apply(c -> c.setAllowedRoles(ADMIN_ROLES))))
                         .uri("lb://AUTH-SERVICE"))

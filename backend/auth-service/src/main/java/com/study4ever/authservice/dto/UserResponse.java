@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,4 +21,5 @@ public class UserResponse {
     private String lastName;
     private Set<String> roles;
     private boolean enabled;
+    private LocalDateTime createdAt;
 }

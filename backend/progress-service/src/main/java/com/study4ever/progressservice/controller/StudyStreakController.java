@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,10 +27,16 @@ public class StudyStreakController {
 
     private final StudyStreakService studyStreakService;
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public StudyStreakDto initializeStudyStreak(@RequestHeader("X-User-Id") String userId) {
+        log.info("Initializing study streak for user {}", userId);
+        return studyStreakService.createInitialStreak(userId);
+    }
+
     @GetMapping
     public StudyStreakDto getUserStreak(@RequestHeader("X-User-Id") String userId) {
-        log.debug("Getting study streak for user {}", userId);
-        studyStreakService.updateStreak(userId);
+        log.info("Getting study streak for user {}", userId);
         return studyStreakService.getUserStreak(userId);
     }
 
@@ -38,20 +45,20 @@ public class StudyStreakController {
             @RequestHeader("X-User-Id") String userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        log.debug("Getting streak history for user {} from {} to {}", userId, startDate, endDate);
+        log.info("Getting streak history for user {} from {} to {}", userId, startDate, endDate);
         return studyStreakService.getStreakHistoryByDateRange(userId, startDate, endDate);
     }
 
     @PutMapping("/reset")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void resetStreak(@RequestHeader("X-User-Id") String userId) {
-        log.debug("Resetting streak for user {}", userId);
+        log.info("Resetting streak for user {}", userId);
         studyStreakService.resetStreak(userId);
     }
 
     @GetMapping("/top")
     public List<StudyStreakDto> getTopStreaks(@RequestParam(defaultValue = "10") int limit) {
-        log.debug("Getting top {} streaks", limit);
+        log.info("Getting top {} streaks", limit);
         return studyStreakService.getTopStreaks(limit);
     }
 }

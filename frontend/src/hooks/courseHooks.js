@@ -166,16 +166,16 @@ export const useEnrollment = () => {
             console.log('Verifying enrollment by fetching enrolled courses...');
             const verifyResponse = await api.get('/api/v1/courses/progress');
             console.log('Verification response:', verifyResponse.data);
-            
+
             // Check if the course is in the enrolled courses list
-            const enrolledCourses = Array.isArray(verifyResponse.data) ? verifyResponse.data : 
+            const enrolledCourses = Array.isArray(verifyResponse.data) ? verifyResponse.data :
               (Array.isArray(verifyResponse.data?.courses) ? verifyResponse.data.courses : []);
-            
+
             const isEnrolled = enrolledCourses.some(course => {
               const courseId = course.id || course.course?.id;
-              return courseId == courseId; // Use == for string/number comparison
+              return !Number.isNaN(courseId);
             });
-            
+
             console.log(`Course ${courseId} enrollment verification:`, isEnrolled ? 'Found in enrolled courses' : 'NOT found in enrolled courses');
           } catch (verifyErr) {
             console.error('Failed to verify enrollment:', verifyErr);
@@ -256,12 +256,10 @@ export const useInstructor = (instructorId) => {
         const { adminApi } = await import('../api/axios');
         
         // Use the adminApi instance which has admin credentials built-in
-        console.log(`Fetching instructor details for ID: ${instructorId} using admin credentials`);
         const response = await adminApi.get(`/api/v1/admin/instructors/${instructorId}`);
         
         if (isMounted) {
           setInstructor(response.data);
-          console.log('Instructor data retrieved:', response.data);
         }
       } catch (err) {
         console.error(`Failed to fetch instructor info for ID ${instructorId}:`, err);
@@ -302,27 +300,16 @@ export const useEnrolledCourses = () => {
         return [];
       }
 
-      console.log('Fetching enrolled courses...');
-      
       // Make the API request to fetch enrolled courses with progress data
       const progressResponse = await api.get('/api/v1/courses/progress');
-      
-      // Log the raw response for debugging
-      console.log('Enrolled Courses Progress Response:', {
-        status: progressResponse.status,
-        statusText: progressResponse.statusText,
-        data: progressResponse.data
-      });
+
       
       // Handle different response formats
       let progressData;
       
       if (Array.isArray(progressResponse.data)) {
-        console.log('Progress response data is an array with length:', progressResponse.data.length);
         progressData = progressResponse.data;
       } else if (progressResponse.data && typeof progressResponse.data === 'object') {
-        console.log('Progress response data is an object with keys:', Object.keys(progressResponse.data));
-        
         // If response is an object that contains courses array
         if (Array.isArray(progressResponse.data.courses)) {
           progressData = progressResponse.data.courses;
@@ -343,9 +330,7 @@ export const useEnrolledCourses = () => {
         console.warn('Processed progress data is not an array, resetting to empty array');
         progressData = [];
       }
-      
-      console.log('Processed progress data:', progressData);
-      
+
       // Now fetch detailed course information for each enrolled course
       const enrichedCourses = await Promise.all(
         progressData.map(async (progressItem) => {
@@ -362,7 +347,6 @@ export const useEnrolledCourses = () => {
             }
             
             // Fetch course details
-            console.log(`Fetching details for course ID: ${courseId}`);
             const courseResponse = await api.get(`/api/v1/courses/${courseId}`);
             const courseDetails = courseResponse.data;
             
@@ -379,7 +363,6 @@ export const useEnrolledCourses = () => {
                 // Import adminApi to fetch instructor details
                 const { adminApi } = await import('../api/axios');
                 
-                console.log(`Fetching instructor details for ID: ${courseDetails.instructorId} using admin credentials`);
                 const instructorResponse = await adminApi.get(`/api/v1/admin/instructors/${courseDetails.instructorId}`);
                 const instructorDetails = instructorResponse.data;
                 
@@ -406,7 +389,6 @@ export const useEnrolledCourses = () => {
         })
       );
       
-      console.log('Final enriched enrolled courses data:', enrichedCourses);
       setEnrolledCourses(enrichedCourses);
       return enrichedCourses;
     } catch (err) {

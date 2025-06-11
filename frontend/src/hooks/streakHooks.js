@@ -69,10 +69,16 @@ export const useStreakHistory = (startDate, endDate) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('useStreakHistory: Fetching streak history...');
+      console.log('useStreakHistory:: Fetching streak history...');
       const historyData = await getStreakHistory(effectiveStartDate, effectiveEndDate);
-      console.log('useStreakHistory: Received history data:', historyData);
-      setHistory(historyData || []);
+      console.log('useStreakHistory:: Received history data:', historyData);
+
+      const transformedData = Array.isArray(historyData) ? historyData.map(item => ({
+        date: item.date || item.studyDate || item.timestamp,
+        streakLength: item.streakLength || item.streakDays || item.value || 0
+      })) : [];
+
+      setHistory(transformedData || []);
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch streak history';
       setError(errorMessage);

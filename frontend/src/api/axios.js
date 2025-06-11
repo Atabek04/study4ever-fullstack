@@ -43,7 +43,6 @@ export const getAdminToken = async (force = false) => {
   }
   
   try {
-    console.log('Getting new admin token...');
     const response = await axios.post(
       `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8095'}/api/v1/auth/login`, 
       { username: 'ibnmalik', password: 'Admin@123' }
@@ -77,7 +76,6 @@ adminApi.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       if (!config.url?.includes('/auth/')) {
-        console.log(`Admin Request: ${config.method.toUpperCase()} ${config.url}`);
       }
     } else {
       console.warn(`Admin Request failed - no token: ${config.method.toUpperCase()} ${config.url}`);
@@ -90,18 +88,6 @@ adminApi.interceptors.request.use(
 // Admin API response interceptor
 adminApi.interceptors.response.use(
   (response) => {
-    const url = response.config.url;
-    
-    // For important endpoints, log the response body
-    if (url?.includes('/courses') || url?.includes('/lessons') || url?.includes('/modules')) {
-      console.log(`Admin Response ${response.status} for ${response.config.method.toUpperCase()} ${url}:`, {
-        status: response.status,
-        data: response.data
-      });
-    } else if (!url?.includes('/auth/')) {
-      // For other non-auth endpoints, just log status
-      console.log(`Admin Response ${response.status} for ${response.config.method.toUpperCase()} ${url}`);
-    }
     return response;
   },
   async (error) => {
@@ -194,9 +180,6 @@ api.interceptors.request.use(
         // Token is still valid, use it
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
-      // Log non-auth requests
-      console.log(`Request: ${config.method.toUpperCase()} ${config.url}`);
     }
     
     return config;
@@ -207,19 +190,6 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    const url = response.config.url;
-    
-    // For important endpoints, log the response body
-    if (url?.includes('/courses') || url?.includes('/lessons') || url?.includes('/modules')) {
-      console.log(`Response ${response.status} for ${response.config.method.toUpperCase()} ${url}:`, {
-        status: response.status,
-        data: response.data
-      });
-    } else if (!url?.includes('/auth/')) {
-      // For other non-auth endpoints, just log status
-      console.log(`Response ${response.status} for ${response.config.method.toUpperCase()} ${url}`);
-    }
-    
     return response;
   },
   async (error) => {

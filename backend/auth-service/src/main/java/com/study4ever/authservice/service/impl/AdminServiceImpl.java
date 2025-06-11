@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -90,7 +89,7 @@ public class AdminServiceImpl implements AdminService {
 
         return instructors.stream()
                 .map(Mapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -146,7 +145,7 @@ public class AdminServiceImpl implements AdminService {
 
         return students.stream()
                 .map(Mapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -157,7 +156,7 @@ public class AdminServiceImpl implements AdminService {
 
         return users.stream()
                 .map(Mapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -212,7 +211,7 @@ public class AdminServiceImpl implements AdminService {
 
         return users.stream()
                 .map(Mapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -231,7 +230,7 @@ public class AdminServiceImpl implements AdminService {
 
         return students.stream()
                 .map(Mapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -248,7 +247,7 @@ public class AdminServiceImpl implements AdminService {
 
         return instructors.stream()
                 .map(Mapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private boolean matchesSearchTerm(UserCredentials user, String searchTerm) {

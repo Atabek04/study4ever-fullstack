@@ -2,6 +2,7 @@ package com.study4ever.progressservice.service.impl;
 
 import com.study4ever.progressservice.dto.StreakHistoryEntryDto;
 import com.study4ever.progressservice.dto.StudyStreakDto;
+import com.study4ever.progressservice.exception.NotFoundException;
 import com.study4ever.progressservice.model.StudySession;
 import com.study4ever.progressservice.model.StudyStreak;
 import com.study4ever.progressservice.repository.StudySessionRepository;
@@ -33,20 +34,20 @@ public class StudyStreakServiceImpl implements StudyStreakService {
     @Override
     @Transactional(readOnly = true)
     public StudyStreakDto getUserStreak(String userId) {
-        return mapToDto(studyStreakRepository.findById(userId)
-                .orElse(createInitialStreak(userId)));
+        return mapToDto(studyStreakRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("StudyStreak with id: " + userId + " not found")));
     }
 
     @Override
     @Transactional
     public void updateStreak(String userId) {
         LocalDate today = LocalDate.now();
-        StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElse(createInitialStreak(userId));
+        StudyStreak streak = studyStreakRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("StudyStreak with id: " + userId + " not found"));
         LocalDate lastStudyDate = streak.getLastStudyDate();
 
         if (lastStudyDate.equals(today)) {
-            log.debug("User {} already has a streak update for today. No changes needed.", userId);
+            log.info("User {} already has a streak update for today. No changes needed.", userId);
             return;
         }
 
@@ -70,8 +71,8 @@ public class StudyStreakServiceImpl implements StudyStreakService {
     @Override
     @Transactional
     public void resetStreak(String userId) {
-        StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElse(createInitialStreak(userId));
+        StudyStreak streak = studyStreakRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("StudyStreak with id: " + userId + " not found"));
 
         LocalDate today = LocalDate.now();
         streak.setCurrentStreakDays(0);
@@ -88,8 +89,7 @@ public class StudyStreakServiceImpl implements StudyStreakService {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay().minusNanos(1);
 
-        List<StudySession> sessions = studySessionRepository.findByUserIdAndStartTimeBetween(
-                userId, startDateTime, endDateTime);
+        List<StudySession> sessions = studySessionRepository.findByUserIdAndStartTimeBetween(userId, startDateTime, endDateTime);
 
         Map<LocalDate, Integer> studyMinutesByDate = sessions.stream()
                 .filter(s -> s.getDurationMinutes() != null)
@@ -132,8 +132,8 @@ public class StudyStreakServiceImpl implements StudyStreakService {
 
     @Override
     public void updateLastStudyDateToday(String userId) {
-        StudyStreak streak = studyStreakRepository.findById(userId)
-                .orElse(createInitialStreak(userId));
+        StudyStreak streak = studyStreakRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("StudyStreak with id: " + userId + " not found"));
 
         streak.setLastStudyDate(LocalDate.now());
         studyStreakRepository.save(streak);
@@ -166,7 +166,8 @@ public class StudyStreakServiceImpl implements StudyStreakService {
     }
 
     @Override
-    public StudyStreak createInitialStreak(String userId) {
+    public StudyStreakDto createInitialStreak(String userId) {
+        log.info("Initialize streak for user {}", userId);
         StudyStreak streak = StudyStreak.builder()
                 .userId(userId)
                 .currentStreakDays(0)
@@ -175,7 +176,7 @@ public class StudyStreakServiceImpl implements StudyStreakService {
                 .streakStartDate(LocalDate.now())
                 .build();
 
-        return studyStreakRepository.save(streak);
+        return mapToDto(studyStreakRepository.save(streak));
     }
 
     private StudyStreakDto mapToDto(StudyStreak streak) {

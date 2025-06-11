@@ -25,8 +25,6 @@ const getUserIdFromToken = () => {
  */
 export const getDailyStats = async (days = 30) => {
   try {
-    console.log('getDailyStats: Fetching daily stats for days:', days);
-    
     const userId = getUserIdFromToken();
     if (!userId) {
       throw new Error('No user ID found in token');
@@ -38,8 +36,6 @@ export const getDailyStats = async (days = 30) => {
         'X-User-Id': userId
       }
     });
-    
-    console.log('getDailyStats: Response received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching daily stats:', error);
@@ -54,8 +50,6 @@ export const getDailyStats = async (days = 30) => {
  */
 export const getWeeklyStats = async (weeks = 12) => {
   try {
-    console.log('getWeeklyStats: Fetching weekly stats for weeks:', weeks);
-    
     const userId = getUserIdFromToken();
     if (!userId) {
       throw new Error('No user ID found in token');
@@ -67,8 +61,6 @@ export const getWeeklyStats = async (weeks = 12) => {
         'X-User-Id': userId
       }
     });
-    
-    console.log('getWeeklyStats: Response received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching weekly stats:', error);
@@ -85,8 +77,6 @@ export const getWeeklyStats = async (weeks = 12) => {
  */
 export const getMonthlyStats = async (months = 12) => {
   try {
-    console.log('getMonthlyStats: Fetching monthly stats for months:', months);
-    
     const userId = getUserIdFromToken();
     if (!userId) {
       throw new Error('No user ID found in token');
@@ -98,8 +88,6 @@ export const getMonthlyStats = async (months = 12) => {
         'X-User-Id': userId
       }
     });
-    
-    console.log('getMonthlyStats: Response received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching monthly stats:', error);
@@ -114,8 +102,6 @@ export const getMonthlyStats = async (months = 12) => {
  */
 export const getYearlyStats = async (years = 5) => {
   try {
-    console.log('getYearlyStats: Fetching yearly stats for years:', years);
-    
     const userId = getUserIdFromToken();
     if (!userId) {
       throw new Error('No user ID found in token');
@@ -128,7 +114,6 @@ export const getYearlyStats = async (years = 5) => {
       }
     });
     
-    console.log('getYearlyStats: Response received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching yearly stats:', error);
@@ -142,8 +127,6 @@ export const getYearlyStats = async (years = 5) => {
  */
 export const getStatsSummary = async () => {
   try {
-    console.log('getStatsSummary: Fetching stats summary');
-    
     const userId = getUserIdFromToken();
     if (!userId) {
       throw new Error('No user ID found in token');
@@ -154,8 +137,6 @@ export const getStatsSummary = async () => {
         'X-User-Id': userId
       }
     });
-    
-    console.log('getStatsSummary: Response received:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching stats summary:', error);

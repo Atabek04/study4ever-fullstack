@@ -23,6 +23,7 @@ public class Mapper {
                 .lastName(user.getLastName())
                 .roles(roles)
                 .enabled(user.isEnabled())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 }
