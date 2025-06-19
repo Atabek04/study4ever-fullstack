@@ -4,35 +4,35 @@ import { useAuth } from '../context/AuthContext';
 import leaderboardApi from '../api/leaderboardApi';
 
 export const useLeaderboard = (periodType = 'weekly', limit = 10) => {
-  const [leaderboard, setLeaderboard] = useState(null);
+  const [leaderboardData, setLeaderboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchLeaderboard = useCallback(async (params = {}) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      let data;
-      
+      let response;
+
       switch (periodType) {
         case 'daily':
-          data = await leaderboardApi.getDailyLeaderboard(params.date, limit);
+          response = await leaderboardApi.getDailyLeaderboard(params.date, limit);
           break;
         case 'weekly':
-          data = await leaderboardApi.getWeeklyLeaderboard(params.startDate, limit);
+          response = await leaderboardApi.getWeeklyLeaderboard(params.startDate, limit);
           break;
         case 'monthly':
-          data = await leaderboardApi.getMonthlyLeaderboard(params.year, params.month, limit);
+          response = await leaderboardApi.getMonthlyLeaderboard(params.year, params.month, limit);
           break;
         case 'yearly':
-          data = await leaderboardApi.getYearlyLeaderboard(params.year, limit);
+          response = await leaderboardApi.getYearlyLeaderboard(params.year, limit);
           break;
         default:
           throw new Error(`Invalid period type: ${periodType}`);
       }
-      
-      setLeaderboard(data);
+
+      setLeaderboardData(response);
     } catch (err) {
       console.error('Error fetching leaderboard:', err);
       setError(err.response?.data?.message || 'Failed to fetch leaderboard');
@@ -46,7 +46,7 @@ export const useLeaderboard = (periodType = 'weekly', limit = 10) => {
   }, [fetchLeaderboard]);
 
   return {
-    leaderboard,
+    leaderboardData,
     loading,
     error,
     refetch: fetchLeaderboard

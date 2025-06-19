@@ -1,123 +1,183 @@
 import React from 'react';
-import { formatStudyDuration, formatRank, getMedalEmoji, getRankColorClass, getAchievementLevel } from '../../utils/leaderboardUtils';
+import {
+  Box,
+  Typography,
+  Avatar,
+  Chip,
+  LinearProgress,
+  Paper,
+  Tooltip
+} from '@mui/material';
+import { formatStudyDuration, formatRank, getMedalEmoji, getAchievementLevel } from '../../utils/leaderboardUtils';
 
-const LeaderboardEntry = ({ entry, currentUserId, showProgress = true, maxMinutes = 0 }) => {
+// Palette mapping from your theme for clarity
+const rankGradients = {
+  1: 'linear-gradient(90deg, #ffe259 0%, #ffa751 100%)',
+  2: 'linear-gradient(90deg, #dadada 0%, #a3a3a3 100%)',
+  3: 'linear-gradient(90deg, #f7971e 0%, #ffd200 100%)',
+  other: 'linear-gradient(90deg, #C70039 0%, #FF6969 100%)'
+};
+
+const LeaderboardEntry = ({
+                            entry,
+                            currentUserId,
+                            showProgress = true,
+                            maxMinutes = 0
+                          }) => {
   const isCurrentUser = entry.userId === currentUserId;
   const achievement = getAchievementLevel(entry.totalStudyMinutes);
   const progressPercentage = maxMinutes > 0 ? (entry.totalStudyMinutes / maxMinutes) * 100 : 0;
+  const rankGradient = rankGradients[entry.rank] || rankGradients.other;
 
   return (
-    <div className={`flex items-center p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
-      isCurrentUser 
-        ? 'bg-blue-50 border-blue-200 shadow-sm' 
-        : 'bg-white border-gray-200 hover:bg-gray-50'
-    }`}>
-      
-      {/* Rank Section */}
-      <div className="flex items-center justify-center w-16 h-16 mr-4">
-        <div className="text-center">
-          <div className={`text-lg font-bold ${getRankColorClass(entry.rank)}`}>
+      <Paper
+          elevation={isCurrentUser ? 7 : 3}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            p: 2,
+            mb: 1.5,
+            background: isCurrentUser
+                ? 'linear-gradient(90deg,#FFF5E0 70%, #ffefef 130%)'
+                : '#F9EFD6',
+            borderLeft: isCurrentUser ? '6px solid #C70039' : 'none',
+            boxShadow: isCurrentUser ? '0px 4px 20px 1px #FF696950' : '0px 2px 8px rgba(199, 0, 57, 0.03)',
+            transition: 'box-shadow 0.2s, background 0.3s',
+          }}
+      >
+        {/* Rank */}
+        <Box sx={{
+          width: 60,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          mr: 2
+        }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: '#C70039', mb: -1 }}>
             {getMedalEmoji(entry.rank)}
-          </div>
-          <div className={`text-sm ${getRankColorClass(entry.rank)}`}>
+          </Typography>
+          <Typography
+              variant="subtitle2"
+              fontWeight={entry.rank < 4 ? 700 : 500}
+              sx={{ color: '#C70039', textShadow: '0px 2px 4px #fff5e0' }}
+          >
             {formatRank(entry.rank)}
-          </div>
-        </div>
-      </div>
+          </Typography>
+        </Box>
 
-      {/* User Info Section */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {/* Avatar */}
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-              {entry.userName ? entry.userName.charAt(0).toUpperCase() : 'U'}
-            </div>
-            
-            {/* Name and Achievement */}
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className={`font-medium text-gray-900 ${isCurrentUser ? 'font-bold' : ''}`}>
-                  {entry.userName || `User ${entry.userId}`}
-                  {isCurrentUser && (
-                    <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                      You
-                    </span>
-                  )}
-                </h3>
-              </div>
-              
-              <div className="flex items-center space-x-2 mt-1">
-                <span className={`text-xs font-medium ${achievement.color}`}>
-                  {achievement.icon} {achievement.level}
-                </span>
-                {entry.streak && entry.streak > 1 && (
-                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                    🔥 {entry.streak} day streak
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Study Time */}
-          <div className="text-right">
-            <div className="text-lg font-bold text-gray-900">
-              {formatStudyDuration(entry.totalStudyMinutes)}
-            </div>
-            {entry.sessionCount && (
-              <div className="text-xs text-gray-500">
-                {entry.sessionCount} session{entry.sessionCount !== 1 ? 's' : ''}
-              </div>
+        {/* User */}
+        <Box sx={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+            <Avatar
+                sx={{
+                  mr: 1.2,
+                  bgcolor: 'transparent',
+                  color: '#C70039',
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #FFF5E0 0%, #FF6969 100%)',
+                  border: isCurrentUser ? '2.5px solid #FF6969' : '2.5px solid #F9EFD6',
+                  width: 42,
+                  height: 42,
+                  fontSize: 24,
+                  boxShadow: '0px 3px 10px 1px #ffe0e0a0'
+                }}
+            >
+              {(entry.userName?.[0] ?? 'U').toUpperCase()}
+            </Avatar>
+            <Typography
+                variant="subtitle1"
+                fontWeight={isCurrentUser ? 'bold' : 500}
+                sx={{ color: '#141E46', mr: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}
+            >
+              {entry.userName || `${entry.userId}`}
+            </Typography>
+            {isCurrentUser && (
+                <Chip label="You" size="small" sx={{
+                  bgcolor: '#C70039',
+                  color: '#FFF5E0',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 10px -3px #FF6969'
+                }} />
             )}
-          </div>
-        </div>
+          </Box>
 
-        {/* Progress Bar */}
-        {showProgress && maxMinutes > 0 && (
-          <div className="mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  entry.rank === 1 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                  entry.rank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-600' :
-                  entry.rank === 3 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                  'bg-gradient-to-r from-blue-400 to-blue-600'
-                }`}
-                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center mt-1">
-              <span className="text-xs text-gray-500">
-                {Math.round(progressPercentage)}% of top performer
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+                size="small"
+                label={
+                  <span>
+                <span style={{ fontSize: '1.2em', marginRight: 4 }}>{achievement.icon}</span>
+                    {achievement.level}
               </span>
-              {entry.averageSessionDuration && (
-                <span className="text-xs text-gray-500">
-                  Avg: {formatStudyDuration(entry.averageSessionDuration)}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+                }
+                sx={{
+                  backgroundColor: '#FF6969',
+                  color: '#FFF5E0',
+                  fontWeight: 500,
+                  letterSpacing: '.02em',
+                  px: 0.7
+                }}
+            />
+            {!!entry.streak && entry.streak > 1 && (
+                <Chip
+                    size="small"
+                    icon={<span style={{ fontSize: '1.1em' }}>🔥</span>}
+                    label={`${entry.streak}d streak`}
+                    sx={{
+                      bgcolor: '#fce4d6',
+                      color: '#C70039',
+                      fontWeight: 500
+                    }}
+                />
+            )}
+          </Box>
+        </Box>
 
-      {/* Additional Stats */}
-      {(entry.totalSessions || entry.averageScore) && (
-        <div className="ml-4 text-right">
-          {entry.totalSessions && (
-            <div className="text-sm text-gray-600">
-              📊 {entry.totalSessions} sessions
-            </div>
+        {/* Study stats (right) */}
+        <Box sx={{ minWidth: 100, textAlign: 'right', mr: 2 }}>
+          <Typography variant="h6" fontWeight="bold" sx={{ color: '#141E46' }}>
+            {formatStudyDuration(entry.totalStudyMinutes)}
+          </Typography>
+          {entry.sessionCount && (
+              <Typography variant="caption" sx={{ color: '#38456C' }}>
+                {entry.sessionCount} session{entry.sessionCount !== 1 ? 's' : ''}
+              </Typography>
           )}
-          {entry.averageScore && (
-            <div className="text-sm text-gray-600">
-              ⭐ {entry.averageScore}% avg score
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+        </Box>
+
+        {/* Progress bar & extra */}
+        {showProgress && maxMinutes > 0 && (
+            <Box sx={{ width: 150 }}>
+              <Tooltip title="Your progress vs Top" arrow>
+                <LinearProgress
+                    variant="determinate"
+                    value={Math.min(progressPercentage, 100)}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      mb: 0.6,
+                      background: '#ffecec',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundImage: rankGradient,
+                        borderRadius: 4,
+                        boxShadow: entry.rank < 4 ? '0px 1.5px 10px 1.5px #FF696980' : undefined,
+                      }
+                    }}
+                />
+              </Tooltip>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" sx={{ color: '#38456C' }}>
+                  {Math.round(progressPercentage)}% of top
+                </Typography>
+                {entry.averageSessionDuration && (
+                    <Typography variant="caption" sx={{ color: '#38456C' }}>
+                      Avg: {formatStudyDuration(entry.averageSessionDuration)}
+                    </Typography>
+                )}
+              </Box>
+            </Box>
+        )}
+      </Paper>
   );
 };
-
 export default LeaderboardEntry;

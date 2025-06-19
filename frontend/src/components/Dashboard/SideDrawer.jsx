@@ -8,7 +8,8 @@ import {
   ListItemIcon, 
   ListItemText, 
   Divider,
-  useMediaQuery
+  useMediaQuery,
+  Avatar
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 
 // Icons
 import HomeIcon from '@mui/icons-material/Home';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import SchoolIcon from '@mui/icons-material/School';
 
 import BookmarkIcon from '@mui/icons-material/Bookmark';
@@ -59,23 +61,34 @@ const SideDrawer = ({ open, onClose, variant = "persistent" }) => {
 
   const drawerContent = (
     <>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         p: 2,
       }}>
-        <Typography 
-          variant="h5" 
-          component="div" 
-          sx={{ 
-            color: 'primary.main',
-            fontWeight: 700,
-            letterSpacing: '-0.5px'
-          }}
+        <Avatar
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              width: 40,
+              height: 40,
+              fontSize: 26,
+              fontWeight: 700,
+              boxShadow: '0 2px 10px #c7003933',
+            }}
+            alt="Study4Ever"
         >
-          Study4Ever
-        </Typography>
+          <MenuBookIcon fontSize="inherit" />
+        </Avatar>
+        {/* Optionally:
+      <Typography
+        variant="subtitle2"
+        sx={{ ml: 1, color: 'primary.main', fontWeight: 600 }}
+      >
+        Study4Ever
+      </Typography>
+      */}
       </Box>
       <Divider />
       <List>

@@ -99,7 +99,8 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: '#C70039', // Rich crimson for app bars
+          background: 'linear-gradient(90deg,#C70039 60%,#FF6969 100%)',
+          color: '#FFF5E0',
         },
       },
     },

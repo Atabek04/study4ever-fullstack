@@ -29,13 +29,13 @@ const LeaderboardDashboard = () => {
   const { user } = useAuth();
   const [activePeriod, setActivePeriod] = useState('weekly');
   const [limit, setLimit] = useState(10);
-  
+
   // Hooks for different periods
   const dailyLeaderboard = useLeaderboard('daily', limit);
   const weeklyLeaderboard = useLeaderboard('weekly', limit);
   const monthlyLeaderboard = useLeaderboard('monthly', limit);
   const yearlyLeaderboard = useLeaderboard('yearly', limit);
-  
+
   const { userRank, fetchUserRank } = useUserRank();
 
   // Get current leaderboard based on active period
@@ -69,7 +69,7 @@ const LeaderboardDashboard = () => {
     if (user?.userId && activePeriod) {
       let startDate, endDate;
       const today = new Date().toISOString().split('T')[0];
-      
+
       switch (activePeriod) {
         case 'daily':
           startDate = endDate = today;
@@ -86,11 +86,8 @@ const LeaderboardDashboard = () => {
           startDate = getCurrentYearStart();
           endDate = today;
           break;
-        default:
-          startDate = getCurrentWeekStart();
-          endDate = today;
       }
-      
+
       fetchUserRank(activePeriod.toUpperCase(), startDate, endDate);
     }
   }, [activePeriod, user?.userId, fetchUserRank]);
@@ -107,9 +104,6 @@ const LeaderboardDashboard = () => {
   const handleLimitChange = (event) => {
     setLimit(event.target.value);
   };
-
-  // Check if we have any leaderboard data
-  const hasData = currentLeaderboard.leaderboard && currentLeaderboard.leaderboard.length > 0;
 
   if (!user) {
     return (
@@ -151,7 +145,7 @@ const LeaderboardDashboard = () => {
       )}
 
       {/* No Data State */}
-      {!currentLeaderboard.loading && !currentLeaderboard.error && !hasData && (
+      {!currentLeaderboard.loading && !currentLeaderboard.error && !currentLeaderboard.leaderboardData?.entries && (
         <Paper sx={{ p: 6, textAlign: 'center', mb: 3 }}>
           <EmojiEvents sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
           <Typography variant="h5" gutterBottom color="text.secondary">
@@ -169,159 +163,183 @@ const LeaderboardDashboard = () => {
         </Paper>
       )}
 
-      {/* Content - only show if we have data or are loading */}
-      {(hasData || currentLeaderboard.loading) && (
-        <>
-          {/* Period Tabs */}
-          <Paper sx={{ mb: 3 }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs
-                value={tabs.findIndex(tab => tab.id === activePeriod)}
-                onChange={handleTabChange}
-                aria-label="leaderboard time periods"
-                variant="scrollable"
-                scrollButtons="auto"
-              >
-                {tabs.map((tab, index) => (
-                  <Tab 
-                    key={tab.id}
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{tab.icon}</span>
-                        <span>{tab.label}</span>
-                      </Box>
-                    }
-                    id={`leaderboard-tab-${index}`}
-                  />
-                ))}
-              </Tabs>
+      {/* Content */}
+      <Paper sx={{ mb: 3 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={tabs.findIndex(tab => tab.id === activePeriod)}
+            onChange={handleTabChange}
+            aria-label="leaderboard time periods"
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            {tabs.map((tab, index) => (
+              <Tab
+                key={tab.id}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </Box>
+                }
+                id={`leaderboard-tab-${index}`}
+              />
+            ))}
+          </Tabs>
+        </Box>
+
+        {/* Controls and User Rank */}
+        <Box sx={{ p: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3, alignItems: { sm: 'center' }, justifyContent: 'space-between' }}>
+          {/* Show Top Control */}
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Show Top</InputLabel>
+            <Select
+              value={limit}
+              label="Show Top"
+              onChange={handleLimitChange}
+              variant="outlined"
+            >
+              <MenuItem value={5}>5 students</MenuItem>
+              <MenuItem value={10}>10 students</MenuItem>
+              <MenuItem value={25}>25 students</MenuItem>
+              <MenuItem value={50}>50 students</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* User's Current Rank */}
+          {userRank && (
+              <Card sx={{ bgcolor: 'primary.50', border: 1, borderColor: 'primary.200' }}>
+                <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                  <Typography variant="caption" color="primary.600">
+                    Your Current Rank
+                  </Typography>
+                  <Typography variant="h6" fontWeight="bold" color="primary.800">
+                    #{userRank.rank} - {userRank.totalStudyMinutes}min studied
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {userRank.sessionCount} sessions completed
+                  </Typography>
+                </CardContent>
+              </Card>
+          )}
+        </Box>
+
+        {/* Leaderboard List */}
+        <LeaderboardList
+          leaderboard={currentLeaderboard.leaderboardData?.entries}
+          loading={currentLeaderboard.loading}
+          error={currentLeaderboard.error}
+          currentUserId={user?.userId}
+          onRefresh={handleRefresh}
+          periodType={activePeriod}
+          showProgress={true}
+        />
+      </Paper>
+
+      {/* Additional Information */}
+      <Box
+          sx={{
+            display: 'flex',
+            gap: 3,
+            mt: 2,
+            flexDirection: { xs: 'column', md: 'row' }, // column on mobile, row on desktop
+            alignItems: 'stretch',
+            width: '100%',
+          }}
+      >
+        {/* Ranking Criteria */}
+        <Paper
+            sx={{
+              flex: 1,
+              p: 3,
+              mb: { xs: 2, md: 0 },
+              display: "flex",
+              flexDirection: "column",
+              minWidth: 0,
+            }}
+            elevation={2}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <TrendingUp sx={{ mr: 1, color: 'primary.main' }} />
+            <Typography variant="h6" fontWeight="bold">
+              Ranking Criteria
+            </Typography>
+          </Box>
+          <List dense>
+            <ListItem>
+              <ListItemText
+                  primary="Total study time (primary factor)"
+                  secondary="The total minutes you've spent studying"
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText
+                  primary="Number of completed sessions"
+                  secondary="How many study sessions you've finished"
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText
+                  primary="Consistency and streaks"
+                  secondary="Regular daily study habits"
+              />
+            </ListItem>
+            <ListItem>
+              <ListItemText
+                  primary="Session quality and completion rate"
+                  secondary="How effectively you complete your studies"
+              />
+            </ListItem>
+          </List>
+        </Paper>
+
+        {/* Achievement Levels */}
+        <Paper
+            sx={{
+              flex: 1,
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              minWidth: 0,
+            }}
+            elevation={2}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <EmojiEvents sx={{ mr: 1, color: 'warning.main' }} />
+            <Typography variant="h6" fontWeight="bold">
+              Achievement Levels
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip label="🔰 Starter" size="small" color="default" />
+              <Typography variant="body2" color="text.secondary">0-49 minutes</Typography>
             </Box>
-
-            {/* Controls and User Rank */}
-            <Box sx={{ p: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3, alignItems: { sm: 'center' }, justifyContent: 'space-between' }}>
-              {/* Show Top Control */}
-              <FormControl size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Show Top</InputLabel>
-                <Select
-                  value={limit}
-                  label="Show Top"
-                  onChange={handleLimitChange}
-                >
-                  <MenuItem value={5}>5 students</MenuItem>
-                  <MenuItem value={10}>10 students</MenuItem>
-                  <MenuItem value={25}>25 students</MenuItem>
-                  <MenuItem value={50}>50 students</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* User's Current Rank */}
-              {userRank && (
-                <Card sx={{ bgcolor: 'primary.50', border: 1, borderColor: 'primary.200' }}>
-                  <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
-                    <Typography variant="caption" color="primary.600">
-                      Your Current Rank
-                    </Typography>
-                    <Typography variant="h6" fontWeight="bold" color="primary.800">
-                      #{userRank.rank} - {userRank.totalStudyMinutes}min studied
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip label="🌱 Beginner" size="small" color="success" />
+              <Typography variant="body2" color="text.secondary">50-199 minutes</Typography>
             </Box>
-
-            {/* Leaderboard List */}
-            <LeaderboardList
-              leaderboard={currentLeaderboard.leaderboard}
-              loading={currentLeaderboard.loading}
-              error={currentLeaderboard.error}
-              currentUserId={user?.userId}
-              onRefresh={handleRefresh}
-              periodType={activePeriod}
-              showProgress={true}
-            />
-          </Paper>
-
-          {/* Additional Information */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <TrendingUp sx={{ mr: 1, color: 'primary.main' }} />
-                  <Typography variant="h6" fontWeight="bold">
-                    Ranking Criteria
-                  </Typography>
-                </Box>
-                <List dense>
-                  <ListItem>
-                    <ListItemText 
-                      primary="Total study time (primary factor)"
-                      secondary="The total minutes you've spent studying"
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText 
-                      primary="Number of completed sessions"
-                      secondary="How many study sessions you've finished"
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText 
-                      primary="Consistency and streaks"
-                      secondary="Regular daily study habits"
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText 
-                      primary="Session quality and completion rate"
-                      secondary="How effectively you complete your studies"
-                    />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3, height: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <EmojiEvents sx={{ mr: 1, color: 'warning.main' }} />
-                  <Typography variant="h6" fontWeight="bold">
-                    Achievement Levels
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="🔰 Starter" size="small" color="default" />
-                    <Typography variant="body2" color="text.secondary">0-49 minutes</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="🌱 Beginner" size="small" color="success" />
-                    <Typography variant="body2" color="text.secondary">50-199 minutes</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="📚 Intermediate" size="small" color="info" />
-                    <Typography variant="body2" color="text.secondary">200-499 minutes</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="⭐ Advanced" size="small" color="warning" />
-                    <Typography variant="body2" color="text.secondary">500-999 minutes</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="🎓 Expert" size="small" color="secondary" />
-                    <Typography variant="body2" color="text.secondary">1000+ minutes</Typography>
-                  </Box>
-                </Box>
-
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  <Typography variant="body2">
-                    <strong>💡 Tip:</strong> Rankings are updated in real-time as you complete study sessions. 
-                    Maintain consistent daily study habits to climb the leaderboard!
-                  </Typography>
-                </Alert>
-              </Paper>
-            </Grid>
-          </Grid>
-        </>
-      )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip label="📚 Intermediate" size="small" color="info" />
+              <Typography variant="body2" color="text.secondary">200-499 minutes</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip label="⭐ Advanced" size="small" color="warning" />
+              <Typography variant="body2" color="text.secondary">500-999 minutes</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip label="🎓 Expert" size="small" color="secondary" />
+              <Typography variant="body2" color="text.secondary">1000+ minutes</Typography>
+            </Box>
+          </Box>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>💡 Tip:</strong> Rankings are updated in real-time as you complete study sessions.
+              Maintain consistent daily study habits to climb the leaderboard!
+            </Typography>
+          </Alert>
+        </Paper>
+      </Box>
     </Box>
   );
 };

@@ -21,9 +21,17 @@ export const leaderboardApi = {
     if (startDate) {
       params.startDate = startDate;
     }
-    
-    const response = await axios.get(`${LEADERBOARD_BASE_URL}/weekly`, { params });
-    return response.data;
+
+    console.log(`📤 API Request: GET ${LEADERBOARD_BASE_URL}/weekly with params:`, params);
+
+    try {
+      const response = await axios.get(`${LEADERBOARD_BASE_URL}/weekly`, { params });
+      console.log(`📥 API Response: ${LEADERBOARD_BASE_URL}/weekly data:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`📥 API Error: ${LEADERBOARD_BASE_URL}/weekly:`, error);
+      throw error;
+    }
   },
 
   // Get monthly leaderboard

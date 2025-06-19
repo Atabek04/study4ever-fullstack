@@ -20,17 +20,4 @@ public class LeaderboardResponseDto {
     private LocalDate endDate;
     private PeriodType periodType;
     private Integer totalEntries;
-    private LeaderboardEntryDto currentUserRanking;
-    private Long lastUpdated; // Unix timestamp
-    
-    public static LeaderboardResponseDto empty(LocalDate startDate, LocalDate endDate, PeriodType periodType) {
-        return LeaderboardResponseDto.builder()
-                .entries(List.of())
-                .startDate(startDate)
-                .endDate(endDate)
-                .periodType(periodType)
-                .totalEntries(0)
-                .lastUpdated(System.currentTimeMillis())
-                .build();
-    }
 }

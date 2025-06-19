@@ -383,6 +383,8 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                 .rank(ranking.getRank())
                 .totalStudyMinutes(ranking.getTotalStudyMinutes())
                 .sessionCount(ranking.getSessionCount())
+                .periodStart(ranking.getStartDate())
+                .periodEnd(ranking.getEndDate())
                 .build();
     }
 
